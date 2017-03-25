@@ -41,7 +41,7 @@ OGF::Util::TileLevel::convertMapLevel( $wwInfoDsc, $targetLevel, $opt{'zip'} ? \
 if( @zipList ){
 	require OGF::Util::File;
 	require Date::Format;
-	my $zipFile = 'C:/Map/Elevation/tmp/maptiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
+	my $zipFile = $OGF::$OGF::TERRAIN_OUTPUT_DIR .'/wwtiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
 	OGF::Util::File::zipFileList( $zipFile, \@zipList );
 	my $zip = Archive::Zip->new();
 }
@@ -49,54 +49,6 @@ if( @zipList ){
 
 
 
-#sub convertMapLevel {
-#	my( $wwInfoDsc, $targetLevel, $aZipList ) = @_;
-#
-#   my $wwInfo = OGF::LayerInfo->tileInfo( $wwInfoDsc );
-#   $OGF::Util::TileLevel::WWINFO_TYPE = $wwInfo->{'type'};
-#
-#   my( $upDown, @list );
-#   if( $targetLevel < $wwInfo->{'level'} ){
-#       ( $upDown, @list ) = ( 'down', reverse ($targetLevel .. $wwInfo->{'level'}) );
-#   }elsif( $targetLevel > $wwInfo->{'level'} ){
-#       ( $upDown, @list ) = ( 'up', $wwInfo->{'level'} .. $targetLevel );
-#   }else{
-#       die qq/level == targetLevel, nothing to do/;
-#   }
-#   pop @list;
-#
-#   foreach my $level ( @list ){
-#       my $hCreated = {};
-#       OGF::LayerInfo->tileIterator( $wwInfo, sub {
-#           my( $item ) = @_;
-#           if( $upDown eq 'down' ){
-#               OGF::Util::TileLevel::downLevelConcat( $tileWd, $tileHg, $item, $hCreated );
-#           }else{
-#               OGF::Util::TileLevel::upLevelSplit( $tileWd, $tileHg, $item );
-#           }
-#           push @zipList, $item->tileName() if $opt{'zip'} && $level == $list[0];
-#       } );
-#       $wwInfo = $wwInfo->copy( 'level' => $upDown );
-#       print STDERR $wwInfo->toString(), "\n";
-#
-#       push @$aZipList, (keys %$hCreated) if $aZipList;
-#   }
-#}
-#
-#
-#if( @zipList ){
-#	require Archive::Zip;
-#	require Date::Format;
-#	my $zipFile = 'C:/Map/Elevation/tmp/maptiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
-#	my $zip = Archive::Zip->new();
-#	foreach my $file ( @zipList ){
-#		(my $fname = $file) =~ s|^.*?/(\d+/)|$1|;
-#		print STDERR $file, " -> ", $fname, "\n";
-#		$zip->addFile( $file, $fname );
-#	}
-#	$zip->writeToFileNamed( $zipFile );
-#	print STDERR "Zip file: ", $zipFile, "\n";
-#}
 
 
 

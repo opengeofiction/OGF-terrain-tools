@@ -65,7 +65,7 @@ if( $opt{'c'} ){
     } );
 
 	# makeSrtmElevationTile
-	$OGF::Terrain::Transform::OUTPUT_DIRECTORY = 'C:/Map/Elevation/tmp';
+	$OGF::Terrain::Transform::OUTPUT_DIRECTORY = $OGF::TERRAIN_OUTPUT_DIR;
     OGF::Terrain::Transform::makeSrtmElevationTile( 'OGF', $LEVEL, $srtmSampSize, $bbox );
 
 	# make WW elevation
@@ -78,7 +78,7 @@ if( $opt{'c'} ){
 	my @zipList;
 	OGF::Util::TileLevel::convertMapLevel( $infoDsc2, 0, \@zipList );
 
-    my $zipFile = 'C:/Map/Elevation/tmp/maptiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
+    my $zipFile = $OGF::TERRAIN_OUTPUT_DIR .'/wwtiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
 	OGF::Util::File::zipFileList( $zipFile, \@zipList );
 
 }else{

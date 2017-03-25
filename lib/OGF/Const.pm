@@ -50,8 +50,9 @@ my $HOME_DIR = ($^O eq 'MSWin32') ? $ENV{'HOMEDRIVE'}.$ENV{'HOMEPATH'} : $ENV{'H
 my %conf = Config::General::ParseConfig( -ConfigFile => 'ogftools.conf', -ConfigPath => ["$HOME_DIR/.ogf","/etc/ogf"] );
 #print STDERR "\%conf <", join('|',%conf), ">\n";  # _DEBUG_
 
-$OGF::LAYER_PATH_PREFIX = $conf{'layer_path_prefix'};
-$OGF::TERRAIN_COLOR_MAP = $conf{'terrain_color_map'};
+$OGF::LAYER_PATH_PREFIX  = $conf{'layer_path_prefix'};
+$OGF::TERRAIN_COLOR_MAP  = $conf{'terrain_color_map'};
+$OGF::TERRAIN_OUTPUT_DIR = $conf{'terrain_output_dir'};
 #print STDERR "\$OGF::LAYER_PATH_PREFIX <", $OGF::LAYER_PATH_PREFIX, ">\n";  # _DEBUG_
 #print STDERR "\$OGF::TERRAIN_COLOR_MAP <", $OGF::TERRAIN_COLOR_MAP, ">\n";  # _DEBUG_
 

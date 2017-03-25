@@ -8,9 +8,6 @@ use OGF::Util::File qw( writeToFile );
 use OGF::Terrain::ElevationTile;
 
 
-#our %TILE_CACHE;
-#our @AREA_BBOX;
-
 
 sub writeContourTiles {
 	my( $ctx, $tileLayer, $aTileSize, $hOpt ) = @_;

@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use OGF::Const;
 use OGF::Terrain::Transform;
 use OGF::Util::Usage qw( usageInit usageError );
 
@@ -38,7 +39,7 @@ our $LEVEL = 4;
 my $sampSize = $SAMP_SIZE || 1200;
 
 
-chdir 'C:/Map/Elevation/tmp';
+chdir $OGF::TERRAIN_OUTPUT_DIR;
 if( $BBOX ){
 #	$BBOX =~ s/^bbox=//;
 #	my( $minLon, $minLat, $maxLon, $maxLat ) = map {POSIX::floor($_)} split /,/, $BBOX;

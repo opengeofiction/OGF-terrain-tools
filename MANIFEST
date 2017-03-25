@@ -1,5 +1,6 @@
 bin/convertMapLevel.pl
 bin/editElevationTile.pl
+bin/make3dElevation.pl
 bin/makeElevationFromContour.pl
 bin/makePhysicalMap.pl
 bin/makeSrtmElevationTile.pl
@@ -41,8 +42,9 @@ lib/OGF/View/Projection.pm
 lib/OGF/View/TileLayer.pm
 Makefile.PL
 MANIFEST			This list of files
-ogftools.conf
+ogftools.sample.conf
 README
+README.md
 t/OGF.t
 TileUtil/Changes
 TileUtil/Makefile.PL

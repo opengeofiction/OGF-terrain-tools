@@ -1,0 +1,6 @@
+Revision history for Perl extension ARP2::Parser.
+
+0.01  Sun Oct  8 12:59:57 2000
+	- original version; created by h2xs 1.20 with options
+		-Ocn ARP2::Parser
+

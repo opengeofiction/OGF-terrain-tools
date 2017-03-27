@@ -34,7 +34,7 @@ usageError() unless $SIZE && @FILES;
 
 
 my( $size, @files ) = ( $SIZE, @FILES );
-my( $wd, $hg ) = ($SIZE =~ /,/)? (split /,/, $SIZE) : ( $SIZE, $SIZE);
+my( $wd, $hg ) = ($SIZE =~ /,/)? (split /,/, $SIZE) : ( $SIZE, $SIZE );
 
 
 my $TILE_DATA = [];

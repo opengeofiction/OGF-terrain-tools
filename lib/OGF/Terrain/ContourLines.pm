@@ -23,9 +23,14 @@ sub writeContourTiles {
 		_tileSize  => $aTileSize,
 		_add       => ($hOpt->{'add'} ? 1 : 0),
 	};
+	if( $hOpt->{'bounds'} ){
+	    my( $minLon, $minLat, $maxLon, $maxLat ) = ref($hOpt->{'bounds'}) ? @{$hOpt->{'bounds'}} : (split /,/, $hOpt->{'bounds'});
+		my( $x0, $y1, $x1, $y0 ) = ( $tileLayer->geo2cnv($minLon,$minLat), $tileLayer->geo2cnv($maxLon,$maxLat) );
+		$hInfo->{_bounds} = [ $x0, $y0, $x1, $y1 ];
+		$hInfo->{_range}  = $tileLayer->bboxTileRange([$minLon, $minLat, $maxLon, $maxLat]);
+	}
 
 	my( @coastWays, @contourWays, @waterWays );
-
 	foreach my $way ( values %{$ctx->{_Way}} ){
 		my $hTags = $way->{'tags'};
 		if( $hTags->{'natural'} && $hTags->{'natural'} eq 'coastline' ){  # handle coastline first to give it priority if "ele" tag is also present
@@ -82,24 +87,6 @@ sub writeContourTiles {
 	return $hInfo;
 }
 
-#sub writeElevationWay {
-#	my( $ctx, $way, $elev, $hInfo ) = @_;
-#	my $proj = $hInfo->{_tileLayer}->projection();
-#	my $bbox = $hInfo->{_bbox};
-#	my $num = $#{$way->{'nodes'}};
-#
-#	for( my $i = 0; $i < $num; ++$i ){
-#		my( $nodeA, $nodeB ) = ( $ctx->{_Node}{$way->{'nodes'}[$i]}, $ctx->{_Node}{$way->{'nodes'}[$i+1]} );
-#		minMaxArea( $bbox, $nodeA, $nodeB );
-#		my( $ptA, $ptB ) = ( $proj->geo2cnv([$nodeA->{'lon'},$nodeA->{'lat'}]), $proj->geo2cnv([$nodeB->{'lon'},$nodeB->{'lat'}]) );
-#		map {$_ = POSIX::floor($_+.5)} ( $ptA->[0], $ptA->[1], $ptB->[0], $ptB->[1] );
-#		my @linePoints = OGF::Geo::Geometry::linePoints( $ptA, $ptB );
-#		@linePoints = ( $ptA, @linePoints, $ptB );
-#		foreach my $pt ( @linePoints ){
-#			setElevationPoint( $pt, $elev, $hInfo );
-#		}
-#	}
-#}
 
 
 my $INT_MAX = 2 ** 31;
@@ -216,15 +203,73 @@ sub getTileArray {
 		print STDERR "tileName: ", $tileName, "\n";  # _DEBUG_
 		my( $wd, $hg ) = @{$hInfo->{_tileSize}};
 		my $aTile;
-		if( $hInfo->{_add} && -f $tileName ){
-			$aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
-		}else{
+
+		if( -f $tileName ){
+			if( $hInfo->{_add} ){
+				$aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
+			}elsif( $hInfo->{_range} && rangeBoundary($hInfo->{_range},$tx,$ty) ){
+				my $aRect = tileOverlap( $hInfo, $tx, $ty, $hInfo->{_bounds} );
+				$aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
+				clearSubtile( $aTile, $aRect, 0 );
+			}
+		}
+		if( ! $aTile ){
 			$aTile = OGF::Terrain::ElevationTile::makeTileArray( $OGF::Terrain::ElevationTile::NO_ELEV_VALUE, $wd, $hg );
 		}
+	
 		$hInfo->{_tileCache}{$tag} = $aTile;
 	}
 	return $hInfo->{_tileCache}{$tag};
 }
+
+sub rangeBoundary {
+	my( $hRange, $tx, $ty ) = @_;
+	my( $y0, $y1, $x0, $x1	) = ( $hRange->{'y'}[0], $hRange->{'y'}[1], $hRange->{'x'}[0], $hRange->{'y'}[1] );
+	return (($ty == $y0 || $ty == $y1) && ($tx >= $x0 && $tx <= $x1)) || (($tx == $x0 || $tx == $x1) && ($ty >= $y0 && $ty <= $y1));
+}
+
+sub tileOverlap {
+    my( $hInfo, $tx, $ty, $aBounds ) = @_;
+    my( $tlr, $wd, $hg ) = ( $hInfo->{_tileLayer}, @{$hInfo->{_tileSize}} );
+    my( $x0, $y0, $x1, $y1 ) = ( $tlr->tile2cnv($tx,$ty,0,0), $tlr->tile2cnv($tx,$ty,$wd-1,$hg-1) );
+    my $aRect = OGF::Geo::Geometry::rectOverlap( $aBounds, [$x0,$y0,$x1,$y1] );
+    my( $tx0, $ty0, $xt0, $yt0 ) = $tlr->cnv2tile( $x0, $y0 );
+    my( $tx1, $ty1, $xt1, $yt1 ) = $tlr->cnv2tile( $x1, $y1 );
+
+    my( $dx, $dy, $maxX, $maxY ) = @{$tlr->{_tileOrder}};
+    $xt0 = 0 if $tx0 < $tx;
+    $yt0 = ($dy >= 0)? 0 : $hg-1 if $ty0 < $ty;
+    $xt1 = $wd-1 if $tx1 > $tx;
+    $yt1 = ($dy >= 0)? $hg-1 : 0 if $ty1 > $ty;
+    return [ $xt0, $yt0, $xt1, $yt1 ];
+}
+
+sub clearSubtile {
+    my( $aTile, $aClear, $val ) = @_;
+    $val = 0 if ! $val;
+    my( $x0, $y0, $x1, $y1 ) = @$aClear;
+    for( my $y = $y0; $y <= $y1; ++$y ){
+        for( my $x = $x0; $x <= $x1; ++$x ){
+            $aTile->[$y][$x] = $val;
+        }
+    }
+}
+
+sub boundsFromFileName {
+    my( $file ) = @_;
+    my $aBounds;
+#   if( $file =~ /_(\d+)([EW])(\d+)([NS])_band(\d+)_/ ){
+    if( $file =~ /_([NS])(\d+)([EW])(\d+)_band(\d+)_/ ){
+        my( $dNS, $minLat, $dEW, $minLon, $band ) = ( $1, $2, $3, $4, $5 );
+		$minLon = -$minLon if $dEW eq 'W';
+		$minLat = -$minLat if $dNS eq 'S';
+        ( $minLon, $minLat, my $maxLon, my $maxLat ) = ( $minLon, $minLat+($band-1)*.2, $minLon+1, $minLat+$band*.2 );
+        $aBounds = [ $minLon, $minLat, $maxLon, $maxLat ];
+    }
+    return $aBounds;
+}
+
+
 
 sub saveElevationTiles {
 	my( $hInfo ) = @_;
@@ -239,17 +284,6 @@ sub saveElevationTiles {
 		writeToFile( $tileName, $data, undef, {-bin => 1, -mdir => 1} );
 	}
 	$hInfo->{_tileRange} = $hRange;
-
-#	$AREA_BBOX[0] = POSIX::floor( 1000 * $AREA_BBOX[0] ) / 1000;
-#	$AREA_BBOX[1] = POSIX::floor( 1000 * $AREA_BBOX[1] ) / 1000;
-#	$AREA_BBOX[2] = (POSIX::floor( 1000 * $AREA_BBOX[2] ) + 1) / 1000;
-#	$AREA_BBOX[3] = (POSIX::floor( 1000 * $AREA_BBOX[3] ) + 1) / 1000;
-#	my $bbox = join( ',', @AREA_BBOX );
-#
-#	my $cmdMakeElev    = qq|makeElevationFromContour.pl contour:OGF:$LEVEL:$hRange->{_yMin}-$hRange->{_yMax}:$hRange->{_xMin}-$hRange->{_xMax}|;
-#	my $cmdConvertElev = qq|makeOsmElevation.pl level=9 size=256 bbox=$bbox|;
-#	my $cmdMakeSRTM    = qq|makeSrtmElevationTile.pl OGF:$LEVEL 1200 bbox=$bbox|;
-#	print STDERR "----- next cmd -----\n$cmdMakeElev\n$cmdConvertElev\n$cmdMakeSRTM\n";
 }
 
 sub setMinMaxRange {

@@ -16,14 +16,14 @@ use ARS::Util::Usage qw( usageInit usageError );
 # ogfElevation 13 C:\Map\Elevation\ji_contour_v20170205_for_upload.osm
 # ogfElevation 13 C:\Map\Elevation\Countours_TR.osm
 # ogfElevation 13 C:\Map\Elevation\mh_83E59S-84E59S_contour_v20170210_for_upload.osm
-# perl C:\usr\MapView\bin\ogfElevation.pl 13 fa_v20170227_contours_121E22S_band1_for_upload.osm fa_v20170227_contours_121E22S_band2_for_upload.osm fa_v20170227_thalwegs_comala_for_upload.osm
-# perl C:\usr\MapView\bin\ogfElevation.pl 13 C:\Map\Elevation\elevation_test_01.osm
+# ogfElevation.pl 13 fa_v20170227_contours_121E22S_band1_for_upload.osm fa_v20170227_contours_121E22S_band2_for_upload.osm fa_v20170227_thalwegs_comala_for_upload.osm
+# ogfElevation.pl 13 C:\Map\Elevation\elevation_test_01.osm
 
 
 
 my %opt;
-usageInit( \%opt, qq/ c add /, << "*" );
-[-c] [-add] <level> <osm_file> [<osm_file2> ...]
+usageInit( \%opt, qq/ c add bd=s /, << "*" );
+[-c] [-add] [-bounds=<bbox>] <level> <osm_file> [<osm_file2> ...]
 *
 
 my( $LEVEL, @OSM_FILES ) = @ARGV;
@@ -32,6 +32,12 @@ usageError() unless @OSM_FILES && $LEVEL;
 
 my $wwLevel      = 9;
 my $srtmSampSize = 1200;
+
+
+my $aBounds = OGF::Terrain::ContourLines::boundsFromFileName( $OSM_FILES[0] );
+#use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aBounds], ['aBounds'] ), "\n";  exit; # _DEBUG_
+$opt{'bounds'} = $aBounds if $aBounds;
+
 
 my $ctx = OGF::Data::Context->new();
 foreach my $file ( @OSM_FILES ){

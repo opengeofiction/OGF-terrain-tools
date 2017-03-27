@@ -400,30 +400,29 @@ sub tileInfo {
 			die qq/LayerInfo::tileInfo: cannot parse file name "$info"/;
 		}
 	}else{
-		my @attrs = split /:/, $info;
+		my @attrs = split /:/, $info, 4;
 		die qq/LayerInfo::tileInfo: invalid info object: $info/ if scalar(@attrs) < 4;
 		$info = {
 			'type'  => $attrs[0],
 			'layer' => $attrs[1],
 			'level' => $attrs[2],
 		};
+		my $range = $attrs[3];
 		bless $info, $pkg;
-		if( $attrs[3] =~ /^(\*|\d+|\d+\-\d+)$/ ){
-			my( $rangeY, $rangeX ) = $1;
-			if( $attrs[4] =~ /^(\*|\d+|\d+\-\d+)$/ ){
-				$rangeX = $1;
-				( $info->{'y'}, $info->{'x'} ) = $pkg->parseRange( $info->{'layer'}, $info->{'level'}, $rangeY, $rangeX );
-			}else{
-				warn qq/LayerInfo::tileInfo: non-matching y:x descriptors "$attrs[3]:$attrs[4]"/;
-				return undef;
-			}
-		}elsif( $attrs[3] =~ /^scan=(\w+)$/ ){
-			my $scanTag = $1;
-			( $info->{'y'}, $info->{'x'} ) = $pkg->scanRange( $info->{'layer'}, $info->{'level'}, $scanTag );
-		}elsif( $attrs[3] =~ /^(all|random)$/ ){
+		if( $range =~ /^(\*|\d+|\d+\-\d+):(\*|\d+|\d+\-\d+)$/ ){
+			my( $rangeY, $rangeX ) = ( $1, $2 );
+			( $info->{'y'}, $info->{'x'} ) = $pkg->parseRange( $info->{'layer'}, $info->{'level'}, $rangeY, $rangeX );
+		}elsif( $range =~ /^(all|random)$/ ){
 			( $info->{'y'}, $info->{'x'} ) = $pkg->parseRange( $info->{'layer'}, $info->{'level'}, '*', '*' );
 			$info->{'random'} = 1 if $attrs[3] eq 'random';
-		}elsif( $attrs[3] =~ /^dir=([-.\\\/\w]+)$/ ){
+		}elsif( $range =~ /^bbox=([-,.\w]+)$/ ){
+			my $bbox = $1;
+			require OGF::View::TileLayer;
+			my $tlr = OGF::View::TileLayer->new( $info );
+			my $hRange = $tlr->bboxTileRange( $bbox );
+			$info->{'y'} = $hRange->{'y'};
+			$info->{'x'} = $hRange->{'x'};
+		}elsif( $range =~ /^dir=([-.\\\/\w]+)$/ ){
 			my $dir = $1;
 			if( -d $dir ){
 				( $info->{'y'}, $info->{'x'} ) = $pkg->directoryRange( $info->{'layer'}, $info->{'level'}, $dir );
@@ -431,6 +430,9 @@ sub tileInfo {
 				warn qq/No such directory: $dir/;
 				return undef;
 			}
+		}elsif( $range =~ /^scan=(\w+)$/ ){   # obsolete
+			my $scanTag = $1;
+			( $info->{'y'}, $info->{'x'} ) = $pkg->scanRange( $info->{'layer'}, $info->{'level'}, $scanTag );
 		}else{
 			warn qq/LayerInfo::tileInfo: invalid selection descriptor "$attrs[3]"/;
 			return undef;

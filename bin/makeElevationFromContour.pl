@@ -20,21 +20,32 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 my %opt;
 usageInit( \%opt, qq//, << "*" );
-<wwInfo>
+<layerInfo> [<bbox>]
 *
 
-my( $wwInfoDsc ) = @ARGV;
-usageError() unless $wwInfoDsc;
+my( $info ) = @ARGV;
+usageError() unless $info;
 
 
 #OGF::Terrain::ElevationTile::setGlobalTileInfo( 512, 512, 2 );
 #our $MIN_MTIME = 0;
-OGF::Terrain::ElevationTile::setGlobalTileInfo( 256, 256, 2, 1 ) if $wwInfoDsc =~ /:OGF:/;
+OGF::Terrain::ElevationTile::setGlobalTileInfo( 256, 256, 2, 1 ) if $info =~ /:OGF:/;
 
 
-my $wwInfo = OGF::LayerInfo->tileInfo( $wwInfoDsc );
+my $lrInfo = OGF::LayerInfo->tileInfo( $info );
 
-OGF::LayerInfo->tileIterator( $wwInfo, sub {
+#if( $bbox ){
+#	require OGF::View::TileLayer;
+#	my $tileLayer = OGF::View::TileLayer->new( $info );
+#	$bbox =~ s/^bbox=//;
+#   $bbox = [ split /,/, $bbox ];
+#	my $aRange = $tileLayer->bboxTileRange( $bbox ); 
+#	$lrInfo->{'x'} = $aRange->{'x'};
+#	$lrInfo->{'y'} = $aRange->{'y'};
+#}
+
+
+OGF::LayerInfo->tileIterator( $lrInfo, sub {
 	my( $item ) = @_;
 	makeElevationFile( $item );
 } );

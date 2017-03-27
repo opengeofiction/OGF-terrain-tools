@@ -197,6 +197,31 @@ sub geo2tile {
 	return ( $tx, $ty, $xt, $yt );
 }
 
+sub geo2cnv {
+	my $self = shift;
+	return $self->{_proj}->geo2cnv( @_ );
+}
+
+sub cnv2geo {
+	my $self = shift;
+	return $self->{_proj}->cnv2geo( @_ );
+}
+
+sub bboxTileRange {
+	my( $self, $bbox ) = @_;
+	if( ! ref($bbox) ){
+		$bbox =~ s/^bbox=//;
+		$bbox = [ split /,/, $bbox ];
+	}
+	my( $minLon, $minLat, $maxLon, $maxLat ) = @$bbox;
+    my( $tx0, $ty0, $xt0, $yt0 ) = $self->geo2tile( $minLon, $minLat );
+    my( $tx1, $ty1, $xt1, $yt1 ) = $self->geo2tile( $maxLon, $maxLat );
+	( $tx0, $tx1 ) = ( $tx1, $tx0 ) if $tx1 < $tx0;  # probably never happens
+	( $ty0, $ty1 ) = ( $ty1, $ty0 ) if $ty1 < $ty0;
+	return {'y' => [$ty0, $ty1], 'x' => [$tx0, $tx1]};
+}
+
+
 #-------------------------------------------------------------------------------
 
 #sub appropriateLevel {

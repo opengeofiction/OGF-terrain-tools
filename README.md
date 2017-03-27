@@ -51,14 +51,14 @@ for further processing:
     perl ogfElevation.pl 13 contours_01.osm contours_02.osm
 
 Here, 13 is the zoom level, followed by a list of contour files. The choice of the most suitable zoom level depends on the contour data. 
-After finishing, `ogfElevation.pl` will display the commands that have to be executed next, in this case:
+After finishing, *ogfElevation.pl* will display the commands that have to be executed next, in this case:
 
 **makeElevationFromContour.pl** will convert the previously generated contour tiles into actual elevation tiles, which 
 are still in Mercator projection and organized along the OSM tiling scheme.
   
     perl makeElevationFromContour.pl contour:OGF:13:5724-5768:5984-6030
 
-**makeSrtmElevationTile.pl** will reproject the previously generated elevation tiles create into 1x1 degree tiles in SRTM .hgt format
+**makeSrtmElevationTile.pl** will reproject the previously generated elevation tiles into 1x1 degree tiles in SRTM *.hgt* format
 
     perl makeSrtmElevationTile.pl OGF:13 1200 bbox=83,-59,85.001,-57.999
 
@@ -66,7 +66,7 @@ are still in Mercator projection and organized along the OSM tiling scheme.
 
 **make3dElevation.pl** reprojects the OGF tiles to the format needed for 3D display with Web Worldwind:
 
-    perl make3DElevation.pl level=9 size=256 bbox=83,-59,85.001,-57.999
+    perl make3dElevation.pl level=9 size=256 bbox=83,-59,85.001,-57.999
 
 **convertMapLevel.pl** creates the lower zoom levels for the 3D display and packs them into a ZIP archive.
 

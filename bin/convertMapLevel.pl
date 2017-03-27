@@ -26,16 +26,16 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 my %opt;
 usageInit( \%opt, qq/ sz=s zip /, << "*" );
-[-sz wd,hg] [-zip] <ww_info> <target_level>
+[-sz wd,hg] [-zip] <layerInfo> <target_level>
 *
 
-my( $wwInfoDsc, $targetLevel ) = @ARGV;
-usageError() unless $wwInfoDsc && defined($targetLevel);
+my( $layerDsc, $targetLevel ) = @ARGV;
+usageError() unless $layerDsc && defined($targetLevel);
 
 
 #my( $tileWd, $tileHg ) = $opt{'sz'} ? split(',',$opt{'sz'}) : (512,512);
 my @zipList;
-OGF::Util::TileLevel::convertMapLevel( $wwInfoDsc, $targetLevel, $opt{'zip'} ? \@zipList : undef );
+OGF::Util::TileLevel::convertMapLevel( $layerDsc, $targetLevel, $opt{'zip'} ? \@zipList : undef );
 
 
 if( @zipList ){

@@ -7,13 +7,13 @@ use OGF::Terrain::Transform;
 use OGF::Util::Usage qw( usageInit usageError );
 
 
-# perl C:/usr/MapView/bin/makeSrtmElevationTile.pl Roantra:4 -- -21 45
-# perl C:/usr/MapView/bin/makeSrtmElevationTile.pl OGF:12 89 18  3600
-# perl C:/usr/MapView/bin/makeSrtmElevationTile.pl OGF:13 -- 124 -26
-# perl C:/usr/MapView/bin/makeSrtmElevationTile.pl OGF:9 -- 100 -64
-# perl C:/usr/MapView/bin/makeSrtmElevationTile.pl OGF:13 -- 50 -9
-# perl C:/usr/MapView/bin/makeSrtmElevationTile.pl OGF:13 -- 108 -63  3600
-# perl C:/usr/MapView/bin/makeSrtmElevationTile.pl OGF:13 3600 bbox=....
+# makeSrtmElevationTile.pl Roantra:4 -- -21 45
+# makeSrtmElevationTile.pl OGF:12 89 18  3600
+# makeSrtmElevationTile.pl OGF:13 -- 124 -26
+# makeSrtmElevationTile.pl OGF:9 -- 100 -64
+# makeSrtmElevationTile.pl OGF:13 -- 50 -9
+# makeSrtmElevationTile.pl OGF:13 -- 108 -63  3600
+# makeSrtmElevationTile.pl OGF:13 3600 bbox=....
 
 
 my %opt;
@@ -41,14 +41,6 @@ my $sampSize = $SAMP_SIZE || 1200;
 
 chdir $OGF::TERRAIN_OUTPUT_DIR;
 if( $BBOX ){
-#	$BBOX =~ s/^bbox=//;
-#	my( $minLon, $minLat, $maxLon, $maxLat ) = map {POSIX::floor($_)} split /,/, $BBOX;
-#	for( my $y = $minLat; $y <= $maxLat; ++$y ){
-#       for( my $x = $minLon; $x <= $maxLon; ++$x ){
-#			print STDERR "makeSrtmElevationTile $LAYER $LEVEL $x $y\n";
-#			makeSrtmElevationTile( $LAYER, $LEVEL, $x, $y );
-#       }
-#	}
 	$BBOX =~ s/^bbox=//;
 	$BBOX = [ map {POSIX::floor($_)} split /,/, $BBOX ];
     OGF::Terrain::Transform::makeSrtmElevationTile( $LAYER, $LEVEL, $SAMP_SIZE, $BBOX );

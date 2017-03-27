@@ -162,6 +162,14 @@ sub convertMapLevel {
 	my( $wwInfoDsc, $targetLevel, $aZipList ) = @_;
 
     my $wwInfo = OGF::LayerInfo->tileInfo( $wwInfoDsc );
+#	if( $bbox ){
+#		require OGF::View::TileLayer;
+#		my $tlr = OGF::View::TileLayer->new( $wwInfoDsc );
+#		my $hRange = $tlr->bboxTileRange( $bbox );
+#		$wwInfo->{'y'} = $hRange->{'y'};
+#		$wwInfo->{'x'} = $hRange->{'x'};
+#	}
+
     $WWINFO_TYPE = $wwInfo->{'type'};
     my( $tileWd, $tileHg ) = $wwInfo->tileSize();
 

@@ -1,5 +1,5 @@
 bin/convertMapLevel.pl
-bin/editElevationTile.pl
+bin/editContourTiles.pl
 bin/make3dElevation.pl
 bin/makeElevationFromContour.pl
 bin/makePhysicalMap.pl

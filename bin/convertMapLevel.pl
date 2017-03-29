@@ -41,7 +41,7 @@ OGF::Util::TileLevel::convertMapLevel( $layerDsc, $targetLevel, $opt{'zip'} ? \@
 if( @zipList ){
 	require OGF::Util::File;
 	require Date::Format;
-	my $zipFile = $OGF::$OGF::TERRAIN_OUTPUT_DIR .'/wwtiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
+	my $zipFile = $OGF::TERRAIN_OUTPUT_DIR .'/wwtiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
 	OGF::Util::File::zipFileList( $zipFile, \@zipList );
 	my $zip = Archive::Zip->new();
 }

@@ -210,7 +210,7 @@ sub getTileArray {
 			}elsif( $hInfo->{_range} && rangeBoundary($hInfo->{_range},$tx,$ty) ){
 				my $aRect = tileOverlap( $hInfo, $tx, $ty, $hInfo->{_bounds} );
 				$aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
-				clearSubtile( $aTile, $aRect, 0 );
+				clearSubtile( $aTile, $aRect, $OGF::Terrain::ElevationTile::NO_ELEV_VALUE );
 			}
 		}
 		if( ! $aTile ){
@@ -224,7 +224,7 @@ sub getTileArray {
 
 sub rangeBoundary {
 	my( $hRange, $tx, $ty ) = @_;
-	my( $y0, $y1, $x0, $x1	) = ( $hRange->{'y'}[0], $hRange->{'y'}[1], $hRange->{'x'}[0], $hRange->{'y'}[1] );
+	my( $y0, $y1, $x0, $x1	) = ( $hRange->{'y'}[0], $hRange->{'y'}[1], $hRange->{'x'}[0], $hRange->{'x'}[1] );
 	return (($ty == $y0 || $ty == $y1) && ($tx >= $x0 && $tx <= $x1)) || (($tx == $x0 || $tx == $x1) && ($ty >= $y0 && $ty <= $y1));
 }
 
@@ -233,8 +233,9 @@ sub tileOverlap {
     my( $tlr, $wd, $hg ) = ( $hInfo->{_tileLayer}, @{$hInfo->{_tileSize}} );
     my( $x0, $y0, $x1, $y1 ) = ( $tlr->tile2cnv($tx,$ty,0,0), $tlr->tile2cnv($tx,$ty,$wd-1,$hg-1) );
     my $aRect = OGF::Geo::Geometry::rectOverlap( $aBounds, [$x0,$y0,$x1,$y1] );
-    my( $tx0, $ty0, $xt0, $yt0 ) = $tlr->cnv2tile( $x0, $y0 );
-    my( $tx1, $ty1, $xt1, $yt1 ) = $tlr->cnv2tile( $x1, $y1 );
+    my( $tx0, $ty0, $xt0, $yt0 ) = $tlr->cnv2tile( $aRect->[0], $aRect->[1] );
+    my( $tx1, $ty1, $xt1, $yt1 ) = $tlr->cnv2tile( $aRect->[2], $aRect->[3] );
+	( $xt0, $yt0, $xt1, $yt1 ) = map {POSIX::floor($_)} ( $xt0, $yt0, $xt1, $yt1 );
 
     my( $dx, $dy, $maxX, $maxY ) = @{$tlr->{_tileOrder}};
     $xt0 = 0 if $tx0 < $tx;

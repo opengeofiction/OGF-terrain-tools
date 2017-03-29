@@ -23,14 +23,11 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 my %opt;
 usageInit( \%opt, qq/ bigEndian noRelief /, << "*" );
-<size> <file1> [<file2> ...] [-bigEndian] [-noRelief]
+<size> <file1> [<file2> ...] [-bigEndian] [-noRelief] [-fullscreen]
 *
 
 my( $SIZE, @FILES ) = @ARGV;
 usageError() unless $SIZE && @FILES;
-
-
-
 
 
 my( $size, @files ) = ( $SIZE, @FILES );
@@ -44,6 +41,8 @@ my $TILE_DATA = [];
 
 
 my $main = MainWindow->new( -title => 'Tk::Widget Test' );
+initMainWindow( $main, $opt{'fullscreen'} );
+
 
 my( $ct, $info ) = ( 0, '' );
 my $lbInfo = $main->Label( -textvariable => \$info, -justify => 'left' )->pack( -expand => 1, -fill => 'x' );
@@ -68,13 +67,6 @@ $cnvS->Tk::bind( '<Motion>' => sub {
 	$text .= "  " . $TILE_DATA->[$y][$x] if $TILE_DATA->[$y] && defined $TILE_DATA->[$y][$x];
 	$info = $text;
 } );
-
-
-#$main->geometry( "${wd}x${hg}+200+0" );
-$main->geometry( "1850x1000+0+0" );
-
-#my $obj->bind( '<Double-ButtonPress-1>', sub{} );
-$main->bind( '<Control-KeyPress-Q>', sub{ exit; } );
 
 
 if( -d $files[0] ){
@@ -153,4 +145,12 @@ sub viewElevationTile {
 }
 
 
+sub initMainWindow {
+    my( $main, $fullScreen ) = @_;
+    my( $wd, $hg, $x0, $y0 ) = ( $main->screenwidth, $main->screenheight, 0, 0 );
+    ( $wd, $hg, $x0 ) = ( $wd - 20, $hg - 100, 200 ) if ! $fullScreen;
+    $main->geometry( "${wd}x${hg}+$x0+$y0" );
+    $main->FullScreen( $fullScreen ? 1 : 0 );
+    $main->bind( '<Control-KeyPress-Q>' => sub{ exit; } );
+}
 

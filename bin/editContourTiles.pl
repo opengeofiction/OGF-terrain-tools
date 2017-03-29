@@ -19,8 +19,8 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 
 my %opt = ('f' => []);
-usageInit( \%opt, qq/ s=i layout=s test f=s /, << "*" );
-[-s <scale>] [-layout XxY] [-test] [-f <ogf_file> ...] <wwInfo>
+usageInit( \%opt, qq/ s=i layout=s fullscreen f=s /, << "*" );
+[-s <scale>] [-layout XxY] [-fullscreen] [-f <ogf_file> ...] <wwInfo>
 *
 
 our( $WW_INFO ) = @ARGV;
@@ -35,12 +35,10 @@ my $aLayout = $opt{'layout'} ? [ split /x/, $opt{'layout'} ] : [ 3, 3 ];
 OGF::Terrain::ElevationTile::setGlobalTileInfo( 256, 256, 2, 1 ) if $WW_INFO =~ /:OGF:/;
 
 
-
-my $geom = $opt{'test'} ? '1200x700+0+0' : '1500x1100+0+0';
-
 my $info = OGF::LayerInfo->tileInfo( $WW_INFO );
 my $main = MainWindow->new( -title => 'Elevation Editor' );
-$main->geometry( $geom );
+initMainWindow( $main, $opt{'fullscreen'} );
+
 
 my $obj = $main->ContourEditor(
 #	-background => '#000000',
@@ -65,8 +63,20 @@ if( $opt{'f'} ){
 $obj->bindInit();
 $obj->{_OGF_canvas}->Tk::focus();
 
+
 MainLoop();
 
 
+#-------------------------------------------------------------------------------
+
+
+sub initMainWindow {
+    my( $main, $fullScreen ) = @_;
+    my( $wd, $hg, $x0, $y0 ) = ( $main->screenwidth, $main->screenheight, 0, 0 );
+    ( $wd, $hg, $x0 ) = ( $wd - 20, $hg - 100, 200 ) if ! $fullScreen;
+    $main->geometry( "${wd}x${hg}+$x0+$y0" );
+    $main->FullScreen( $fullScreen ? 1 : 0 );
+    $main->bind( '<Control-KeyPress-Q>' => sub{ exit; } );
+}
 
 

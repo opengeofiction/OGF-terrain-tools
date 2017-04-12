@@ -9,6 +9,9 @@ use OGF::Terrain::ElevationTile;
 
 
 
+our $ELEVATION_TAG = 'ele';
+
+
 sub writeContourTiles {
 	my( $ctx, $tileLayer, $aTileSize, $hOpt ) = @_;
 	$hOpt = {} if ! $hOpt;
@@ -36,14 +39,17 @@ sub writeContourTiles {
 		if( $hTags->{'natural'} && $hTags->{'natural'} eq 'coastline' ){  # handle coastline first to give it priority if "ele" tag is also present
 			$way->{_elev} = 0;
 			push @coastWays, $way;
-		}elsif( $hTags && defined($hTags->{'ele'}) ){
-			next unless $hTags->{'ele'} =~ /^-?\d+$/;
-			$way->{_elev} = $hTags->{'ele'};
+		}elsif( $hTags && defined($hTags->{$ELEVATION_TAG}) ){
+			next unless $hTags->{$ELEVATION_TAG} =~ /^-?[.\d]+$/;
+			$way->{_elev} = $hTags->{$ELEVATION_TAG};
 			push @contourWays, $way;
 #			print STDERR "\%\$way <", join('|',%$way), ">\n";  # _DEBUG_
 		}elsif( $hTags && $hTags->{'waterway'} ){
 			push @waterWays, $way;
 		}
+	}
+	if( scalar(@contourWays) == 0 ){
+		die qq/ERROR: Found no contour ways.\n/
 	}
 
 	print STDERR "write contour ways\n";
@@ -73,10 +79,10 @@ sub writeContourTiles {
 	}
 
 	my $proj = $tileLayer->projection();
-    foreach my $node ( grep {$_->{'tags'} && defined $_->{'tags'}{'ele'}} values %{$ctx->{_Node}} ){
+    foreach my $node ( grep {$_->{'tags'} && defined $_->{'tags'}{$ELEVATION_TAG}} values %{$ctx->{_Node}} ){
         minMaxArea( $hInfo->{_bbox}, $node );
         my $pt = $proj->geo2cnv( [$node->{'lon'},$node->{'lat'}] );
-        setElevationPoint( $pt, int($node->{'tags'}{'ele'}), $hInfo );
+        setElevationPoint( $pt, int($node->{'tags'}{$ELEVATION_TAG}), $hInfo );
     }
 
 	unless( $hOpt->{'nosave'} ){
@@ -113,7 +119,7 @@ sub writeElevationWay {
 	my( $ctx, $way, $hInfo ) = @_;
 	convertWayPoints( $ctx, $way, $hInfo ) if ! $way->{_points};
 	my $num = $#{$way->{_points}};
-#	print STDERR $way->{'id'}, " \$num <", $num, ">\n";  # _DEBUG_
+	print STDERR $way->{'id'}, " num=$num  elev=", $way->{_elev}, "\n";  # _DEBUG_
 
 	for( my $i = 0; $i < $num; ++$i ){
 		my( $ptA, $ptB ) = ( $way->{_points}[$i], $way->{_points}[$i+1] );

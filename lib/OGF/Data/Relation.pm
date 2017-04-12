@@ -110,7 +110,7 @@ sub boundingRectangle {
 	$proj = OGF::View::Projection->identity() if ! $proj;
 	$ctx = $self->{_context} if ! $ctx;
 #	print STDERR "Relation::boundingRectangle <", $self->{'id'}, ">\n";  # _DEBUG_
-#	use ARS::Util::Exception; ARS::Util::Exception::printStackTrace();
+#	OGF::Util::printStackTrace();
 
 #	my $mb = $self->{'members'}[0];
 #	my $node = ($mb->{'type'} eq 'Node')? $ctx->{_Node}{$mb->{'ref'}} : $ctx->{_Node}{ $ctx->{_Way}{$mb->{'ref'}}{'nodes'}[0] };

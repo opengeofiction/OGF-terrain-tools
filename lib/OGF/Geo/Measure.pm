@@ -147,7 +147,7 @@ sub geoTriangle {
 sub checkCosineValues {
 	for( my $i = 0; $i <= $#_; ++$i ){
 		if( $_[$i] < -1 || $_[$i] > 1 ){
-#			use ARS::Util::Exception; ARS::Util::Exception::printStackTrace();
+#			use OGF::Util; OGF::Util::printStackTrace();
 			die qq/cosine error [$i] $_[$i]\n/;
 		}
 	}

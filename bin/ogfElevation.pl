@@ -6,7 +6,7 @@ use POSIX;
 use OGF::Terrain::ContourLines;
 use OGF::Terrain::Transform;
 use OGF::Data::Context;
-use ARS::Util::Usage qw( usageInit usageError );
+use OGF::Util::Usage qw( usageInit usageError );
 
 
 # ogfElevation 13 C:\Map\Elevation\extremosur.osm
@@ -22,7 +22,7 @@ use ARS::Util::Usage qw( usageInit usageError );
 
 
 my %opt;
-usageInit( \%opt, qq/ c add bd=s /, << "*" );
+usageInit( \%opt, qq/ c add bd=s et=s /, << "*" );
 [-c] [-add] [-bounds=<bbox>] <level> <osm_file> [<osm_file2> ...]
 *
 
@@ -32,6 +32,9 @@ usageError() unless @OSM_FILES && $LEVEL;
 
 my $wwLevel      = 9;
 my $srtmSampSize = 1200;
+
+$OGF::Terrain::ContourLines::ELEVATION_TAG = $opt{'et'} || 'ele';
+
 
 
 my $aBounds = OGF::Terrain::ContourLines::boundsFromFileName( $OSM_FILES[0] );
@@ -88,6 +91,7 @@ if( $opt{'c'} ){
 	OGF::Util::File::zipFileList( $zipFile, \@zipList );
 
 }else{
+	use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$bbox], ['bbox'] ), "\n";  # _DEBUG_
     $bbox->[0] = POSIX::floor( 1000 * $bbox->[0] ) / 1000;
     $bbox->[1] = POSIX::floor( 1000 * $bbox->[1] ) / 1000;
     $bbox->[2] = (POSIX::floor( 1000 * $bbox->[2] ) + 1) / 1000;

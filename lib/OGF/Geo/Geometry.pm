@@ -266,7 +266,7 @@ sub polygonCentroid {
 
 sub boundingRectangle {
 	my( $aSelf ) = @_;
-#	use ARS::Util::Exception; ARS::Util::Exception::printStackTrace();
+#	use OGF::Util; OGF::Util::printStackTrace();
 	my( $xMin, $yMin, $xMax, $yMax ) = ( $aSelf->[0][0],$aSelf->[0][1], $aSelf->[0][0], $aSelf->[0][1] );
 	foreach my $pt ( @{$aSelf} ){
 		my( $x, $y ) = @$pt;

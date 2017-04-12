@@ -1,7 +1,7 @@
 use strict;
 use warnings;
-use ARS::Util::Usage qw( usageInit usageError );
-use ARSx::CmdUtil qw( makeFilePath );
+use OGF::Util::Usage qw( usageInit usageError );
+use OGF::Util::File qw( makeFilePath );
 use OGF::LayerInfo;
 use OGF::Util::PPM;
 use OGF::Terrain::ElevationTile qw( $T_WIDTH $T_HEIGHT $BPP makeArrayFromFile );

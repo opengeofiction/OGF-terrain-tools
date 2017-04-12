@@ -104,7 +104,7 @@ sub boundingRectangle {
 	my( $self, $ctx, $proj, $len ) = @_;
 	$proj = OGF::View::Projection->identity() if ! $proj;
 	$ctx = $self->{_context} if ! $ctx;
-#	use ARS::Util::Exception; ARS::Util::Exception::printStackTrace();
+#	OGF::Util::printStackTrace();
 
 	my @nodes = @{$self->{'nodes'}};
 	@nodes = ($len >= 0)? @nodes[0 .. $len] : @nodes[$len-1 .. -1] if defined $len;
@@ -137,7 +137,7 @@ sub maximumInsideCircle {
 	require OGF::Geo::Geometry;
 	my( $self, $ctx ) = @_;
 	$ctx = $self->{_context} if ! $ctx;
-#	use ARS::Util::Exception; ARS::Util::Exception::printStackTrace();
+#	OGF::Util::printStackTrace();
 	my $aRect = $self->boundingRectangle( $ctx, $ctx->{_proj} );
 
 	my $aWay = $ctx->way2points( $self );

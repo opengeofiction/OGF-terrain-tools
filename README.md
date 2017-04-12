@@ -42,6 +42,12 @@ Several of the included scripts accept a tile range descriptor of the following 
 Here, "contour" is the file type, "OGF" the layer name, and 13 the zoom level. Then follows the range of tiles in Y (latitude) and then X (longitude) direction.
 In the current example, the result is a total number of (5768-5742+1) * (6030-5984+) = 27 * 47 = 1269 tiles.
 
+Instead of the explicit tile ranges, it's also possible to specify a bounding box defined by lat/lon values, like e.g. this:
+
+    contour:OGF:13:bbox=121,-21.85,122,-21.8
+
+The format of the bounding box definition is bbox=*minLon*,*minLat*,*maxLon*,*maxLat*.
+
 
 ## Examples
 

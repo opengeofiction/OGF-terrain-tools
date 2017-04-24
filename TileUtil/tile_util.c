@@ -12,7 +12,7 @@ map_tile tGlobalColorMap;
 
 
 
-map_tile convert_tile( char *method, map_tile tSrc ){
+map_tile convert_tile( char *method, map_tile tSrc, char *opt ){
 	int dx = tSrc.dx;
 	int dy = tSrc.dy;
 	map_tile tDst;
@@ -41,7 +41,8 @@ map_tile convert_tile( char *method, map_tile tSrc ){
 	}else if( strcmp(method,"gradient") == 0 ){
 		tDst = convert_tile_gradient( tSrc );
 	}else if( strcmp(method,"radius") == 0 ){
-		tDst = convert_tile_radius( tSrc, 20 );
+        int radius = opt_int_value( opt, "radius=", 20 );
+		tDst = convert_tile_radius( tSrc, radius );
 	}else{
 		errorExit( "Unknown method\n" );
 	}
@@ -54,6 +55,24 @@ map_tile convert_tile( char *method, map_tile tSrc ){
 
 	return tDst;
 }
+
+
+int opt_int_value( char *opt, char *name, int defaultVal ){
+    char *ptr;
+    
+    if( opt == NULL ){
+        return defaultVal;
+    }
+
+    ptr = strstr( opt, name );
+    if( ptr != NULL ){
+        int val = atoi( ptr + strlen(name) + 1 );
+        return val;
+    }else{
+        return defaultVal;
+    }
+}
+
 
 void set_sea_level( map_tile tElev, VALUE seaLevel ){
 	int x, y;

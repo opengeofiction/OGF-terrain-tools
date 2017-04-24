@@ -85,11 +85,12 @@ surroundTile( dx, dy, margin, ... )
 
 
 SV *
-convertTile( method, dx, dy, tSrnd )
+convertTile( method, dx, dy, tSrnd, options=NULL )
 	char *		method
 	int     dx
 	int     dy
 	char *		tSrnd
+	char *  options
 	CODE:
 	{
 		map_tile tConv;
@@ -102,7 +103,7 @@ convertTile( method, dx, dy, tSrnd )
 			printf( "tSrnd <%p>\n", tSrnd );    /* _DEBUG_ */
 		}
 
-		tConv = convert_tile( method, data_tile(dx,dy,(TILE) tSrnd) );
+		tConv = convert_tile( method, data_tile(dx,dy,(TILE) tSrnd), options );
 
 		RETVAL = newSVpvn( (char*) tConv.tile, tConv.dx * tConv.dy * BYTES_PER_PIXEL );
 		free_tile( tConv );

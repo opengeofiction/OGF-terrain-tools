@@ -44,7 +44,7 @@ map_tile convert_tile( char *method,
 	map_tile t00, map_tile t01, map_tile t02, map_tile t10, map_tile t11, map_tile t12, map_tile t20, map_tile t21, map_tile t22 );
 */
 
-map_tile convert_tile( char *method, map_tile tSrc );
+map_tile convert_tile( char *method, map_tile tSrc, char *opt );
 
 map_tile combine_complete_tileset(
 	map_tile t00, map_tile t01, map_tile t02, map_tile t10, map_tile t11, map_tile t12, map_tile t20, map_tile t21, map_tile t22 );
@@ -121,7 +121,7 @@ map_tile *get_global_color_map();
 void get_color_values( char *dst, map_tile tCanvas, int x0, int y0, int dx, int dy, map_tile *tColorMap );
 void relief_color_transform( int *pR, int *pB, int *pG, map_tile tCanvas, int x, int y );
 
-
+int opt_int_value( char *opt, char *name, int defaultVal );
 
 
 

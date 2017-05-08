@@ -734,6 +734,8 @@ sub calculateRelationAreas_html {
 
 </head><body>
 OGF area table generated at $dtime <hr>
+The table is now generated only once a month, as you can now use the <a href="relation_area.html">Relation Area Calculator</a> to compute
+the area of a relation instantly.<hr>
 <table id="adminarea" class="cell-border stripe" style="font-size:10pt;">
 <thead>
 EOF
@@ -1361,6 +1363,22 @@ sub simpleClose {
 
 
 #-------------------------------------------------------------------------------
+
+
+sub addTags {
+	my( $ctx, $aTags ) = @_;
+    my @tags = map {[ split( /=/, $_, 2  ) ]} @$aTags;
+
+	foreach my $way ( values %{$ctx->{_Way}} ){
+        foreach my $tag ( @tags ){
+            $way->{'tags'}{$tag->[0]} = $tag->[1];
+        }
+	}
+}
+
+
+#-------------------------------------------------------------------------------
+
 
 
 

@@ -441,7 +441,7 @@ sub runCommand {
 	my $rv = system $cmd;
 	if( $rv != 0 && ! $hOpt->{'ignore_errors'} ){
 		if( $CMD_ERROR_HANDLER ){
-			$CMD_ERROR_HANDLER->( 'OGF::Util::Command', $cmd ."\n----------\n". $! );
+			$CMD_ERROR_HANDLER->( 'OGF::Util::runCommand', $cmd ."\n----------\n". $! );
 		}
 		die qq/ERROR: $!\n/;
 	}

@@ -19,6 +19,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/MapView/bin/viewElevationTile.pl 256 C:\Map\OGF\WW_elev\13\5735\5735_6001.bil
 # perl C:/usr/MapView/bin/viewElevationTile.pl 256 elev:OGF:13:5911-5935:6563-6581
 # perl C:/usr/MapView/bin/viewElevationTile.pl 262,239 C:/Map/Elevation/tmp/temp_layer.cnr
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev
 
 
 my %opt;
@@ -81,7 +82,7 @@ if( -d $files[0] ){
         }
         if( $photo ){
             $photo->destroy;
-            $photo->delete;
+#           $photo->delete;
         }
 
         my $file = $File::Find::name;

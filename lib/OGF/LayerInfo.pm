@@ -153,7 +153,7 @@ our %INFO_MAP = (
         'size'     => [ 1024, 1024 ],
         'proj4'    => '+proj=lcc +lat_1=32.5 +lat_2=46.5 +lon_0=43 +x_0=0 +y_0=0',
         'elev' => {
-            'baseDir'  => [ $PATH_PREFIX.'/Map/Sathria/elev' ],
+            'baseDir'  => [ $PATH_PREFIX.'/Sathria/elev' ],
             'tile'     => [ '%d/%d/%d_%d.%s', 'level', 'y', 'y', 'x', 'suffix' ],
             'suffix'   => 'bil',
         },
@@ -376,6 +376,7 @@ sub cachedTileArray {
 
 sub tileInfo {
 	my( $pkg, $info ) = @_;
+#	print STDERR "LayerInfo::tileInfo <", $info, ">\n";
 	if( ref($info) ){
 		# do nothing
 	}elsif( $info =~ /^list=(.*)/ ){
@@ -400,7 +401,7 @@ sub tileInfo {
 			die qq/LayerInfo::tileInfo: cannot parse file name "$info"/;
 		}
 	}else{
-		my @attrs = split /:/, $info, 4;
+		my @attrs = split /:/, $info;
 		die qq/LayerInfo::tileInfo: invalid info object: $info/ if scalar(@attrs) < 4;
 		$info = {
 			'type'  => $attrs[0],
@@ -409,9 +410,11 @@ sub tileInfo {
 		};
 		my $range = $attrs[3];
 		bless $info, $pkg;
-		if( $range =~ /^(\*|\d+|\d+\-\d+):(\*|\d+|\d+\-\d+)$/ ){
-			my( $rangeY, $rangeX ) = ( $1, $2 );
+		if( $attrs[3] =~ /^(\*|\d+|\d+\-\d+)$/ && $attrs[4] =~ /^(\*|\d+|\d+\-\d+)$/ ){
+            $range = "$attrs[3]:$attrs[4]";
+			my( $rangeY, $rangeX ) = ( $attrs[3], $attrs[4] );
 			( $info->{'y'}, $info->{'x'} ) = $pkg->parseRange( $info->{'layer'}, $info->{'level'}, $rangeY, $rangeX );
+            splice @attrs, 4, 1;
 		}elsif( $range =~ /^(all|random)$/ ){
 			( $info->{'y'}, $info->{'x'} ) = $pkg->parseRange( $info->{'layer'}, $info->{'level'}, '*', '*' );
 			$info->{'random'} = 1 if $attrs[3] eq 'random';
@@ -434,7 +437,7 @@ sub tileInfo {
 			my $scanTag = $1;
 			( $info->{'y'}, $info->{'x'} ) = $pkg->scanRange( $info->{'layer'}, $info->{'level'}, $scanTag );
 		}else{
-			warn qq/LayerInfo::tileInfo: invalid selection descriptor "$attrs[3]"/;
+			warn qq/LayerInfo::tileInfo: invalid selection descriptor "$range"/;
 			return undef;
 		}
 		for( my $i = 4; $i <= $#attrs; ++$i ){
@@ -775,7 +778,8 @@ sub getProjection {
 	my( $info ) = @_;
 	return $info->{'proj4'} if $info->{'proj4'};
 	my $layer = $info->{'layer'};
-	return $INFO_MAP{'image'}{$layer}{'proj4'} if $INFO_MAP{'image'}{$layer}{'proj4'};
+#	return $INFO_MAP{'image'}{$layer}{'proj4'} if $INFO_MAP{'image'}{$layer}{'proj4'};
+	return $INFO_MAP{$layer}{'proj4'} if $INFO_MAP{$layer}{'proj4'};
 	return undef;
 }
 

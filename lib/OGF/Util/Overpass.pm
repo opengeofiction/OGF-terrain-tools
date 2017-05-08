@@ -43,17 +43,35 @@ sub runQuery_local {
 }
 
 sub runQuery_remote {
-	my( $queryText ) = @_;
+	my( $outFile, $queryText ) = @_;
 	my $startTimeE = time();
 
 	my $userAgent = LWP::UserAgent->new(
 		keep_alive => 20,
 	);
-	my $resp = $userAgent->post( $URL_OVERPASS, 'Content' => $queryText );
-	my $data = $resp->content();
+	if( $outFile ){
+        my( $ogfFile, $osmFile ) = ( $outFile );
+        if( $outFile =~ /\.ogf$/ ){
+            ($osmFile = $outFile) =~ s/\.ogf$/.osm/;
+            $ogfFile = $outFile;
+        }else{
+            $osmFile = $outFile;
+        }
 
-	print STDERR 'Overpass export [1]: ', time() - $startTimeE, " seconds\n";
-	return $data;
+        my $resp = $userAgent->post( $URL_OVERPASS, 'Content' => $queryText, ':content_file' => $osmFile );
+        print STDERR 'Overpass export [1]: ', time() - $startTimeE, " seconds\n";
+        
+        if( $ogfFile ){
+            my $ctx = OGF::Data::Context->new();
+            $ctx->loadFromXml( $osmFile );
+            $ctx->writeToXml( $ogfFile );
+        }
+	}else{
+        my $resp = $userAgent->post( $URL_OVERPASS, 'Content' => $queryText );
+        my $data = $resp->content();
+        print STDERR 'Overpass export [1]: ', time() - $startTimeE, " seconds\n";
+        return $data;
+	}
 }
 
 

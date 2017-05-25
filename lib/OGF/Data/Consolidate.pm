@@ -1371,7 +1371,26 @@ sub addTags {
 
 	foreach my $way ( values %{$ctx->{_Way}} ){
         foreach my $tag ( @tags ){
-            $way->{'tags'}{$tag->[0]} = $tag->[1];
+            $way->{'tags'}{$tag->[0]} = $tag->[1] if ! $way->{'tags'}{$tag->[0]};
+        }
+	}
+}
+
+
+#-------------------------------------------------------------------------------
+
+
+sub addVersions {
+	my( $ctx, $fromFile ) = @_;
+
+    my $ctx2 = OGF::Data::Context->new();
+    $ctx2->loadFromFile( $fromFile );
+
+    foreach my $type ( qw/_Node _Way _Relation/ ){
+        foreach my $obj ( values %{$ctx->{$type}} ){
+            my $id = $obj->{'id'};
+            next if $id < 0;
+            $obj->{'version'} = $ctx2->{$type}{$id}{'version'} if $ctx2->{$type}{$id};
         }
 	}
 }

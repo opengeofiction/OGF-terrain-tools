@@ -461,40 +461,69 @@ sub writeToXml {
 	$fh->print( qq|<osm version="0.6" generator="JOSM">\n| );
 
 	foreach my $node ( map {$self->{_Node}{$_}} sort {$a <=> $b} keys %{$self->{_Node}} ){
-		my( $id, $version, $lon, $lat ) = map {$node->{$_}} qw/id version lon lat/;
-		my $versionAttr = $version ? qq|version="$version"| : "";
-		$fh->print( qq|  <node id="$id" $versionAttr lon="$lon" lat="$lat" visible="true" timestamp="$timeStamp" user="$user">\n| );
-		printObjectTags( $fh, $node ) if $node->{'tags'};
-		$fh->print( qq|  </node>\n| );
+        printXmlNode( $fh, $node, $timeStamp, $user );
 	}
 
 	foreach my $way ( map {$self->{_Way}{$_}} sort {$a <=> $b} keys %{$self->{_Way}} ){
-		my( $id, $version ) = map {$way->{$_}} qw/id version/;
-		my $versionAttr = $version ? qq|version="$version"| : "";
-		$fh->print( qq|  <way id="$id" $versionAttr visible="true" timestamp="$timeStamp" user="$user">\n| );
-		foreach my $nodeId ( @{$way->{'nodes'}} ){
-			$fh->print( qq|    <nd ref="$nodeId"/>\n| );
-		}
-		printObjectTags( $fh, $way );
-		$fh->print( qq|  </way>\n| );
+        printXmlWay( $fh, $way, $timeStamp, $user );
 	}
 
 	foreach my $rel ( map {$self->{_Relation}{$_}} sort {$a <=> $b} keys %{$self->{_Relation}} ){
-		my( $id, $version ) = map {$rel->{$_}} qw/id version/;
-		my $versionAttr = $version ? qq|version="$version"| : "";
-		$fh->print( qq|  <relation id="$id" $versionAttr visible="true" timestamp="$timeStamp" user="$user">\n| );
-		foreach my $mb ( @{$rel->{'members'}} ){
-			my( $type, $role, $mbId ) = map {$mb->{$_}} qw/type role ref/;
-			$type = lc($type);
-			$fh->print( qq|    <member type="$type" ref="$mbId" role="$role"/>\n| );
-		}
-		printObjectTags( $fh, $rel );
-		$fh->print( qq|  </relation>\n| );
+        printXmlRelation( $fh, $rel, $timeStamp, $user );
 	}
 
 	$fh->print( "</osm>\n" );
 	$fh->close();
 	return $text;
+}
+
+sub printXmlObject {
+    my( $fh, $obj, $timeStamp, $user ) = @_;
+    my $class = $obj->class();
+    if( $class eq 'Node' ){
+        printXmlNode( $fh, $obj, $timeStamp, $user );
+    }elsif( $class eq 'Way' ){
+        printXmlWay( $fh, $obj, $timeStamp, $user );
+    }elsif( $class eq 'Relation' ){
+        printXmlRelation( $fh, $obj, $timeStamp, $user );
+    }else{
+        die qq/Unexpected error: unknown object class "$class"/;
+    }
+}
+
+sub printXmlNode {
+    my( $fh, $node, $timeStamp, $user ) = @_;
+    my( $id, $version, $lon, $lat ) = map {$node->{$_}} qw/id version lon lat/;
+    my $versionAttr = $version ? qq|version="$version"| : "";
+    $fh->print( qq|  <node id="$id" $versionAttr lon="$lon" lat="$lat" visible="true" timestamp="$timeStamp" user="$user">\n| );
+    printObjectTags( $fh, $node ) if $node->{'tags'};
+    $fh->print( qq|  </node>\n| );
+}
+
+sub printXmlWay {
+    my( $fh, $way, $timeStamp, $user ) = @_;
+    my( $id, $version ) = map {$way->{$_}} qw/id version/;
+    my $versionAttr = $version ? qq|version="$version"| : "";
+    $fh->print( qq|  <way id="$id" $versionAttr visible="true" timestamp="$timeStamp" user="$user">\n| );
+    foreach my $nodeId ( @{$way->{'nodes'}} ){
+        $fh->print( qq|    <nd ref="$nodeId"/>\n| );
+    }
+    printObjectTags( $fh, $way );
+    $fh->print( qq|  </way>\n| );
+}
+
+sub printXmlRelation {
+    my( $fh, $rel, $timeStamp, $user ) = @_;
+    my( $id, $version ) = map {$rel->{$_}} qw/id version/;
+    my $versionAttr = $version ? qq|version="$version"| : "";
+    $fh->print( qq|  <relation id="$id" $versionAttr visible="true" timestamp="$timeStamp" user="$user">\n| );
+    foreach my $mb ( @{$rel->{'members'}} ){
+        my( $type, $role, $mbId ) = map {$mb->{$_}} qw/type role ref/;
+        $type = lc($type);
+        $fh->print( qq|    <member type="$type" ref="$mbId" role="$role"/>\n| );
+    }
+    printObjectTags( $fh, $rel );
+    $fh->print( qq|  </relation>\n| );
 }
 
 sub printObjectTags {
@@ -764,7 +793,7 @@ sub mapDiffLine {
 }
 
 sub printDiffMap {
-	my( $pkg, $hDiffMap, $fileCmd, $fileDrw ) = @_;
+	my( $pkg, $hDiffMap, $fileCmd, $fileDrw, $fileXml ) = @_;
 	my $fhCmd = FileHandle->new($fileCmd,'>');
 	if( ! $fhCmd ){
 		exception( qq/diffOgfMap: Cannot open "$fileCmd" for writing: $!\n/ );
@@ -775,8 +804,17 @@ sub printDiffMap {
 		exception( qq/diffOgfMap: Cannot open "$fileDrw" for writing: $!\n/ );
 		return;
 	};
+#	my $fhXml = FileHandle->new($fileXml,'>');
+#	if( ! $fhXml ){
+#		exception( qq/diffOgfMap: Cannot open "$fileXml" for writing: $!\n/ );
+#		return;
+#	};
+
+#	my $user = 'thilo';
+#	my $timeStamp = Date::Format::time2str( '%Y-%m-%dT%H:%M:%S', time() );
 
 	foreach my $op ( 'c', 'u', 'd', '#' ){
+#       $fmXml->print();
 		my $hMap = $hDiffMap->{$op};
 		my @sr = ($op eq 'd')? qw/R W N/ : qw/N W R/;
 		my %sr = map {$sr[$_] => $_} (0..$#sr);
@@ -787,10 +825,15 @@ sub printDiffMap {
 #			print STDERR "$op \$key <", $key, ">  \$line <", $line, ">\n";  # _DEBUG_
 			$fhCmd->print( $op, ' ', $key, '|', $line, "\n" ) unless $op eq '#';
 			$fhDrw->print( $key, '|', $line, "\n" );
+
+#			my $obj = $pkg->loadObject( $key .'|'. $line );
+#			printXmlObject( $fhXml, $obj, $timeStamp, $user );
 		}
+#       $fmXml->print();
 	}
 	$fhCmd->close();
 	$fhDrw->close();
+#   $fhXml->close();
 }
 
 sub diffOgfFiles {

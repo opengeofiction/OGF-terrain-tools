@@ -1399,6 +1399,23 @@ sub addVersions {
 #-------------------------------------------------------------------------------
 
 
+sub wayTagFilter {
+	my( $ctx, @match ) = @_;
+
+	my @deleteList;
+	foreach my $way ( values %{$ctx->{_Way}} ){
+		push @deleteList, $way->{'id'} if ! $way->tagMatch( @match );
+	}
+
+	map {delete $ctx->{_Way}{$_}} @deleteList;
+}
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
 
 
 

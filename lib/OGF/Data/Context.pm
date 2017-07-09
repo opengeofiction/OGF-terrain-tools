@@ -686,23 +686,48 @@ sub cloneContext {
 	return $ctx;
 }
 
+#sub tagMatch {
+#	my( $obj, $hMatch ) = @_;
+#	my $hTags = $obj->{'tags'};
+##	print STDERR "\$hMatch <", ($hMatch ? join('|',%$hMatch) : 'undef'), ">  \$hTags <", ($hTags ? join('|',%$hTags) : 'undef'), ">\n";  # _DEBUG_
+#	my $ret = 1;
+#	foreach my $attr ( keys %$hMatch ){
+#		if( ! defined($hTags->{$attr}) ){
+#			$ret = 0;
+#		}elsif( ref($hMatch->{$attr}) eq 'ARRAY' ){
+#			my $val = $hTags->{$attr};
+#			$ret = 0 if ! (grep {$_ eq $val} @{$hMatch->{$attr}});
+#		}elsif( $hMatch->{$attr} eq '*' ){
+#			# do nothing, any value is OK
+#		}else{
+#			$ret = 0 if $hTags->{$attr} ne $hMatch->{$attr};
+#		}
+#	}
+##	map {$ret &&= ($hTags->{$_} && $hTags->{$_} eq $hMatch->{$_})} keys %$hMatch;
+#	return $ret;
+#}
+
 sub tagMatch {
-	my( $obj, $hMatch ) = @_;
+	my( $obj, @match ) = @_;  # returns true if one of @ matches
 	my $hTags = $obj->{'tags'};
 #	print STDERR "\$hMatch <", ($hMatch ? join('|',%$hMatch) : 'undef'), ">  \$hTags <", ($hTags ? join('|',%$hTags) : 'undef'), ">\n";  # _DEBUG_
-	my $ret = 1;
-	foreach my $attr ( keys %$hMatch ){
-		if( ! defined($hTags->{$attr}) ){
-			$ret = 0;
-		}elsif( ref($hMatch->{$attr}) eq 'ARRAY' ){
-			my $val = $hTags->{$attr};
-			$ret = 0 if ! (grep {$_ eq $val} @{$hMatch->{$attr}});
-		}elsif( $hMatch->{$attr} eq '*' ){
-			# do nothing, any value is OK
-		}else{
-			$ret = 0 if $hTags->{$attr} ne $hMatch->{$attr};
-		}
-	}
+	my $ret = 0;
+	foreach my $hMatch ( @match ){
+        $ret = 1;
+        foreach my $attr ( keys %$hMatch ){
+            if( ! defined($hTags->{$attr}) ){
+                $ret = 0;
+            }elsif( ref($hMatch->{$attr}) eq 'ARRAY' ){
+                my $val = $hTags->{$attr};
+                $ret = 0 if ! (grep {$_ eq $val} @{$hMatch->{$attr}});
+            }elsif( $hMatch->{$attr} eq '*' ){
+                # do nothing, any value is OK
+            }else{
+                $ret = 0 if $hTags->{$attr} ne $hMatch->{$attr};
+            }
+        }
+        last if $ret;
+    }
 #	map {$ret &&= ($hTags->{$_} && $hTags->{$_} eq $hMatch->{$_})} keys %$hMatch;
 	return $ret;
 }

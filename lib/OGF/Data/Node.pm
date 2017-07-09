@@ -20,8 +20,7 @@ sub class {  'Node';  }
 sub uid {  'N|' . $_[0]->{'id'};  }
 
 sub tagMatch {
-	my( $self, $hMatch ) = @_;
-	return OGF::Data::Context::tagMatch( $self, $hMatch );
+	return OGF::Data::Context::tagMatch( @_ );
 }
 
 sub add_tag {

@@ -112,8 +112,10 @@ sub convertWayPoints {
 	$way->{_rect}   = [ $INT_MAX, $INT_MAX, -$INT_MAX, -$INT_MAX ];
 	for( my $i = 0; $i <= $num; ++$i ){
 		my $node = $ctx->{_Node}{$way->{'nodes'}[$i]};
+#		print STDERR "$i ", $way->{'nodes'}[$i] ,"  \$node <", $node, ">\n";  # _DEBUG_
 		my $pt = $proj->geo2cnv( [$node->{'lon'},$node->{'lat'}] );
-        $pt->[2] = int($node->{'tags'}{$ELEVATION_TAG}) if defined $node->{'tags'}{$ELEVATION_TAG};
+#       $pt->[2] = int($node->{'tags'}{$ELEVATION_TAG}) if defined $node->{'tags'}{$ELEVATION_TAG};
+        $pt->[2] = $node->{'tags'}{$ELEVATION_TAG} if defined $node->{'tags'}{$ELEVATION_TAG};
 		minMaxArea( $bbox, $node );
 		minMaxArea( $way->{_rect}, $pt );
 		$way->{_points}[$i] = $pt;		
@@ -202,6 +204,7 @@ sub linearSegmentElevation {
 		my $dd = $pt->[$zD];
 		my $elevLin  = ($e1 * $dd + $e0 * ($distTotal - $dd)) / $distTotal;
 #		print STDERR "[$i] \$elevLin <", $elevLin, ">\n";  # _DEBUG_
+#		warn qq/Point elevation mismatch [$i]\n/ if defined($pt->[$zE]) && $pt->[$zE] != $elevLin;
 		$pt->[$zE] = $elevLin;
 	}
 }
@@ -315,6 +318,61 @@ sub setMinMaxRange {
 #-------------------------------------------------------------------------------
 
 
+
+sub waterwayElevation {
+	my( $ctx, $hOpt ) = @_;
+	$hOpt = {} if ! $hOpt;
+
+	my $proj = $ctx->{_proj};
+	die qq/waterwayElevation: no projection defined for data context.\n/ if ! $proj;
+	my $hInfo = {_proj => $proj, _bbox => [ 180, 90, -180, -90 ]};
+
+	my( $aContourWays, $aWaterWays ) = separateWayCategories( $ctx );
+	foreach my $wayC ( @$aContourWays ){
+		convertWayPoints( $ctx, $wayC, $hInfo );
+		my $elev = $wayC->{_elev};
+        foreach my $nodeId ( @{$wayC->{'nodes'}} ){
+            my $node = $ctx->{_Node}{$nodeId};
+            $node->{'tags'}{$ELEVATION_TAG} = $elev;
+        }
+	}
+
+	print STDERR "linear interpolation of waterways\n";
+    my @waterWays = sortHierarchical( $ctx, $aWaterWays );
+	my( $ct, $num ) = ( 0, scalar(@waterWays) );
+
+	foreach my $way ( @waterWays ){
+		++$ct;
+		print STDERR "+ way ", $way->{'id'}, "  $ct/$num\n";
+		my @isctAll;
+		convertWayPoints( $ctx, $way, $hInfo );
+		foreach my $wayC ( @$aContourWays ){
+			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayC->{_rect} );
+			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayC->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayC->{_rect}]} );
+#			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
+			map {$_->{_point}[2] = $wayC->{_elev}} @isct;
+			push @isctAll, @isct if @isct;
+		}
+		next if ! @isctAll;
+
+        addIntersectionNodes( $ctx, $way, \@isctAll );
+        my $node = $ctx->{_Node}{$way->{'nodes'}[-1]};
+        $node->{'tags'}{$ELEVATION_TAG} = $way->{_points}[-1][2] = 0 if ! $node->{'tags'}{$ELEVATION_TAG};
+        linearWayElevation( $way->{_points} );
+
+#       warn qq/Way length mismatch\n/ if $#{$way->{_points}} != $#{$way->{'nodes'}};
+        for( my $i = 0; $i <= $#{$way->{_points}}; ++$i ){
+            my $pt = $way->{_points}[$i];
+            next if ! defined $pt->[2];
+            my( $node, $elev ) = ( $ctx->{_Node}{$way->{'nodes'}[$i]}, $pt->[2] );
+            my $elevExist = ($node->{'tags'} && $node->{'tags'}{$ELEVATION_TAG})? $node->{'tags'}{$ELEVATION_TAG} : undef;
+            warn qq/Elevation mismatch: [$i] $elevExist != $elev\n/ if defined($elevExist) && $elevExist != $elev;
+            $node->{'tags'}{$ELEVATION_TAG} = sprintf( '%.2f', $elev );
+            $node->{'tags'}{$ELEVATION_TAG} =~ s/\.0+$//;
+        }
+	}
+}
+
 sub separateWayCategories {
     my( $ctx ) = @_;
 	my( @contourWays, @waterWays );
@@ -339,61 +397,26 @@ sub separateWayCategories {
 	return ( \@contourWays, \@waterWays );
 }
 
-
-sub waterwayElevation {
-	my( $ctx, $hOpt ) = @_;
-	$hOpt = {} if ! $hOpt;
-
-	my $proj = $ctx->{_proj};
-	die qq/waterwayElevation: no projection defined for data context.\n/ if ! $proj;
-	my $hInfo = {_proj => $proj, _bbox => [ 180, 90, -180, -90 ]};
-
-	my( $aContourWays, $aWaterWays ) = separateWayCategories( $ctx );
-	foreach my $wayC ( @$aContourWays ){
-		convertWayPoints( $ctx, $wayC, $hInfo );
-		my $elev = $wayC->{_elev};
-        foreach my $nodeId ( @{$wayC->{'nodes'}} ){
-            $ctx->{_Node}{$nodeId} = $elev;
-        }
-	}
-
-	print STDERR "linear interpolation of waterways\n";
-    my @waterWays = sortHierarchical( $ctx, $aWaterWays );
-	my( $ct, $num ) = ( 0, scalar(@waterWays) );
-
-	foreach my $way ( @waterWays ){
-		++$ct;
-		print STDERR "+ way ", $way->{'id'}, "  $ct/$num\n";
-		my @isctAll;
-		convertWayPoints( $ctx, $way, $hInfo );
-		foreach my $wayC ( @$aContourWays ){
-			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayC->{_rect} );
-			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayC->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayC->{_rect}]} );
-#			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
-			map {$_->{_point}[2] = $wayC->{_elev}} @isct;
-			push @isctAll, @isct if @isct;
-		}
-		next if ! @isctAll;
-        addIntersectionNodes( $ctx, $way, \@isctAll );
-        linearWayElevation( $way->{_points} );
-	}
-}
-
 sub addIntersectionNodes {
 	my( $ctx, $way, $aIsctList ) = @_;
 	@$aIsctList = sort {$a->{_idx} <=> $b->{_idx} || $a->{_ratio} <=> $b->{_ratio}} @$aIsctList;
 #	use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aIsctList], ['aIsctList'] ), "\n";  # _DEBUG_
 
-	my( $proj, $aNodes, @nodes ) = ( $ctx->{_proj}, $way->{'nodes'} );
+	my( $proj, $aNodes, $aPoints ) = ( $ctx->{_proj}, $way->{'nodes'}, $way->{_points} );
+	my( @nodes, @points );
 	for( my $i = 0; $i <= $#{$aNodes}; ++$i ){
-		push @nodes, $aNodes->[$i];
+		push @points, $aPoints->[$i];
+		push @nodes,  $aNodes->[$i];
 		my @idxPoints = map {$_->{_point}} grep {$_->{_idx} == $i} @$aIsctList;
         foreach my $pt ( @idxPoints ){
+            push @points, $pt;
             my( $lon, $lat ) = $proj->cnv2geo( $pt->[0], $pt->[1] ); 
             my $node = OGF::Data::Node->new( $ctx, {'lon' => $lon, 'lat' => $lat} );
+            $node->{_keep} = 1;
 		    push @nodes, $node->{'id'};
 		}
 	}
+	$way->{_points} = \@points;
 	$way->{'nodes'} = \@nodes;
 }
 
@@ -406,9 +429,10 @@ sub sortHierarchical {
         $endNodes{$endNode} = $way->{'id'};
 	}
 	foreach my $way ( @$aWays ){
-        foreach my $nodeId ( $way->{'nodes'} ){
+        foreach my $nodeId ( @{$way->{'nodes'}} ){
 			if( $endNodes{$nodeId} && $endNodes{$nodeId} != $way->{'id'} ){
                 $parent{$endNodes{$nodeId}} = $way->{'id'};
+#               print STDERR "\$parent{$endNodes{$nodeId}} <", $parent{$endNodes{$nodeId}}, ">\n";  # _DEBUG_
 			}
         }
 	}

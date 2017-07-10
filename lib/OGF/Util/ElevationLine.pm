@@ -483,10 +483,18 @@ sub drawContextElevation_Ridge_1 {
 
 sub drawContextElevation_River {
 	my( $ctx, $terrainTool ) = @_;
+
+    my $cnv = $terrainTool->canvas();
+    my( $wd2, $hg2 ) = ( int($cnv->width / 2), int($cnv->height / 2) );
+    
     foreach my $way ( values %{$ctx->{_Way}} ){
         next unless $way->tagMatch( {'waterway' => 'river'} ) && $way->{_elevationFlag};
     	   print STDERR "river \$way <", $way->{'id'}, ">\n";  # _DEBUG_
 		my $aPoints = $terrainTool->getPathPoints( $way, {'linePoints' => 1, 'elevIndex' => 3} );
+
+        my( $x, $y ) = @{$aPoints->[int($#{$aPoints} / 2)]};
+        $cnv->ogfMoveView( $x-$wd2, $y-$hg2 );
+
 		$terrainTool->applyTerrainInfo( $aPoints );
 #		use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aPoints], ['aPoints'] ), "\n";  # _DEBUG_
 		$terrainTool->drawElevationPath( $aPoints, {'nosave' => 1} );

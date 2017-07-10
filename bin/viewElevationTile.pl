@@ -22,6 +22,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev
 
 
+
 my %opt;
 usageInit( \%opt, qq/ bigEndian noRelief /, << "*" );
 <size> <file1> [<file2> ...] [-bigEndian] [-noRelief] [-fullscreen]
@@ -88,10 +89,16 @@ if( -d $files[0] ){
         my $file = $File::Find::name;
         return unless $file =~ /\.bil$/;
 
+        my $pngFile = $file . '.png';
+        if( -f $pngFile ){
+            my $photo = $cnv->Photo( -file => $pngFile );
+            my $img = $cnv->createImage( 0, 0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
+            return;
+        }
+
         print STDERR "load $file\n";
         ( $img, $photo ) = viewElevationTile( $cnv, $file, 0, 0, $wd, $hg, \%opt );
 #    	  (my $pngFile1 = $file) =~ s/\.bil$/.png/;
-        my $pngFile = $file . '.png';
 
         die q/ERROR $file == $pngFile/ if $file eq $pngFile;
         print STDERR "save $pngFile\n";

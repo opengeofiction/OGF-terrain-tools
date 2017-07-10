@@ -41,14 +41,15 @@ sub initLayerInfo {
 		}, 'OGF::LayerInfo';
 		my $hTransf = $wwInfo->{'transform'} = {};
 		$self->initLayerFromTlr( $dsc, $wwInfo, $hTransf );		
-		( $OGF::ELEV_TILE_WIDTH, $OGF::ELEV_TILE_HEIGHT ) = $wwInfo->tileSize();
-		print STDERR "\$OGF::ELEV_TILE_WIDTH <", $OGF::ELEV_TILE_WIDTH, ">  \$OGF::ELEV_TILE_HEIGHT <", $OGF::ELEV_TILE_HEIGHT, ">\n";  # _DEBUG_
 	}else{
 		$dsc =~ s/^WW://;
 		$dsc =~ s/(:\d+)$/$1:all/;
 		$wwInfo = OGF::LayerInfo->tileInfo( $dsc );
 	}
 	$self->{_info} = $wwInfo;
+
+	( $OGF::ELEV_TILE_WIDTH, $OGF::ELEV_TILE_HEIGHT ) = $wwInfo->tileSize();
+	print STDERR "\$OGF::ELEV_TILE_WIDTH <", $OGF::ELEV_TILE_WIDTH, ">  \$OGF::ELEV_TILE_HEIGHT <", $OGF::ELEV_TILE_HEIGHT, ">\n";  # _DEBUG_
 
 	if( $wwInfo->{'transform'} && $self->{_proj4} ){
 		# loaded from tlr description	

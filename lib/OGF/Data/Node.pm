@@ -30,7 +30,7 @@ sub add_tag {
 
 sub toString {
 	my( $self ) = @_;
-	my $str = join( '|', 'N', $self->{'id'}, $self->{'version'}, $self->{'lon'}, $self->{'lat'} );
+	my $str = join( '|', 'N', $self->{'id'}, ($self->{'version'} || ''), $self->{'lon'}, $self->{'lat'} );
 	if( $self->{'tags'} ){
 		$str .= OGF::Util::tagText( $self->{'tags'} );
 	}

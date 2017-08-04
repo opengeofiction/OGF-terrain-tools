@@ -58,6 +58,7 @@ sub makeTileFromArray {
 	$packTemplate .= '*' unless $packTemplate =~ /\*$/;
 
 	my $dy = scalar( @$aRows );
+	print STDERR "\$dy <", $dy, ">\n";  # _DEBUG_
 	my $tileData = '';
 	for( my $y = 0; $y < $dy; ++$y ){
 		my $dx = scalar @{$aRows->[$y]};

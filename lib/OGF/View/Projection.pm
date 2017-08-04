@@ -9,6 +9,7 @@ use OGF::Const;
 
 sub new {
 	my( $pkg, $dsc, $hTransf ) = @_;
+	$hTransf = {'X' => [ @{$hTransf->{'X'}} ], 'Y' => [ @{$hTransf->{'Y'}} ]} if $hTransf;  # clone transform to prevent in-place modifications
 
 	my $self = {
 		_descriptor => $dsc,

@@ -96,11 +96,12 @@ convertTile( method, dx, dy, tSrnd, options=NULL )
 		map_tile tConv;
 
 		if( VERBOSE >= 1 ){
-			printf( "--- convertTile ---\n" );  /* _DEBUG_ */
-			printf( "method <%s>\n", method );  /* _DEBUG_ */
-			printf( "dx <%d>\n", dx );          /* _DEBUG_ */
-			printf( "dy <%d>\n", dy );          /* _DEBUG_ */
-			printf( "tSrnd <%p>\n", tSrnd );    /* _DEBUG_ */
+			printf( "--- convertTile ---\n" );   /* _DEBUG_ */
+			printf( "method <%s>\n", method );   /* _DEBUG_ */
+			printf( "dx <%d>\n", dx );           /* _DEBUG_ */
+			printf( "dy <%d>\n", dy );           /* _DEBUG_ */
+			printf( "tSrnd <%p>\n", tSrnd );     /* _DEBUG_ */
+			printf( "options <%s>\n", options ); /* _DEBUG_ */
 		}
 
 		tConv = convert_tile( method, data_tile(dx,dy,(TILE) tSrnd), options );

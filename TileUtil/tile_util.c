@@ -41,7 +41,7 @@ map_tile convert_tile( char *method, map_tile tSrc, char *opt ){
 	}else if( strcmp(method,"gradient") == 0 ){
 		tDst = convert_tile_gradient( tSrc );
 	}else if( strcmp(method,"radius") == 0 ){
-        int radius = opt_int_value( opt, "radius=", 20 );
+        int radius = opt_int_value( opt, "radius", 20 );
 		tDst = convert_tile_radius( tSrc, radius );
 	}else{
 		errorExit( "Unknown method\n" );

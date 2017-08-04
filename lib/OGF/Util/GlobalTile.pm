@@ -52,6 +52,10 @@ sub setPixel {
 
 sub getElevation {
 	my( $self, $x, $y ) = @_;
+    if( ref($x) && defined $x->{'lon'} ){
+        my( $x, $y ) = $self->{_tileLayer}->geo2cnv( $x->{'lon'}, $x->{'lat'} );
+        return $self->getElevation( $x, $y );
+	}
     my( $x0, $y0 ) = ( floor($x), floor($y) );
     my( $x1, $y1 ) = ( $x0 + 1, $y0 + 1 );
     my( $elev00, $elev10, $elev01, $elev11 ) = ( $self->getPixel($x0,$y0), $self->getPixel($x1,$y0), $self->getPixel($x0,$y1), $self->getPixel($x1,$y1) );

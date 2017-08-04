@@ -158,6 +158,13 @@ sub maximumInsideCircle {
 	return ( $aMaxDist->[1], $aMaxDist->[2], $aMaxDist->[0] );
 }
 
+sub nodeObjects {
+	my( $self, $ctx ) = @_;
+	$ctx = $self->{_context} if ! $ctx;
+	my @nodes = map {$ctx->{_Node}{$_}} @{$self->{'nodes'}};
+	return @nodes;
+}
+
 sub canvasPoints {
 	require OGF::Geo::Geometry;
 	my( $self, $ctx, $proj ) = @_;

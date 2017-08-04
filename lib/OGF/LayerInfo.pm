@@ -81,6 +81,18 @@ our %INFO_MAP = (
             'valEmpty' => 0,
         },
     },
+    'Roantra' => {
+        'size'     => [ 512, 512 ],
+        'minMax'   => { baseLevel => 0, maxLevel => 4, min_Y => 47, max_Y => 49, min_X => 55, max_X => 57 },
+        'image' => {
+            'baseDir' => [ $PATH_PREFIX.'/%s/WW', 'layer' ],
+        },
+        'elev' => {
+            'baseDir'  => [ $PATH_PREFIX.'/Roantra/WW_elev' ],
+            'suffix'   => 'bil',
+            'valEmpty' => 0,
+        },
+    },
     'Cearno' => {
         'image' => {
             'baseDir' => [ $PATH_PREFIX.'/%s/WW', 'layer' ],
@@ -767,10 +779,16 @@ sub geoCoord {
 
 sub getTransform {
 	my( $info ) = @_;
-	return $info->{'transform'} if $info->{'transform'};
-#	my $layer = $info->{'layer'};
-#	return $INFO_MAP{'image'}{$layer}{'transform'} if $INFO_MAP{'image'}{$layer}{'transform'};
-	my $trf = $info->layerInfo( 'transform', 'opt' );
+#	return $info->{'transform'} if $info->{'transform'};
+    my $trf;
+	if( $info->{'transform'} ){
+		$trf = $info->{'transform'};
+	}else{
+#	    my $layer = $info->{'layer'};
+#	    return $INFO_MAP{'image'}{$layer}{'transform'} if $INFO_MAP{'image'}{$layer}{'transform'};
+	    $trf = $info->layerInfo( 'transform', 'opt' );
+	}
+	$trf = {'X' => [ @{$trf->{'X'}} ], 'Y' => [ @{$trf->{'Y'}} ]} if $trf ;  # clone transform to prevent in-place modifications
 	return $trf ? $trf : undef;
 }
 

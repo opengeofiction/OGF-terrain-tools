@@ -11,20 +11,27 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 
 
-# perl C:/usr/MapView/bin/viewElevationTile.pl 1201 C:/usr/tmp/S09E050.hgt -bigEndian
-# perl C:/usr/MapView/bin/viewElevationTile.pl 1201 C:\Map\Roantra\SRTM3\tmp\N45E030.hgt -bigEndian
-# perl C:/usr/MapView/bin/viewElevationTile.pl 1201 C:\Map\Roantra\SRTM3\tmp\N43E029.hgt -bigEndian
-# perl C:/usr/MapView/bin/viewElevationTile.pl 3601 C:/usr/tmp/S63E108.hgt -bigEndian
-# perl C:/usr/MapView/bin/viewElevationTile.pl -bigEndian 1201 C:\Map\Elevation\tmp\S59E083.hgt
-# perl C:/usr/MapView/bin/viewElevationTile.pl 256 C:\Map\OGF\WW_elev\13\5735\5735_6001.bil
-# perl C:/usr/MapView/bin/viewElevationTile.pl 256 elev:OGF:13:5911-5935:6563-6581
-# perl C:/usr/MapView/bin/viewElevationTile.pl 262,239 C:/Map/Elevation/tmp/temp_layer.cnr
-# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/usr/tmp/S09E050.hgt -bigEndian
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:\Map\Roantra\SRTM3\tmp\N45E030.hgt -bigEndian
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:\Map\Roantra\SRTM3\tmp\N43E029.hgt -bigEndian
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 3601 C:/usr/tmp/S63E108.hgt -bigEndian
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl -bigEndian 1201 C:\Map\Elevation\tmp\S59E083.hgt
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 C:\Map\OGF\WW_elev\13\5735\5735_6001.bil
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:OGF:13:5911-5935:6563-6581
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 183,296 C:/Map/Elevation/tmp/temp_layer.cnr
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev/
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev/2/1/1_1.bil
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:WebWW:8:766-770:1190-1194
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 512 elev:Roantra:4:766-770:908-912
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev/5 -noExist
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:OGF:13:bbox=121.28014,-21.61147,121.46965,-21.43070
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:WebWW:9:bbox=121.28014,-21.61147,121.46965,-21.43070
+
 
 
 
 my %opt;
-usageInit( \%opt, qq/ bigEndian noRelief /, << "*" );
+usageInit( \%opt, qq/ bigEndian noRelief noExist /, << "*" );
 <size> <file1> [<file2> ...] [-bigEndian] [-noRelief] [-fullscreen]
 *
 
@@ -47,7 +54,7 @@ initMainWindow( $main, $opt{'fullscreen'} );
 
 
 my( $ct, $info ) = ( 0, '' );
-my $lbInfo = $main->Label( -textvariable => \$info, -justify => 'left' )->pack( -expand => 1, -fill => 'x' );
+my $lbInfo = $main->Label( -textvariable => \$info, -justify => 'left', -height => 1 )->pack( -expand => 1, -fill => 'x' );
 
 #my $view = $main->Scrolled( 'Widget' )->pack();
 #my $cnv = $main->Canvas(
@@ -66,7 +73,7 @@ $cnvS->Tk::bind( '<Motion>' => sub {
 	my( $x, $y ) = OGF::Util::Canvas::canvasEventPos( $cnvS );
 #	print STDERR ++$ct . "   \$x <", $x, ">  \$y <", $y, ">\n";  # _DEBUG_
 	my $text = "$x,$y";
-	$text .= "  " . $TILE_DATA->[$y][$x] if $TILE_DATA->[$y] && defined $TILE_DATA->[$y][$x];
+	$text .= $File::Find::name ."  ". $TILE_DATA->[$y][$x] if $TILE_DATA->[$y] && defined $TILE_DATA->[$y][$x];
 	$info = $text;
 } );
 
@@ -86,13 +93,15 @@ if( -d $files[0] ){
 #           $photo->delete;
         }
 
-        my $file = $File::Find::name;
+        my $file = $info = $File::Find::name;
         return unless $file =~ /\.bil$/;
 
         my $pngFile = $file . '.png';
         if( -f $pngFile ){
-            my $photo = $cnv->Photo( -file => $pngFile );
-            my $img = $cnv->createImage( 0, 0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
+            if( ! $opt{'noExist'} ){
+                my $photo = $cnv->Photo( -file => $pngFile );
+                my $img = $cnv->createImage( 0, 0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
+            }
             return;
         }
 
@@ -144,7 +153,7 @@ MainLoop();
 sub viewElevationTile {
     my( $cnv, $file, $x0, $y0, $wd, $hg, $hOpt ) = @_;
 	$hOpt = {} if ! $hOpt;
-	my $packTemplate = $hOpt->{'bigEndian'} ? 's>' : 's';
+	my $packTemplate = ($hOpt->{'bigEndian'} || $file =~ /\.hgt$/)? 's>' : 's';
     my $aTile = $TILE_DATA = OGF::Terrain::ElevationTile::makeArrayFromFile( $file, $wd, $hg, 2, undef, $packTemplate );
     my( $photo, $data, $cSub ) = OGF::Terrain::PhysicalMap::makePhotoFromElev( $cnv, $aTile, $wd, $hg, $hOpt );
     my $img = $cnv->createImage( $x0, $y0, -image => $photo, -anchor => 'nw', -tags => 'tile' );

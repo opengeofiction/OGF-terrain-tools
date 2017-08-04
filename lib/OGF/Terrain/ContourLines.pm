@@ -58,7 +58,7 @@ sub writeContourTiles {
 		writeElevationWay( $ctx, $way, $hInfo );
 	}
 
-    @waterWays = sortHierarchical( $ctx, \@waterWays );
+    @waterWays = sortHierarchical( \@waterWays );
 
 	print STDERR "linear interpolation of waterways\n";
 	my( $ct, $num ) = ( 0, scalar(@waterWays) );
@@ -280,6 +280,13 @@ sub boundsFromFileName {
 		$minLat = -$minLat if $dNS eq 'S';
         ( $minLon, $minLat, my $maxLon, my $maxLat ) = ( $minLon, $minLat+($band-1)*.2, $minLon+1, $minLat+$band*.2 );
         $aBounds = [ $minLon, $minLat, $maxLon, $maxLat ];
+    }elsif( $file =~ /([NS])([.\d]+)([EW])([.\d]+)_([NS])([.\d]+)([EW])([.\d]+)/ ){
+        my( $minNS, $minLat, $minEW, $minLon, $maxNS, $maxLat, $maxEW, $maxLon ) = ( $1, $2, $3, $4, $5, $6, $7, $8 );
+		$minLon = -$minLon if $minEW eq 'W';
+		$minLat = -$minLat if $minNS eq 'S';
+		$maxLon = -$maxLon if $maxEW eq 'W';
+		$maxLat = -$maxLat if $maxNS eq 'S';
+        $aBounds = [ $minLon, $minLat, $maxLon, $maxLat ];
     }
     return $aBounds;
 }
@@ -337,25 +344,33 @@ sub waterwayElevation {
         }
 	}
 
+	print STDERR "Connect waterway segments\n";
+	require OGF::Geo::Topology;
+	my %ways = map {$_->{'id'} => $_} @$aWaterWays;
+	my $aWays = OGF::Geo::Topology::buildWaySequence( $ctx, undef, \%ways, {'wayDirection' => 1} );
+
 	print STDERR "linear interpolation of waterways\n";
-    my @waterWays = sortHierarchical( $ctx, $aWaterWays );
+#   my @waterWays = sortHierarchical( \@waterWays );
+    my @waterWays = sortHierarchical( $aWays );
 	my( $ct, $num ) = ( 0, scalar(@waterWays) );
 
 	foreach my $way ( @waterWays ){
 		++$ct;
 		print STDERR "+ way ", $way->{'id'}, "  $ct/$num\n";
-		my @isctAll;
-		convertWayPoints( $ctx, $way, $hInfo );
-		foreach my $wayC ( @$aContourWays ){
-			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayC->{_rect} );
-			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayC->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayC->{_rect}]} );
-#			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
-			map {$_->{_point}[2] = $wayC->{_elev}} @isct;
-			push @isctAll, @isct if @isct;
-		}
-		next if ! @isctAll;
+        convertWayPoints( $ctx, $way, $hInfo );
+        if( ! $hOpt->{'noIntersect'}  ){
+            my @isctAll;
+            foreach my $wayC ( @$aContourWays ){
+                next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayC->{_rect} );
+                my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayC->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayC->{_rect}]} );
+#	    		    use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
+                map {$_->{_point}[2] = $wayC->{_elev}} @isct;
+                push @isctAll, @isct if @isct;
+            }
+#    		    next if ! @isctAll;
+            addIntersectionNodes( $ctx, $way, \@isctAll );
+        }
 
-        addIntersectionNodes( $ctx, $way, \@isctAll );
         my $node = $ctx->{_Node}{$way->{'nodes'}[-1]};
         $node->{'tags'}{$ELEVATION_TAG} = $way->{_points}[-1][2] = 0 if ! $node->{'tags'}{$ELEVATION_TAG};
         linearWayElevation( $way->{_points} );
@@ -421,8 +436,11 @@ sub addIntersectionNodes {
 }
 
 sub sortHierarchical {
-	my( $ctx, $aWays ) = @_;
-	my( @ways, %ways, %endNodes, %parent,  );
+	my( $aWays, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
+    my $maxIter = $hOpt->{'maxIterations'} || 20;
+
+	my( @ways, %ways, %endNodes, %parent );
 
 	foreach my $way ( @$aWays ){
         my $endNode = $way->{'nodes'}[-1];
@@ -436,7 +454,7 @@ sub sortHierarchical {
 			}
         }
 	}
-    my $ct = $#{$aWays} * 20;
+    my $ct = $#{$aWays} * $maxIter;
 	while( @$aWays ){
 	    my $way = shift @$aWays;
         my $parentId = $parent{$way->{'id'}};
@@ -451,6 +469,43 @@ sub sortHierarchical {
 
     return @ways;
 }
+
+sub sortConsecutive {
+	my( $aWays, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
+    my $maxIter = $hOpt->{'maxIterations'} || 20;
+
+    my %ways = map {$_->{'id'} => $_} @$aWays;
+    my @ways = ( delete $ways{$aWays->[0]{'id'}} );
+
+    my $ct = $#{$aWays} * $maxIter;
+    while( %ways ){
+        foreach my $id ( keys %ways ){
+            my $way = $ways{$id};
+            my( $idStart, $idEnd ) = ( $way->{'nodes'}[0], $way->{'nodes'}[-1] );
+            my( $idListStart, $idListEnd ) = ( $ways[0]->{'nodes'}[0], $ways[-1]->{'nodes'}[-1] );
+#           print STDERR "\$idListStart <", $idListStart, ">  \$idListEnd <", $idListEnd, ">\n";
+            if( $idStart == $idListEnd ){
+                push @ways, $way;
+                delete $ways{$id};
+            }elsif( $idEnd == $idListEnd ){
+                @{$way->{'nodes'}} = reverse @{$way->{'nodes'}};
+                push @ways, $way;
+                delete $ways{$id};
+            }elsif( $idEnd == $idListStart ){
+                unshift @ways, $way;
+                delete $ways{$id};
+            }elsif( $idStart == $idListStart ){
+                @{$way->{'nodes'}} = reverse @{$way->{'nodes'}};
+                unshift @ways, $way;
+                delete $ways{$id};
+            }
+        }
+	    die qq/sortHierarchical: too many iterations/ if --$ct <= 0;
+    }
+    return @ways;
+}
+
 
 
 

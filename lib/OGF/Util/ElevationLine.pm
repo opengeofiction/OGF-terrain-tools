@@ -300,10 +300,11 @@ sub shapeElevation {
 #	use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$rectB], ['rectB'] ), "\n";  # _DEBUG_
 
 	unless( $hOpt->{'noBorder'} ){
-        print STDERR "shapeElevation draw border\n";
+        print STDERR "shapeElevation draw border - ", ($wayElev || ''), "\n";
         foreach my $pt ( $shapeB->points ){
 			next if $hOpt->{'coastalPlain'} && $pt->[2] <= 0;
             my $ptX = [ $pt->[0], $pt->[1], $pt->[2] / $terrainTool->{_maxElev} ];
+#           print STDERR "  \$pt->[2] <", $pt->[2], ">\n";  # _DEBUG_
             $terrainTool->drawLinePoint( $ptX, $ptX );
 #    		    $terrainTool->drawPixel( $pt, '#FF0000' );
             $terrainTool->canvas()->update();
@@ -330,7 +331,8 @@ sub shapeElevation {
 #		my $ptX = [ $pt->[0], $pt->[1], $elev / $terrainTool->{_maxElev} ];
 #		my $drawFlag = $randFlag ? (rand() <= $randFlag) : 1;
 #		$terrainTool->drawLinePoint( $ptX, $ptX ) if $drawFlag;
-		$terrainTool->setPixel_max( $pt->[0], $pt->[1], $elev, 0 );
+#		$terrainTool->setPixel_max( $pt->[0], $pt->[1], $elev, 0 );
+		$terrainTool->setPixel( $pt->[0], $pt->[1], $elev );
 
 		if( $ct % 1000 == 0 ){
 			print STDERR qq|shapeElevation $way->{id}; $ct/$size  (elev=$elev)\n|;
@@ -515,7 +517,11 @@ sub drawContextElevation_Lake {
     foreach my $way ( values %{$ctx->{_Way}} ){
         next unless $way->tagMatch( {'natural' => 'water'} );
     	   print STDERR "lake \$way <", $way->{'id'}, ">\n";  # _DEBUG_
-		my $shape = shapeElevation( $way, $terrainTool );
+		my $shape = shapeElevation( $way, $terrainTool, {'noBorder' => 1} );
+
+		my $aPoints = $terrainTool->getPathPoints( $way, {'linePoints' => 1, 'elevIndex' => 3} );
+		$terrainTool->applyTerrainInfo( $aPoints );
+		$terrainTool->drawElevationPath( $aPoints, {'nosave' => 1} );
     }
 }
 

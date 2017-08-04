@@ -13,11 +13,16 @@ sub layerTransform {
 #   my( $dscSrc, $dscTgt ) = ( "elev:OGF:13:all", "elev:WebWW:$level:all" );
 #   my( $dscSrc, $dscTgt ) = ( "elev:WebWW:6:all", "elev:SathriaLCC:$level:all" );
 #   my( $dscSrc, $dscTgt ) = ( 'C:/Map/ogf/work/eck4_Sathria_elev.cpx', "elev:SathriaLCC:$level:all" );
-    my( $dscSrc, $dscTgt, $bbox ) = @_;
+    my( $dscSrc, $dscTgt, $bbox, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
     my $vtSrc = OGF::Util::GlobalTile->new( $dscSrc );
     my $vtTgt = OGF::Util::GlobalTile->new( $dscTgt );
+#   use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 5; print STDERR Data::Dumper->Dump( [$vtTgt], ['vtTgt'] ), "\n";  # _DEBUG_
+    my $aStrictBbox = $hOpt->{'strictBbox'} ? $bbox : undef;
+
     my( $minLon, $minLat, $maxLon, $maxLat ) = @$bbox;
     my( $tileWd, $tileHg ) = $vtTgt->{_layerInfo}->tileSize();
+    print STDERR "\$tileWd <", $tileWd, ">  \$tileHg <", $tileHg, ">\n";  # _DEBUG_
 
     my @tileNW = $vtTgt->geo2tile( $minLon, $maxLat );
     my @tileSE = $vtTgt->geo2tile( $maxLon, $minLat );
@@ -37,13 +42,17 @@ sub layerTransform {
         for( my $tx = $tx0; $tx <= $tx1; ++$tx ){
 #           next unless $tx == 2 && $ty == 0;
             my $file = OGF::LayerInfo->tileInfo("$dscTgt:$ty:$tx")->tileName();
-#           print STDERR "TILE: ", $file, "\n";  # _DEBUG_
+            print STDERR "TILE: ", $file, "\n";  # _DEBUG_
+            next if $hOpt->{'noExist'} && -f $file;
             my $aTile = (-f $file)? OGF::LayerInfo->tileInfo("$dscTgt:$ty:$tx")->tileArray() : [];
             for( my $y = 0; $y < $tileHg; ++$y ){
+                $aTile->[$y] = [] if ! $aTile->[$y];
                 for( my $x = 0; $x < $tileWd; ++$x ){
 #                   next if $aTile->[$y][$x];
 #                   print STDERR "tgt $tx $ty $x $y\n";
-                    my $ptGeo  = $vtTgt->tile2geo( [$tx, $ty, $x, $y] );
+                    my $ptGeo = $vtTgt->tile2geo( [$tx, $ty, $x, $y] );
+                    next if $aStrictBbox && ! inBbox( $aStrictBbox, $ptGeo );
+#                   $ptGeo->[0] -= 50;   ### Roantra specific ###
 #                   print STDERR "\@\$ptGeo <", join('|',@$ptGeo), ">\n";  # _DEBUG_
                     my $ptElev = $vtSrc->geo2cnv( $ptGeo );
 #                   print STDERR "\$ptElev <", join(',',@$ptElev), ">\n"; exit; # _DEBUG_
@@ -66,11 +75,18 @@ sub layerTransform {
             my $data = makeTileFromArray( $aTile, 2 );
             makeFilePath( $file );
             writeToFile( $file, $data, undef, {-bin => 1, -mdir => 1} );
+            unlink "$file.png" if -f "$file.png";
         }
     }
 
 	my $hInfo = {	_tileRange => $hRange, _tileSize => [$tileWd, $tileHg] };
 	return $hInfo;
+}
+
+sub inBbox {
+    my( $bbox, $pt ) = @_;
+    my( $x0, $y0, $x1, $y1, $x, $y ) = ( @$bbox, @$pt );
+    return ($x >= $x0 && $x <= $x1 && $y >= $y0 && $y <= $y1);
 }
 
 

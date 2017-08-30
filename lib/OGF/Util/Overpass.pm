@@ -26,19 +26,27 @@ sub runQuery_local {
 		$osmFile = $outFile;
 	}
 
-	my $cmd = qq|$CMD_OSM3S_QUERY > "$osmFile"|;
-	print STDERR "CMD: $cmd\n";
-	local *OSM3S_QUERY;
-	open( OSM3S_QUERY, '|-', $cmd ) or die qq/Cannot open pipe "$cmd": $!\n/;
-	print OSM3S_QUERY $queryText;
-	close OSM3S_QUERY;
+	my @queries = ref($queryText) ? @$queryText : ($queryText);
+    my @osmFiles;
+
+    foreach my $query ( @queries ){
+        push @osmFiles, $osmFile;
+        my $cmd = qq|$CMD_OSM3S_QUERY > "$osmFile"|;
+        print STDERR "CMD: $cmd\n";
+        local *OSM3S_QUERY;
+        open( OSM3S_QUERY, '|-', $cmd ) or die qq/Cannot open pipe "$cmd": $!\n/;
+        print OSM3S_QUERY $query;
+        close OSM3S_QUERY;
+		$osmFile =~ s/\.osm/_1.osm/;
+    }
 	print STDERR 'Overpass export [1]: ', time() - $startTimeE, " seconds\n";
 
 	if( $pbfFile ){
-        OGF::Util::runCommand( qq|$CMD_OSMCONVERT "$osmFile" --out-pbf -o="$pbfFile"| );
+        my $osmFileList = join( ' ', map {"\"$_\""} @osmFiles );
+        OGF::Util::runCommand( qq|$CMD_OSMCONVERT $osmFileList --out-pbf -o="$pbfFile"| );
         chmod 0644, $pbfFile; 
         print STDERR 'Overpass export [2]: ', time() - $startTimeE, " seconds\n";
-        unlink $osmFile;
+        unlink @osmFiles;
 	}
 }
 

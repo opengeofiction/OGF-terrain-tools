@@ -17,6 +17,7 @@ usageInit( \%opt, qq/ noExist strictBbox /, << "*" );
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl size=1024 bbox=25.97,29.47,56.61,49.49 src=elev:SathriaLCC:2:all tgt=elev:SathriaLCC:5:all -noExist    # Sathria
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl size=1024 bbox=25.97,43.14,31.346,47.10 src=elev:Roantra:4:all tgt=elev:SathriaLCC:5:all -strictBbox   # Roantra
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl size=1024 bbox=30.9,43.1,31.4,43.772 src=elev:SathriaLCC:2:all tgt=elev:SathriaLCC:5:all -strictBbox   # Sathria repair
+# perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl size=1024 bbox=42.62146,48.01932,44.47266,49.42884 src=elev:SathriaLCC:2:all tgt=elev:SathriaLCC:5:all -strictBbox   # Sathria repair
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl size=1024 bbox=31.15,45.48,31.346,47.10 src=elev:Roantra:4:all tgt=elev:SathriaLCC:5:all -strictBbox   # Roantra repair
 
 

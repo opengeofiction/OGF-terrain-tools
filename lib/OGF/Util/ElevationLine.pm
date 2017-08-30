@@ -514,7 +514,17 @@ sub drawContextElevation_Plateau {
 
 sub drawContextElevation_Lake {
 	my( $ctx, $terrainTool ) = @_;
+
+    foreach my $rel ( values %{$ctx->{_Relation}} ){
+        next unless $rel->tagMatch( {'natural' => 'water'} );
+    	   print STDERR "lake \$rel <", $rel->{'id'}, ">\n";  # _DEBUG_
+        my $aRelWays = $rel->closedWayComponents( 'outer' );
+        print STDERR "\@\$aRelWays <", join('|',@$aRelWays), ">\n";  # _DEBUG_
+        map {$_->{'tags'}{'natural'} = 'water'} @$aRelWays;
+    }
+
     foreach my $way ( values %{$ctx->{_Way}} ){
+    	   print STDERR "$way <", $way->{'id'}, ">\n";  # _DEBUG_
         next unless $way->tagMatch( {'natural' => 'water'} );
     	   print STDERR "lake \$way <", $way->{'id'}, ">\n";  # _DEBUG_
 		my $shape = shapeElevation( $way, $terrainTool, {'noBorder' => 1} );

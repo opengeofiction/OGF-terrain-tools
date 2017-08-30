@@ -42,8 +42,8 @@ sub start_element {
 		my $class = 'OGF::Data::'. uc(substr($name,0,1)) . substr($name,1);
 #		my @nodeAttr = ($name eq 'node')? ('lon','lat') : ();
 		my $hAttr = convertAttr( $elem, @{$CLASS_ATTR{$name}} );
-		$self->{_OGF_currentObj} = $class->new( $self->{_OGF_context}, $hAttr );
-		++$self->{_OGF_statistics}{$name};
+        $self->{_OGF_currentObj} = $class->new( $self->{_OGF_context}, $hAttr );
+        ++$self->{_OGF_statistics}{$name};
 	}elsif( $name eq 'tag' ){
 		my $hAttr = convertAttr( $elem, 'k', 'v' );
 		$self->{_OGF_currentObj}->add_tag( $hAttr->{'k'}, $hAttr->{'v'} );

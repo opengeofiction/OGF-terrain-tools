@@ -959,7 +959,8 @@ void apply_elevation_min( map_tile tCanvas, int x0, int y0, map_tile tPaint, dou
 		for( x = 0; x < tPaint.dx; ++x ){
 			xp = x0 + x;
 			if( xp >= tCanvas.dx ) break; if( xp < 0 ) continue;
-			/* printf( "y:%d x:%d yp:%d xp:%d\n", y,x, yp,xp  );  -- _DEBUG_ */
+			/* printf( "y:%d x:%d yp:%d xp:%d\n", y,x, yp,xp ); -- _DEBUG_ */
+			/* printf( "y:%d x:%d yp:%d xp:%d off:%d\n", y,x, yp,xp, 2*pixel_offset(tCanvas,xp,yp) ); -- _DEBUG_ */
 			/* vPrev   = get_pixel( tPrev, xp,yp ); */
 			/* if( (flags & FLAG_LAND_AREA) && vPrev <= 0 ) continue; */
 			vPaint  = get_pixel( tPaint, x,y );

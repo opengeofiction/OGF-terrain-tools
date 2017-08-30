@@ -26,12 +26,13 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev/5 -noExist
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:OGF:13:bbox=121.28014,-21.61147,121.46965,-21.43070
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:WebWW:9:bbox=121.28014,-21.61147,121.46965,-21.43070
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:5:bbox=42.62146,48.01932,44.47266,49.42884 -forceRemake
 
 
 
 
 my %opt;
-usageInit( \%opt, qq/ bigEndian noRelief noExist /, << "*" );
+usageInit( \%opt, qq/ bigEndian noRelief forceRemake noExist /, << "*" );
 <size> <file1> [<file2> ...] [-bigEndian] [-noRelief] [-fullscreen]
 *
 
@@ -96,22 +97,9 @@ if( -d $files[0] ){
         my $file = $info = $File::Find::name;
         return unless $file =~ /\.bil$/;
 
-        my $pngFile = $file . '.png';
-        if( -f $pngFile ){
-            if( ! $opt{'noExist'} ){
-                my $photo = $cnv->Photo( -file => $pngFile );
-                my $img = $cnv->createImage( 0, 0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
-            }
-            return;
-        }
-
         print STDERR "load $file\n";
         ( $img, $photo ) = viewElevationTile( $cnv, $file, 0, 0, $wd, $hg, \%opt );
 #    	  (my $pngFile1 = $file) =~ s/\.bil$/.png/;
-
-        die q/ERROR $file == $pngFile/ if $file eq $pngFile;
-        print STDERR "save $pngFile\n";
-        $photo->write( $pngFile );
     }, no_chdir => 1 }, $startDir	);
 
 }elsif( -f $files[0] ){
@@ -153,13 +141,31 @@ MainLoop();
 sub viewElevationTile {
     my( $cnv, $file, $x0, $y0, $wd, $hg, $hOpt ) = @_;
 	$hOpt = {} if ! $hOpt;
+
+	my( $img, $photo );
+    my $pngFile = $file . '.png';
+    if( -f $pngFile && ! $opt{'forceRemake'} ){
+        if( ! $opt{'noExist'} ){
+            $photo = $cnv->Photo( -file => $pngFile );
+            $img = $cnv->createImage( 0, 0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
+        }
+        return ( $img, $photo );
+    }
+
 	my $packTemplate = ($hOpt->{'bigEndian'} || $file =~ /\.hgt$/)? 's>' : 's';
     my $aTile = $TILE_DATA = OGF::Terrain::ElevationTile::makeArrayFromFile( $file, $wd, $hg, 2, undef, $packTemplate );
-    my( $photo, $data, $cSub ) = OGF::Terrain::PhysicalMap::makePhotoFromElev( $cnv, $aTile, $wd, $hg, $hOpt );
-    my $img = $cnv->createImage( $x0, $y0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
+    ( $photo, my $data, my $cSub ) = OGF::Terrain::PhysicalMap::makePhotoFromElev( $cnv, $aTile, $wd, $hg, $hOpt );
+    $img = $cnv->createImage( $x0, $y0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
     $cSub->( $cnv ) if $cSub;
+
+    die q/ERROR $file == $pngFile/ if $file eq $pngFile;
+    print STDERR "save $pngFile\n";
+    $photo->write( $pngFile );
+
     return ( $img, $photo );
 }
+
+
 
 
 sub initMainWindow {

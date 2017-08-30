@@ -95,6 +95,7 @@ sub parseAttr {
 }
 
 sub closedWayComponents {
+    require OGF::Geo::Topology;
 	my( $self, $rxRole, $hOpt ) = @_;
 	$hOpt = {} if ! $hOpt;
 	if( ! $self->{_way_components}{$rxRole} ){

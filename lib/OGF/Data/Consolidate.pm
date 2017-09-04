@@ -1333,10 +1333,15 @@ sub removeIdenticalWays {
 }
 
 sub removeIdenticalNodes {
-	my( $ctx ) = @_;
+	my( $ctx, $precision ) = @_;
+    my $fmt = $precision ? "\%.${precision}f" : undef;
+#   print STDERR "\$fmt <", $fmt, ">\n";  # _DEBUG_
+
 	my %nodeInfo;
 	foreach my $node ( values %{$ctx->{_Node}} ){
-		my $tag = join( '|', $node->{'lon'}, $node->{'lat'} );
+		my( $lon, $lat ) = ( $node->{'lon'}, $node->{'lat'} );
+        ( $lon, $lat ) = ( sprintf($fmt,$lon), sprintf($fmt,$lat) ) if $fmt;
+		my $tag = join( '|', $lon, $lat );
 		$nodeInfo{$tag} = [] if ! $nodeInfo{$tag};
 		push @{$nodeInfo{$tag}}, $node->{'id'};
 	}
@@ -1360,6 +1365,73 @@ sub simpleClose {
 		}
 	}
 }
+
+sub addLinearRedundantNodes {
+    my( $ctx, $div, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
+    $div = 2 if ! $div;
+    foreach my $way ( values %{$ctx->{_Way}} ){
+        my @newNodes;
+        my $aNodes = $way->{'nodes'};
+        my $n = $#{$aNodes};
+        for( my $i = 0; $i < $n; ++$i ){
+            push @newNodes, $aNodes->[$i];
+            my( $n0, $n1 ) = ( $ctx->{_Node}{$aNodes->[$i]}, $ctx->{_Node}{$aNodes->[$i+1]} );
+            my( $lon0, $lat0, $lon1, $lat1 ) = ( $n0->{'lon'}, $n0->{'lat'}, $n1->{'lon'}, $n1->{'lat'} );
+            next if $hOpt->{'gridOnly'} && !($lon0 == $lon1 || $lat0 == $lat1);
+            my( $dx, $dy ) = ( ($lon1 - $lon0) / $div, ($lat1 - $lat0) / $div );
+            for( my $j = 1; $j < $div; ++$j ){
+		        my $node = OGF::Data::Node->new( $ctx, {'lon' => $lon0+$j*$dx, 'lat' => $lat0+$j*$dy} );
+		        push @newNodes, $node->{'id'};
+            }
+        }
+        push @newNodes, $aNodes->[-1];
+        $way->{'nodes'} = \@newNodes;
+    }
+}
+
+sub removeLinearRedundantNodes {   # horizontal/vertical only
+    my( $ctx, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
+	$ctx->setReverseInfo() if $hOpt->{'allWays'};
+	my %redundantNodes = ();
+
+    foreach my $way ( values %{$ctx->{_Way}} ){
+        my $aNodes = $way->{'nodes'};
+        my $n = $#{$aNodes};
+        my @indexList = map {[$_-1, $_, $_+1]} (1 .. $n-1);
+        push @indexList, [$n-1,0,1] if $aNodes->[0] == $aNodes->[$n];
+        
+        foreach my $aIdx ( @indexList ){
+            my( $n0, $n1, $n2 ) = map {$ctx->{_Node}{$aNodes->[$_]}} @$aIdx;
+            if( $n0->{'lon'} == $n1->{'lon'} && $n1->{'lon'} == $n2->{'lon'} || $n0->{'lat'} == $n1->{'lat'} && $n1->{'lat'} == $n2->{'lat'} ){
+                $redundantNodes{'N|'.$n1->{'id'}}{'W|'.$way->{'id'}} = 1;
+            }
+        }
+    }
+    if( $hOpt->{'allWays'} ){
+        foreach my $nodeId ( keys %redundantNodes ){
+            my( $hRev, $hRedundant ) = ( $ctx->{_rev_info}{$nodeId}, $redundantNodes{$nodeId} );
+#    		    use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$hRev], ['hRev'] ), "\n";  # _DEBUG_
+            my @ways = grep {! $hRedundant->{$_}} keys %$hRev;
+            if( scalar(@ways) == 0 ){
+                $nodeId =~ s/^N\|//;
+                delete $ctx->{_Node}{$nodeId};
+            }
+        }
+    }else{
+        foreach my $nodeId ( keys %redundantNodes ){
+            $nodeId =~ s/^N\|//;
+            delete $ctx->{_Node}{$nodeId};
+        }
+    }
+
+    removeMissingNodes( $ctx );
+}
+
+
+
+
 
 
 #-------------------------------------------------------------------------------

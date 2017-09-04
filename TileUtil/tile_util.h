@@ -15,7 +15,8 @@
 #define FUNC_ELEV_MIN_MAX     104
 #define FUNC_ELEV_SUBTRACT    105
 #define FUNC_ELEV_SUBTRACT_CENTER    106
-#define FUNC_ELEV_MIN         107
+#define FUNC_ELEV_MIN_SHIFT   107
+#define FUNC_ELEV_MAX_SHIFT   108
 
 #define FLAG_LAND_AREA        1
 
@@ -110,7 +111,8 @@ void apply_elevation_max( map_tile tCanvas, int x0, int y0, map_tile tPaint, dou
 void apply_elevation_add( map_tile tCanvas, int x0, int y0, map_tile tPaint, double mult, map_tile tPrev, int flags );
 void apply_elevation_subtract( map_tile tCanvas, int x0, int y0, map_tile tPaint, double mult, map_tile tPrev, int flags );
 void apply_elevation_subtract_center( map_tile tCanvas, int x0, int y0, map_tile tPaint, double mult, map_tile tPrev, int flags );
-void apply_elevation_min( map_tile tCanvas, int x0, int y0, map_tile tPaint, double min, map_tile tPrev, int flags );
+void apply_elevation_min_shift( map_tile tCanvas, int x0, int y0, map_tile tPaint, double min, map_tile tPrev, int flags );
+void apply_elevation_max_shift( map_tile tCanvas, int x0, int y0, map_tile tPaint, double min, map_tile tPrev, int flags );
 
 void apply_elevation_min_max( map_tile tCanvas, int x0, int y0, map_tile tPaint, double mult, int *minMax );
 void apply_elevation_add_prev( map_tile tCanvas, int x0, int y0, map_tile tPaint, double mult, map_tile tPrev, int dx, int dy );

@@ -944,7 +944,33 @@ void apply_elevation_max( map_tile tCanvas, int x0, int y0, map_tile tPaint, dou
 	}
 }
 
-void apply_elevation_min( map_tile tCanvas, int x0, int y0, map_tile tPaint, double min, map_tile tPrev, int flags ){
+void apply_elevation_max_shift( map_tile tCanvas, int x0, int y0, map_tile tPaint, double max, map_tile tPrev, int flags ){
+	int x, y, xp, yp;
+	VALUE vPaint, vPaintC, vCanvas, vPrev;	
+
+	x = tPaint.dx / 2;
+	y = tPaint.dy / 2;
+	vPaintC = get_pixel( tPaint, x, y );
+	/* printf( "min:%lf vPaintC:%d\n", min, vPaintC );  -- _DEBUG_ */ 
+
+	for( y = 0; y < tPaint.dy; ++y ){
+		yp = y0 + y;
+		if( yp >= tCanvas.dy ) break; if( yp < 0 ) continue;
+		for( x = 0; x < tPaint.dx; ++x ){
+			xp = x0 + x;
+			if( xp >= tCanvas.dx ) break; if( xp < 0 ) continue;
+			/* printf( "y:%d x:%d yp:%d xp:%d\n", y,x, yp,xp ); -- _DEBUG_ */
+			/* printf( "y:%d x:%d yp:%d xp:%d off:%d\n", y,x, yp,xp, 2*pixel_offset(tCanvas,xp,yp) ); -- _DEBUG_ */
+			/* vPrev   = get_pixel( tPrev, xp,yp ); */
+			/* if( (flags & FLAG_LAND_AREA) && vPrev <= 0 ) continue; */
+			vPaint  = get_pixel( tPaint, x,y );
+			vCanvas = get_pixel( tCanvas, xp,yp );
+			if( max - (vPaintC - vPaint) > vCanvas )  set_pixel( tCanvas, xp,yp, (VALUE) (max - (vPaintC - vPaint)) );
+		}
+	}
+}
+
+void apply_elevation_min_shift( map_tile tCanvas, int x0, int y0, map_tile tPaint, double min, map_tile tPrev, int flags ){
 	int x, y, xp, yp;
 	VALUE vPaint, vPaintC, vCanvas, vPrev;	
 

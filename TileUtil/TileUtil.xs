@@ -360,8 +360,11 @@ applyDrawFunction( func, dxC, dyC, tCanvas, x0, y0, dxP, dyP, tPaint, mult, strR
 		case FUNC_ELEV_MIN_MAX:
 			apply_elevation_min_max( data_tile(dxC,dyC,(TILE) tCanvas), x0,y0, data_tile(dxP,dyP,(TILE) tPaint), mult, &minMax );
 			break;
-		case FUNC_ELEV_MIN:
-			apply_elevation_min( data_tile(dxC,dyC,(TILE) tCanvas), x0,y0, data_tile(dxP,dyP,(TILE) tPaint), mult, data_tile(dxP,dyP,(TILE) tPrev), flags );
+		case FUNC_ELEV_MIN_SHIFT:
+			apply_elevation_min_shift( data_tile(dxC,dyC,(TILE) tCanvas), x0,y0, data_tile(dxP,dyP,(TILE) tPaint), mult, data_tile(dxP,dyP,(TILE) tPrev), flags );
+			break;
+		case FUNC_ELEV_MAX_SHIFT:
+			apply_elevation_max_shift( data_tile(dxC,dyC,(TILE) tCanvas), x0,y0, data_tile(dxP,dyP,(TILE) tPaint), mult, data_tile(dxP,dyP,(TILE) tPrev), flags );
 			break;
 		default:
 			printf( "applyDrawFunction: unknown function code %d\n", func );

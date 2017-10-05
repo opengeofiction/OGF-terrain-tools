@@ -1429,8 +1429,56 @@ sub removeLinearRedundantNodes {   # horizontal/vertical only
     removeMissingNodes( $ctx );
 }
 
+sub extractOuterBoundaries {
+    my( $ctx, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
+	$ctx->setReverseInfo();
 
+    foreach my $way ( values %{$ctx->{_Way}} ){
+        my $aNodes = $way->{'nodes'};
+        my $n = $#{$aNodes};
 
+        my @outerParts = ( [] );
+        my @indexList = grep {scalar(keys %{$ctx->{_rev_info}{'N|'.$aNodes->[$_]}}) <= 1} (0 .. $#{$aNodes});
+        next if ! @indexList;
+        print STDERR $way->{'id'}, " ($#{$aNodes}|$aNodes->[0])  \@indexList <", join('|',@indexList), ">\n";  # _DEBUG_
+        while( @indexList ){
+            my $idx = shift @indexList;
+            push @{$outerParts[-1]}, $idx;
+            if( @indexList && $indexList[0] != $idx+1 ){
+                push @outerParts, [];
+            }
+        }
+        use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@outerParts], ['*outerParts'] ), "\n";  # _DEBUG_
+        print STDERR "\$outerParts[0][0] <", $outerParts[0][0], ">  \$outerParts[-1][-1] <", $outerParts[-1][-1], ">\n";  # _DEBUG_
+        print STDERR "\$aNodes->[\$outerParts[0][0]] <", $aNodes->[$outerParts[0][0]], ">  \$aNodes->[\$outerParts[-1][-1]] <", $aNodes->[$outerParts[-1][-1]], ">\n";  # _DEBUG_
+        my $shiftFlag = 0;
+        if( scalar(@outerParts) > 1 && $aNodes->[$outerParts[0][0]] == $aNodes->[$outerParts[-1][-1]] ){
+            my $aFirst = shift @outerParts;
+            shift @$aFirst;
+            push @{$outerParts[-1]}, @$aFirst;
+            $shiftFlag = 1;
+            use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@outerParts], ['*outerParts'] ), "\n";  # _DEBUG_
+        }
+        if( scalar(@outerParts) > 0 ){
+            foreach my $aP ( @outerParts ){
+                my( $i0, $i1 ) = ( $aP->[0], $aP->[-1] );
+                print STDERR "\$i0 <", $i0, ">  \$i1 <", $i1, ">\n";  # _DEBUG_
+                $i0 = ($i0 > 0)? $i0-1 : $#{$aNodes};
+                $i1 = ($i1 < $#{$aNodes})? $i1+1 : 0;
+                $i1 = 1 if $i1 == 0 && $shiftFlag;
+                unshift @$aP, $i0;
+                push    @$aP, $i1;
+                my @nodes = map {$aNodes->[$_]} @$aP;
+                my $wayNew = OGF::Data::Way->new( $ctx, {'tags' => $way->{'tags'}, 'nodes' => \@nodes} );
+            }
+            use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@outerParts], ['*outerParts'] ), "\n";  # _DEBUG_
+            delete $ctx->{_Way}{$way->{'id'}};
+        }
+    }
+	$ctx->setReverseInfo();
+    removeUnusedNodes( $ctx );
+}
 
 
 

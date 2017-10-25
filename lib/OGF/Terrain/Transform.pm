@@ -53,7 +53,7 @@ sub layerTransform {
                     my $ptGeo = $vtTgt->tile2geo( [$tx, $ty, $x, $y] );
                     next if $aStrictBbox && ! inBbox( $aStrictBbox, $ptGeo );
 #                   $ptGeo->[0] -= 50;   ### Roantra specific ###
-#                   print STDERR "\@\$ptGeo <", join('|',@$ptGeo), ">\n";  # _DEBUG_
+                    print STDERR "\@\$ptGeo <", join('|',@$ptGeo), ">\n";  # _DEBUG_
                     my $ptElev = $vtSrc->geo2cnv( $ptGeo );
 #                   print STDERR "\$ptElev <", join(',',@$ptElev), ">\n"; exit; # _DEBUG_
 #                   my( $xe, $ye ) = ( floor($ptElev->[0]+.5), floor($ptElev->[1]+.5) );
@@ -98,26 +98,28 @@ our $OUTPUT_DIRECTORY;
 
 
 sub makeSrtmElevationTile {
-    my( $layer, $level, $sampSize, $X, $Y ) = @_;
-	if( ref($X) eq 'ARRAY' ){
-		my $bbox = $X;
-        my( $minLon, $minLat, $maxLon, $maxLat ) = map {POSIX::floor($_)} @$bbox;
+    my( $layer, $level, $sampSize, $aCoord, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
+
+	if( scalar(@$aCoord) == 4 ){
+        my( $minLon, $minLat, $maxLon, $maxLat ) = map {POSIX::floor($_)} @$aCoord;
         for( my $y = $minLat; $y <= $maxLat; ++$y ){
             for( my $x = $minLon; $x <= $maxLon; ++$x ){
                 print STDERR "makeSrtmElevationTile $layer $level $x $y\n";
-                makeSrtmElevationTile( $layer, $level, $sampSize, $x, $y );
+                makeSrtmElevationTile( $layer, $level, $sampSize, [$x,$y], $hOpt );
             }
         }
 		return;
 	}
+	my( $X, $Y ) = @$aCoord;
 
-    $X += 50 if $layer eq 'Roantra';
     my $outfile = sprintf( '%s%02d%s%03d.hgt', (($Y =~ /^-/)? 'S':'N'), abs($Y), (($X =~ /^-/)?'W':'E'), abs($X) );
 	$outfile = $OUTPUT_DIRECTORY .'/'. $outfile if $OUTPUT_DIRECTORY;
-#   if( -e $outfile ){
-#       print STDERR qq/File "$outfile" already exists, skipping.\n/;
-#       return;
-#   }
+	print STDERR "* file: ", $outfile, "\n";  # _DEBUG_
+    if( $hOpt->{'noExist'} && -e $outfile ){
+        print STDERR qq/File "$outfile" already exists, skipping.\n/;
+        return;
+    }
 
     my $aRows  = makeTileArray( sub{ 0; }, $sampSize+1, $sampSize+1 );
     my $vtElev = OGF::Util::GlobalTile->new( "elev:$layer:$level:all", {'-default' => 0} );
@@ -144,16 +146,21 @@ sub getSrcElevation {
     my( $vtElev, $sampSize, $X, $Y, $xx, $yy ) = @_;
     my $arc = 1 / $sampSize;
     my( $degX, $degY ) = ( $X + $xx * $arc, $Y + 1 - $yy * $arc );
+#   $degX -= 50;   ### Roantra specific ###
 #	print STDERR "\$degY <", $degY, ">  \$degX <", $degX, ">\n";  # _DEBUG_
 
-    my( $xx_WW, $yy_WW ) = $vtElev->geo2cnv( $degX, $degY );
-    my( $x0, $y0 ) = ( POSIX::floor($xx_WW), POSIX::floor($yy_WW) );
+    my( $xC, $yC ) = $vtElev->geo2cnv( $degX, $degY );
+    my( $x0, $y0 ) = ( POSIX::floor($xC), POSIX::floor($yC) );
     my( $x1, $y1 ) = ( $x0 + 1, $y0 + 1 );
 #	print STDERR "[$xx:$yy] \$x0 <", $x0, ">  \$y0 <", $y0, ">  \$x1 <", $x1, ">  \$y1 <", $y1, ">\n";  # _DEBUG_
 
-#	my( $elev00, $elev01, $elev10, $elev11 ) = ( $vtElev->[$y0][$x0] || 0, $vtElev->[$y0][$x1] || 0, $vtElev->[$y1][$x0] || 0, $vtElev->[$y1][$x1] || 0 );
-    my( $elev00, $elev01, $elev10, $elev11 ) = ( $vtElev->getPixel($x0,$y0) || 0, $vtElev->getPixel($x1,$y0) || 0, $vtElev->getPixel($x0,$y1) || 0, $vtElev->getPixel($x1,$y1) || 0 );
-    my $elev = ($y1-$yy_WW)*($x1-$xx_WW)*$elev00 + ($y1-$yy_WW)*($xx_WW-$x0)*$elev01 + ($yy_WW-$y0)*($x1-$xx_WW)*$elev10 + ($yy_WW-$y0)*($xx_WW-$x0)*$elev00;
+#   my( $elev00, $elev01, $elev10, $elev11 ) = ( $vtElev->getPixel($x0,$y0) || 0, $vtElev->getPixel($x1,$y0) || 0, $vtElev->getPixel($x0,$y1) || 0, $vtElev->getPixel($x1,$y1) || 0 );
+#   my $elev = ($y1-$yC)*($x1-$xC)*$elev00 + ($y1-$yC)*($xC-$x0)*$elev01 + ($yC-$y0)*($x1-$xC)*$elev10 + ($yC-$y0)*($xC-$x0)*$elev00;
+
+    my( $elev00, $elev01, $elev10, $elev11 ) = ( $vtElev->getPixel($x0,$y0) || 0, $vtElev->getPixel($x0,$y1) || 0, $vtElev->getPixel($x1,$y0) || 0, $vtElev->getPixel($x1,$y1) || 0 );
+    my( $dx0, $dx1, $dy0, $dy1 ) = ( $xC - $x0, $x1 - $xC, $yC - $y0, $y1 - $yC );
+    my $elev = $dx1*$dy1*$elev00 + $dx1*$dy0*$elev01 + $dx0*$dy1*$elev10 + $dx0*$dy0*$elev11;
+
     $elev = POSIX::floor( $elev + .5 );
     return $elev;
 }

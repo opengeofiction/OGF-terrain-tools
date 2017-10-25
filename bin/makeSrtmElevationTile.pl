@@ -7,18 +7,20 @@ use OGF::Terrain::Transform;
 use OGF::Util::Usage qw( usageInit usageError );
 
 
-# makeSrtmElevationTile.pl Roantra:4 -- -21 45
+# makeSrtmElevationTile.pl Roantra:4 -- -21 45 1200
 # makeSrtmElevationTile.pl OGF:12 89 18  3600
 # makeSrtmElevationTile.pl OGF:13 -- 124 -26
 # makeSrtmElevationTile.pl OGF:9 -- 100 -64
 # makeSrtmElevationTile.pl OGF:13 -- 50 -9
 # makeSrtmElevationTile.pl OGF:13 -- 108 -63  3600
 # makeSrtmElevationTile.pl OGF:13 3600 bbox=....
+# perl C:/usr/OGF-terrain-tools/bin/makeSrtmElevationTile.pl Paxtar:0 1200 bbox=18.6,-45.94,37.86,-36.3
+# perl C:/usr/OGF-terrain-tools/bin/makeSrtmElevationTile.pl Roantra:4 1200 bbox=25.97,43.14,31.34,47.10
 
 
 my %opt;
-usageInit( \%opt, qq//, << "*" );
-<layer> <x> <y>
+usageInit( \%opt, qq/ noExist /, << "*" );
+[-noExist] <layer> <x> <y>
 *
 
 our( $LAYER, $X, $Y, $SAMP_SIZE, $BBOX );
@@ -43,9 +45,9 @@ chdir $OGF::TERRAIN_OUTPUT_DIR;
 if( $BBOX ){
 	$BBOX =~ s/^bbox=//;
 	$BBOX = [ map {POSIX::floor($_)} split /,/, $BBOX ];
-    OGF::Terrain::Transform::makeSrtmElevationTile( $LAYER, $LEVEL, $SAMP_SIZE, $BBOX );
+    OGF::Terrain::Transform::makeSrtmElevationTile( $LAYER, $LEVEL, $SAMP_SIZE, $BBOX, \%opt );
 }else{
-    OGF::Terrain::Transform::makeSrtmElevationTile( $LAYER, $LEVEL, $SAMP_SIZE, $X, $Y );
+    OGF::Terrain::Transform::makeSrtmElevationTile( $LAYER, $LEVEL, $SAMP_SIZE, [$X,$Y], \%opt );
 }
 
 

@@ -3,11 +3,10 @@ use strict;
 use warnings;
 use Date::Format;
 use File::Copy;
-use UTAN::Util qw( splitDelimited errorDialog );
 use OGF::Const;
 use Exporter;
 our @ISA = qw( Exporter );
-our @EXPORT_OK = qw(
+our @EXPORT_OK = qw( exception errorDialog infoDialog
 );
 
 
@@ -219,6 +218,7 @@ sub convertOsmosis {
         'Archanta'  => [ 'OGF', 'bbox=60,-60,130,34' ],
         'R_S'       => [ 'OGF', 'bbox=25.97,29.47,56.61,49.49' ],
         'Khaiwoon'  => [ 'OGF', 'bbox=89.10,18.31,90.93,18.85' ],
+        'Paxtar'    => [ 'OGF', 'bbox=18.6,-45.94,37.86,-36.3' ],
     );
 
 	my $cmd = $OSMOSIS_EXE;
@@ -283,11 +283,6 @@ sub extractFileBlocks {
 sub parseConfig {
 	my( $file, $hDsc ) = @_;
 	print STDERR "parseConfig( $file )\n";  # _DEBUG_
-#	print "parseConf(", join('|',%$fileObj), ")\n";  # _DEBUG_
-#	if( ! ref($fileObj) ){
-#		$fileObj = UTAN::UniTree::FileSystem::File::handleNonrefFile( $self, $self->{_UTAN_component}, $fileObj );
-#	}
-
 	my @cmds;
 	my $perlBlock = undef;
 
@@ -328,6 +323,41 @@ sub parseConfig {
 	};
 
 	return $hInit;
+}
+
+sub splitDelimited {
+	my( $line, $hOpt ) = @_;
+	my @ret;
+	my $val;
+	my( $blS, $blE ) = $hOpt->{-block} ? ($hOpt->{-block} =~ /^(.).*(.)$/) : (undef,undef);
+
+#	print "-------------------\n";
+	while( length($line) ){
+		if( substr($line,0,1) eq '"' ){
+			( $val, $line ) = extract_delimited( $line, '"' );
+			last if defined($line) && !defined($val);
+#			print "<$val>\n";
+			unless( $hOpt->{-nostrip} ){
+				$val =~ s/^"//;
+				$val =~ s/"$//;
+			}
+		}elsif( defined($blS) && substr($line,0,1) eq $blS ){
+			( $val, $line ) = extract_bracketed( $line, $hOpt->{-block} );
+			last if defined($line) && !defined($val);
+			unless( $hOpt->{-nostrip} ){
+				$val =~ s/^\Q$blS//;
+				$val =~ s/\Q$blE\E$//;
+			}
+		}elsif( $line =~ s/^'(.*)// ){
+			$val = $1;
+		}else{
+			$line =~ s/(\S+)//;
+			$val = $1;
+		}
+		push @ret, $val;
+		$line =~ s/.\s*//;
+	}
+	return @ret;
 }
 
 sub processParserInfo {
@@ -421,11 +451,7 @@ sub colorHex {
 }
 
 
-
-
-
 #-------------------------------------------------------------------------------
-
 
 our $CMD_ERROR_HANDLER = undef;
 
@@ -465,6 +491,94 @@ sub stackTrace {
 
 sub printStackTrace {
 	print STDERR stackTrace(), "\n";
+}
+
+
+
+#-------------------------------------------------------------------------------
+
+our $TK_APP;
+
+sub exception {
+	if( $TK_APP ){
+		errorDialog( join('',@_) );
+	}else{
+		warn @_, "\n";
+	}
+}
+
+sub errorDialog {
+	$TK_APP->logToFile( 'ERROR', @_ ) if $TK_APP && $TK_APP->can('logToFile');
+	dialog( @_, -title => 'Error' );
+}
+
+sub warnDialog {
+	dialog( @_, -title => 'Warning' );
+}
+
+sub infoDialog {
+	dialog( @_, -title => 'Info' );
+}
+
+sub confirmDialog {
+	my $ret = dialog( @_, -title => 'Confirm', -buttons => ['OK','*Cancel'] );
+	return $ret;
+}
+
+sub dialog {
+	my( $text, %opts ) = @_;
+	my $aButtons   = (exists $opts{-buttons})?   (delete $opts{-buttons})   : ['*OK'];
+	my $hAddWidget = (exists $opts{-addWidget})? (delete $opts{-addWidget}) : undef;
+
+    my $app = $TK_APP;
+	if( ! $app ){
+		print STDERR "[", uc($opts{'-title'}), "] ", $text, "\n";
+		return;
+	}
+
+	my $dg = $app->Toplevel( %opts );
+	if( ! $dg ){
+		warn $text;
+		return;
+	}
+	$dg->Label(
+		-text    => $text,
+		-padx    => 50,
+		-pady    => 20,
+		-justify => 'left',
+	)->pack( -side => 'top', -fill => 'x', -expand => 1 );
+
+	if( $hAddWidget ){
+		my $class = delete $hAddWidget->{'class'};
+		my $hPack = $hAddWidget->{'pack'} ? (delete $hAddWidget->{'pack'}) : {-side => 'top', -fill => 'x', -expand => 1};
+		$dg->$class( %$hAddWidget )->pack( %$hPack );
+	}
+
+	my $frm = $dg->Frame()->pack( -side => 'top' );
+	my $ret = '';
+	foreach my $btnText ( @$aButtons ){
+		my $focus = ($btnText =~ s/^\*//)? 1 : 0;
+		my $btn = $frm->Button(
+			-text    => $btnText,
+#			-command => sub{ $dg->grabRelease; $dg->destroy; },
+			-command => sub{ $ret = $btnText },
+			-padx    => 20,
+		)->pack( -side => 'left', -expand => 1, -padx => 10, -pady => 5 );
+		$btn->focus if $focus;
+	}
+
+	$dg->bind( '<Control-c>', sub{
+		$dg->clipboardClear();
+		$dg->clipboardAppend( $text );
+	} );
+
+	$dg->update;
+	$dg->grab;   # update must happen before grab to avoid "grab failed: window not viewable" error on Linux
+
+	$app->waitVariable( \$ret );
+	$dg->grabRelease;
+	$dg->destroy;
+	return $ret;
 }
 
 

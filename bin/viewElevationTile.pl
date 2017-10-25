@@ -27,6 +27,9 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:OGF:13:bbox=121.28014,-21.61147,121.46965,-21.43070
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:WebWW:9:bbox=121.28014,-21.61147,121.46965,-21.43070
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:5:bbox=42.62146,48.01932,44.47266,49.42884 -forceRemake
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Paxtar/elev/0
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:Paxtar:0:0-7:0-7
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/Map/Elevation/tmp/N45E030.hgt
 
 
 
@@ -74,7 +77,7 @@ $cnvS->Tk::bind( '<Motion>' => sub {
 	my( $x, $y ) = OGF::Util::Canvas::canvasEventPos( $cnvS );
 #	print STDERR ++$ct . "   \$x <", $x, ">  \$y <", $y, ">\n";  # _DEBUG_
 	my $text = "$x,$y";
-	$text .= $File::Find::name ."  ". $TILE_DATA->[$y][$x] if $TILE_DATA->[$y] && defined $TILE_DATA->[$y][$x];
+	$text .= $TILE_DATA->[$y][$x] if $TILE_DATA->[$y] && defined $TILE_DATA->[$y][$x];
 	$info = $text;
 } );
 
@@ -144,10 +147,11 @@ sub viewElevationTile {
 
 	my( $img, $photo );
     my $pngFile = $file . '.png';
+    print STDERR "\$pngFile <", $pngFile, ">\n";  # _DEBUG_
     if( -f $pngFile && ! $opt{'forceRemake'} ){
         if( ! $opt{'noExist'} ){
             $photo = $cnv->Photo( -file => $pngFile );
-            $img = $cnv->createImage( 0, 0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
+            $img = $cnv->createImage( $x0, $y0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
         }
         return ( $img, $photo );
     }

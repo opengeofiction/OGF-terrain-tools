@@ -1,7 +1,7 @@
 package OGF::Terrain::RiverProfile;
 use strict;
 use warnings;
-use UTAN::Util qw( errorDialog );
+use OGF::Util qw( errorDialog );
 use OGF::Geo::Measure;
 use base qw( Tk::Frame );
 

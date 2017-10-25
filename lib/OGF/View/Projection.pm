@@ -2,7 +2,6 @@ package OGF::View::Projection;
 use strict;
 use warnings;
 use Geo::Proj4;
-use UTAN::Util qw( exception );
 use OGF::Const;
 
 

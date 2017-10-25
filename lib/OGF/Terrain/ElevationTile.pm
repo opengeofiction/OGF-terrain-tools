@@ -2,7 +2,7 @@ package OGF::Terrain::ElevationTile;
 use strict;
 use warnings;
 use POSIX;
-use UTAN::Util qw( readFromFile writeToFile );
+use OGF::Util::File qw( readFromFile writeToFile );
 use OGF::TileUtil;
 use Exporter;
 our @ISA = qw( Exporter );

@@ -170,6 +170,20 @@ our %INFO_MAP = (
             'suffix'   => 'bil',
         },
     },
+    'Paxtar' => {
+        'size'     => [ 1024, 1024 ],
+        'minMax'   => { baseLevel => 0, maxLevel => 19, min_Y => 0, max_Y => 7, min_X => 0, max_X => 7, order_X => 1, order_Y => 1 },
+        'proj4'    => '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs',
+        'tile'     => [ '%d/%d/%d.%s', 'level', 'x', 'y', 'suffix' ],
+        'elev' => {
+            'baseDir'  => [ $PATH_PREFIX.'/Paxtar/elev' ],
+            'tile'     => [ '%d/%d/%d.%s', 'level', 'x', 'y', 'suffix' ],
+        },
+        'transform' => {
+            'X' => [  2046411.1508409,  0, 4284199.51430543, 8192 ],
+            'Y' => [ -3875764.20684828, 0, -6113552.57031249, 8192 ],
+        },
+    },
 #    'SathriaEck4' => {
 #        'definitionFile' => $PATH_PREFIX.'/OGF/work/eck4_Sathria_elev.cpx',
 #        'transform' => {
@@ -742,11 +756,11 @@ sub tileIterator {
 			$cSub->( $item );
 		}else{
 			for( my $y = $yMin; $y <= $yMax; ++$y ){
-				print STDERR "tileIterator \$y <", $y, ">\n";  # _DEBUG_
+#				print STDERR "tileIterator \$y <", $y, ">\n";  # _DEBUG_
 				for( my $x = $xMin; $x <= $xMax; ++$x ){
 					my $item = $info->copy( 'y' => $y, 'x' => $x );
 					my $fileName = $item->tileName();
-					print STDERR "\$fileName <", $fileName, ">\n";  # _DEBUG_
+#					print STDERR "\$fileName <", $fileName, ">\n";  # _DEBUG_
 					next unless -f $fileName || $ITERATOR_OPTS{'CREATE'} || $fileName =~ /^https?:/;
 					$cSub->( $item );
 				}

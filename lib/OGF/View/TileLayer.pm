@@ -2,10 +2,7 @@ package OGF::View::TileLayer;
 use strict;
 use warnings;
 use POSIX qw( floor fmod );
-use UTAN::Util qw( exception );
-use UTAN::Parser;
-use OGF::Const;
-use OGF::Util;
+use OGF::Util qw( exception );
 use OGF::View::Projection;
 use OGF::LayerInfo;
 

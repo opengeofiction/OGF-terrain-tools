@@ -7,7 +7,7 @@ use Tk::JPEG;
 use Tk::PNG;
 use POSIX;
 use File::Copy;
-use UTAN::Util qw( infoDialog );
+use OGF::Util qw( infoDialog );
 use OGF::Util::File qw( writeToFile readFromFile );
 use OGF::Geo::Measure;
 use OGF::LayerInfo;
@@ -917,10 +917,6 @@ sub setInlandWaterPoints {
 #-------------------------------------------------------------------------------
 
 
-our $GET_APP_OBJ;
-sub getApp { 	return $GET_APP_OBJ;  }
-
-
 
 sub loadTiles {
 #	my( $self, $layer, $tx, $ty, $level ) = @_;
@@ -1152,7 +1148,7 @@ sub showRGB {
 #	my $text = "R $cR   G $cG   B $cB";
 	my $text = sprintf "Position ($xE,$yE)   --   R:%d   G:%d   B:%d   --   %02X %02X %02X", $cR, $cG, $cB, $cR, $cG, $cB;
 
-	$GET_APP_OBJ = $self;
+	$OGF::Util::TK_APP = $self;
 	infoDialog( $text );
 }
 

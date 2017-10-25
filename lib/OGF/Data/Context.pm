@@ -4,11 +4,10 @@ use warnings;
 use FileHandle;
 use IO::Scalar;
 use OGF::Const;
-use OGF::Util;
+use OGF::Util qw( exception );
 use OGF::Data::Node;
 use OGF::Data::Way;
 use OGF::Data::Relation;
-use UTAN::Util qw( exception );
 
 
 our $AUTOLOAD;

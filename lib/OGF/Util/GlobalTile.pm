@@ -68,6 +68,7 @@ sub getTileArray {
 	my( $self, $x, $y, $verbose ) = @_;
 #	my( $tx, $ty, $tileWd, $tileHg ) = $self->getTileXY( $x, $y );
 	my( $tx, $ty, $xt, $yt ) = $self->cnv2tile( $x, $y );
+#	print STDERR "\$tx <", $tx, ">  \$ty <", $ty, ">  \$xt <", $xt, ">  \$yt <", $yt, ">\n";  # _DEBUG_
 	my( $tileWd, $tileHg )   = $self->{_layerInfo}->tileSize();
 	my( $key, $flag ) = ( "$tx:$ty", 0 );
 

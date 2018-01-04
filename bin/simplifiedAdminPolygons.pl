@@ -54,6 +54,7 @@ our %VERIFY_IGNORE = (
     481   => 'UL130',  # Alora, Takora region (indyroads)
     10386 => 'TA333',  # Egani, southern islands   
     24874 => 'PE070',  # ???
+    992   => 'AR120-00',  # AR120 capital region, missing ogf:id
 );
 
 
@@ -242,7 +243,7 @@ sub fileExport_Overpass {
        [timeout:1800][maxsize:4294967296];
        (
          (relation["boundary"="administrative"]["admin_level"="2"];
-          relation["boundary"="administrative"]["ogf:id"];);
+          relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|AR120-[0-9]{2})$"];);
          >;
        );
        out;

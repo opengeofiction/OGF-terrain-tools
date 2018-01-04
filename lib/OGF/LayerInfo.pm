@@ -663,7 +663,7 @@ sub minMaxInfo {
 	if( $hMinMax->{'order_X'} ){
 		return ( $minY, $maxY, $minX, $maxX, $baseLevel, $hMinMax->{'order_X'}, $hMinMax->{'order_Y'} );
 	}else{
-		return ( $minY, $maxY, $minX, $maxX, $baseLevel );
+		return ( $minY, $maxY, $minX, $maxX, $baseLevel, 1, 1 );
 	}
 }
 

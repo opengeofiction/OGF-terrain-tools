@@ -40,6 +40,8 @@ $OGF::ELEV_UNDEF = -30001;
 $OGF::DISPLAY_PPI = 94.34;  # pixels per inch, via http://www.sven.de/dpi/
 $OGF::DISPLAY_PPM = $OGF::DISPLAY_PPI / .0254;  # pixels per meter  = 3714.17322834646
 
+$OGF::REPLICATION_DIR = '/opt/osm/replicate-05-min';
+$OGF::COASTLINE_UPDATE_COMPLETION_FILE = '/var/lib/tirex/tmp/COASTLINE_UPDATE';
 
 #-------------------------------------------------------------------------------
 

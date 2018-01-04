@@ -172,6 +172,8 @@ sub convertMapLevel {
 
     $WWINFO_TYPE = $wwInfo->{'type'};
     my( $tileWd, $tileHg ) = $wwInfo->tileSize();
+	my( $minY, $maxY, $minX, $maxX, $baseLevel, $orderX, $orderY ) = OGF::LayerInfo->minMaxInfo( $wwInfo->{'layer'}, $wwInfo->{'level'} );
+    my $hTileOrder = { order_X => $orderX, order_Y => $orderY };
 
     my( $upDown, @list );
     if( $targetLevel < $wwInfo->{'level'} ){
@@ -188,7 +190,7 @@ sub convertMapLevel {
         OGF::LayerInfo->tileIterator( $wwInfo, sub {
             my( $item ) = @_;
             if( $upDown eq 'down' ){
-                OGF::Util::TileLevel::downLevelConcat( $tileWd, $tileHg, $item, $hCreated );
+                OGF::Util::TileLevel::downLevelConcat( $tileWd, $tileHg, $item, $hCreated, $hTileOrder );
             }else{
                 OGF::Util::TileLevel::upLevelSplit( $tileWd, $tileHg, $item );
             }
@@ -203,19 +205,16 @@ sub convertMapLevel {
 
 
 sub downLevelConcat {
-	my( $wd, $hg, $objIn, $hCreated ) = @_;
+	my( $wd, $hg, $objIn, $hCreated, $hTileOrder ) = @_;
 #	print STDERR "downLevelConcat( $wd, $hg, $fileIn )\n";  # _DEBUG_
 	my( $level, $yD, $xD ) = ( $objIn->{'level'}, int($objIn->{'y'}/2), int($objIn->{'x'}/2) );
+    my( $dx0, $dx1 ) = ($hTileOrder->{order_X} < 0)? ( 1, 0 ) : ( 0, 1 );
+    my( $dy0, $dy1 ) = ($hTileOrder->{order_Y} < 0)? ( 1, 0 ) : ( 0, 1 );
 
-	my $img00 = $objIn->copy( 'y' => $yD*2,   'x' => $xD*2   )->tileName();
-	my $img01 = $objIn->copy( 'y' => $yD*2,   'x' => $xD*2+1 )->tileName();
-	my $img10 = $objIn->copy( 'y' => $yD*2+1, 'x' => $xD*2   )->tileName();
-	my $img11 = $objIn->copy( 'y' => $yD*2+1, 'x' => $xD*2+1 )->tileName();
-
-#	my $img00 = $objIn->copy( 'y' => $yD*2+1, 'x' => $xD*2   )->tileName();
-#	my $img01 = $objIn->copy( 'y' => $yD*2+1, 'x' => $xD*2+1 )->tileName();
-#	my $img10 = $objIn->copy( 'y' => $yD*2,   'x' => $xD*2   )->tileName();
-#	my $img11 = $objIn->copy( 'y' => $yD*2,   'x' => $xD*2+1 )->tileName();
+	my $img00 = $objIn->copy( 'y' => $yD*2+$dy0, 'x' => $xD*2+$dx0 )->tileName();
+	my $img01 = $objIn->copy( 'y' => $yD*2+$dy0, 'x' => $xD*2+$dx1 )->tileName();
+	my $img10 = $objIn->copy( 'y' => $yD*2+$dy1, 'x' => $xD*2+$dx0 )->tileName();
+	my $img11 = $objIn->copy( 'y' => $yD*2+$dy1, 'x' => $xD*2+$dx1 )->tileName();
 
 	my $imgOut = $objIn->copy( 'level' => $level-1, 'y' => $yD, 'x' => $xD )->tileName();
 	if( $hCreated ){
@@ -256,8 +255,7 @@ sub concat4img {
 
 	my $cmd_01 = qq/pnmcat -leftright "$tmp[0]" "$tmp[1]" > "$tmp[4]"/;
 	my $cmd_02 = qq/pnmcat -leftright "$tmp[2]" "$tmp[3]" > "$tmp[5]"/;
-#	my $cmd_03 = qq/pnmcat -topbottom "$tmp[5]" "$tmp[4]" > "$tmp[6]"/;
-	my $cmd_03 = qq/pnmcat -topbottom "$tmp[4]" "$tmp[5]" > "$tmp[6]"/;   # OSM
+	my $cmd_03 = qq/pnmcat -topbottom "$tmp[4]" "$tmp[5]" > "$tmp[6]"/;
 	my $cmd_SC = qq/$CMD_PNMSCALE -xsize $wd -ysize $hg "$tmp[6]" > "$tmp[7]"/;
 
 	print STDERR "CMD: ", $cmd_01, "\n";  # _DEBUG_
@@ -281,10 +279,10 @@ sub concat4img_BIL {
 	print STDERR "\$wd <", $wd, ">  \$hg <", $hg, ">  \$imgOut <", $imgOut, ">\n"; # _DEBUG_
 	my( $aSet, $bpp, $w2, $h2 ) = ( [], 2, $wd/2, $hg/2 );
 
-	$aSet->[1][0] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img00, $wd, $hg, $bpp, 0 );
-	$aSet->[1][1] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img01, $wd, $hg, $bpp, 0 );
-	$aSet->[0][0] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img10, $wd, $hg, $bpp, 0 );
-	$aSet->[0][1] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img11, $wd, $hg, $bpp, 0 );
+	$aSet->[0][0] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img00, $wd, $hg, $bpp, 0 );
+	$aSet->[0][1] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img01, $wd, $hg, $bpp, 0 );
+	$aSet->[1][0] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img10, $wd, $hg, $bpp, 0 );
+	$aSet->[1][1] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img11, $wd, $hg, $bpp, 0 );
 	my $aDst = OGF::Terrain::ElevationTile::makeTileArray( 0, $wd, $hg );
 
 	for( my $Y = 0; $Y <= 1; ++$Y ){

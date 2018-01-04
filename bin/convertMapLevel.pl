@@ -21,6 +21,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 # convertMapLevel -sz 256,256 image:OGF:14:5768-5998:9386-9617 0
 # convertMapLevel -sz 256,256 elev:OGF:9:dir=/Map/OGF/WW_contour/9 10
 # convertMapLevel -sz 1024,1024 elev:SathriaLCC:2:dir=/Map/Sathria/elev/2 0
+# perl C:\usr\OGF-terrain-tools\bin\convertMapLevel.pl -sz 1024,1024 elev:SathriaLCC:5:dir=/Map/Sathria/elev/5 0
 
 
 

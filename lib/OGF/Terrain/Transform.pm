@@ -53,7 +53,7 @@ sub layerTransform {
                     my $ptGeo = $vtTgt->tile2geo( [$tx, $ty, $x, $y] );
                     next if $aStrictBbox && ! inBbox( $aStrictBbox, $ptGeo );
 #                   $ptGeo->[0] -= 50;   ### Roantra specific ###
-                    print STDERR "\@\$ptGeo <", join('|',@$ptGeo), ">\n";  # _DEBUG_
+#                   print STDERR "\@\$ptGeo <", join('|',@$ptGeo), ">\n";  # _DEBUG_
                     my $ptElev = $vtSrc->geo2cnv( $ptGeo );
 #                   print STDERR "\$ptElev <", join(',',@$ptElev), ">\n"; exit; # _DEBUG_
 #                   my( $xe, $ye ) = ( floor($ptElev->[0]+.5), floor($ptElev->[1]+.5) );

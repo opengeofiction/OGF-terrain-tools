@@ -322,6 +322,7 @@ sub mergeStreamDataIntoContourLayer {
 }
 
 sub mergeStreamArrayIntoContourLayer {
+	require OGF::Util::Shape;
 	require OGF::Util::StreamShape;
 	my( $aContour, $aStream, $aTileSize ) = @_;
 	$aTileSize = [ $T_WIDTH, $T_HEIGHT ] if ! defined $aTileSize;

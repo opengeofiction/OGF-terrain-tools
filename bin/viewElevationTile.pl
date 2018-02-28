@@ -29,7 +29,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:5:bbox=42.62146,48.01932,44.47266,49.42884 -forceRemake
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Paxtar/elev/0
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:Paxtar:0:0-7:0-7
-# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/Map/Elevation/tmp/N45E030.hgt
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/Map/Elevation/tmp/S25E123.hgt
 
 
 

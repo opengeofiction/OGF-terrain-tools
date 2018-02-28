@@ -54,7 +54,7 @@ our %VERIFY_IGNORE = (
     481   => 'UL130',  # Alora, Takora region (indyroads)
     10386 => 'TA333',  # Egani, southern islands   
     24874 => 'PE070',  # ???
-    992   => 'AR120-00',  # AR120 capital region, missing ogf:id
+    91121 => 'AR120-00',  # AR120 capital region, missing ogf:id
 );
 
 

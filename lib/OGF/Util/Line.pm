@@ -35,14 +35,24 @@ sub lineConnect {
 	if( $hOpt->{'cut'} ){
         ( $lineId, $aPoints, @lines ) = applyCut( $cnv, $lineId, $aPoints, \@isctInfo, $hOpt->{'cut'} ) if @isctInfo;
 	}else{
-        my $aRules = [
-            [ 'close_self' ],    # OK
-            [ 'close_other' ],   # OK
-            [ 'extend_end' ],    # OK
-            [ 'extend_start' ],  # OK
-            [ 'connect' ],       # OK
-            [ 'improve' ],       # OK (sporadic errors)
-        ];
+	    my $aRules;
+	    if( $hOpt->{'no_close'} ){
+            $aRules = [
+                [ 'extend_end' ],    # OK
+                [ 'extend_start' ],  # OK
+                [ 'connect' ],       # OK
+                [ 'improve' ],       # OK (sporadic errors)
+            ];
+	    }else{
+            $aRules = [
+                [ 'close_self' ],    # OK
+                [ 'close_other' ],   # OK
+                [ 'extend_end' ],    # OK
+                [ 'extend_start' ],  # OK
+                [ 'connect' ],       # OK
+                [ 'improve' ],       # OK (sporadic errors)
+            ];
+        }
         ( $lineId, $aPoints, @lines ) = applyIntersection( $cnv, $lineId, $aPoints, \@isctInfo, $aRules ) if @isctInfo;
 	}
 	return ( $lineId, $aPoints, @lines );

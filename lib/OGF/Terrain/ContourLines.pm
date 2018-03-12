@@ -33,6 +33,115 @@ sub writeContourTiles {
 		$hInfo->{_range}  = $tileLayer->bboxTileRange([$minLon, $minLat, $maxLon, $maxLat]);
 	}
 
+    my $hWays = separateWayClasses( $ctx->{_Way} );
+
+    writeElevationWays( $ctx, $hWays, $hInfo );
+    writeWaterWays( $ctx, $hWays, $hInfo );
+    writeElevationNodes( $ctx, $hInfo );
+
+	unless( $hOpt->{'nosave'} ){
+        saveElevationTiles( $hInfo );
+        delete $hInfo->{_tileCache};
+	}
+
+	return $hInfo;
+}
+
+sub separateWayClasses {
+    my( $hCtxWays ) = @_;
+	my( @coastWays, @contourWays, @waterWays );
+	foreach my $way ( values %$hCtxWays ){
+		my $hTags = $way->{'tags'};
+		if( $hTags->{'natural'} && $hTags->{'natural'} eq 'coastline' ){  # handle coastline first to give it priority if "ele" tag is also present
+			$way->{_elev} = 0;
+			push @coastWays, $way;
+		}elsif( $hTags && defined($hTags->{$ELEVATION_TAG}) ){
+			next unless $hTags->{$ELEVATION_TAG} =~ /^-?[.\d]+$/;
+			$way->{_elev} = $hTags->{$ELEVATION_TAG};
+			push @contourWays, $way;
+#			print STDERR "\%\$way <", join('|',%$way), ">\n";  # _DEBUG_
+		}elsif( $hTags && $hTags->{'waterway'} ){
+			push @waterWays, $way;
+		}
+	}
+	if( scalar(@contourWays) == 0 ){
+		die qq/ERROR: Found no contour ways.\n/
+	}
+    my $hWays = {
+        _coastline => \@coastWays,
+        _contour   => \@contourWays,
+        _waterway  => \@waterWays,
+    };
+    return $hWays;	
+}
+
+sub writeElevationWays {
+    my( $ctx, $hWays, $hInfo ) = @_;
+	print STDERR "write contour ways\n";
+	@{$hWays->{_contour}} = sort {$a->{_elev} <=> $b->{_elev}}  @{$hWays->{_contour}};
+	foreach my $way ( @{$hWays->{_contour}}, @{$hWays->{_coastline}} ){
+		writeElevationWay( $ctx, $way, $hInfo );
+	}
+}
+
+sub writeWaterWays {
+    my( $ctx, $hWays, $hInfo ) = @_;
+    @{$hWays->{_waterway}} = sortHierarchical( $hWays->{_waterway} );
+
+	print STDERR "linear interpolation of waterways\n";
+	my( $ct, $num ) = ( 0, scalar(@{$hWays->{_waterway}}) );
+	foreach my $way ( @{$hWays->{_waterway}} ){
+		++$ct;
+		print STDERR "+ way ", $way->{'id'}, "  $ct/$num\n";
+		my @isctAll;
+		convertWayPoints( $ctx, $way, $hInfo );
+		foreach my $wayC ( @{$hWays->{_contour}}, @{$hWays->{_coastline}} ){
+			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayC->{_rect} );
+			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayC->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayC->{_rect}]} );
+#			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
+			map {$_->{_point}[2] = $wayC->{_elev}} @isct;
+			push @isctAll, @isct if @isct;
+		}
+		next if ! @isctAll;
+        $way->{_points} = addIntersectionPoints( $way->{_points}, \@isctAll );
+        linearWayElevation( $way->{_points} );
+        writeElevationWay( $ctx, $way, $hInfo );
+	}
+}
+
+sub writeElevationNodes {
+    my( $ctx, $hInfo ) = @_;
+	my $proj = $hInfo->{_tileLayer}->projection();
+    foreach my $node ( grep {$_->{'tags'} && defined $_->{'tags'}{$ELEVATION_TAG}} values %{$ctx->{_Node}} ){
+        minMaxArea( $hInfo->{_bbox}, $node );
+        my $pt = $proj->geo2cnv( [$node->{'lon'},$node->{'lat'}] );
+        setElevationPoint( $pt, int($node->{'tags'}{$ELEVATION_TAG}), $hInfo );
+    }
+}
+
+
+
+sub writeContourTiles__ {
+	my( $ctx, $tileLayer, $aTileSize, $hOpt ) = @_;
+	$hOpt = {} if ! $hOpt;
+	$aTileSize = [ 256, 256 ] if ! $aTileSize;
+
+#	my $tileLayer = OGF::View::TileLayer->new( "contour:OGF:$level" );
+	$tileLayer = OGF::View::TileLayer->new( $tileLayer ) if ! ref($tileLayer);
+	my $hInfo = {
+		_tileLayer => $tileLayer,
+		_tileCache => {},
+		_bbox      => [ 180, 90, -180, -90 ],
+		_tileSize  => $aTileSize,
+		_add       => ($hOpt->{'add'} ? 1 : 0),
+	};
+	if( $hOpt->{'bounds'} ){
+	    my( $minLon, $minLat, $maxLon, $maxLat ) = ref($hOpt->{'bounds'}) ? @{$hOpt->{'bounds'}} : (split /,/, $hOpt->{'bounds'});
+		my( $x0, $y1, $x1, $y0 ) = ( $tileLayer->geo2cnv($minLon,$minLat), $tileLayer->geo2cnv($maxLon,$maxLat) );
+		$hInfo->{_bounds} = [ $x0, $y0, $x1, $y1 ];
+		$hInfo->{_range}  = $tileLayer->bboxTileRange([$minLon, $minLat, $maxLon, $maxLat]);
+	}
+
 	my( @coastWays, @contourWays, @waterWays );
 	foreach my $way ( values %{$ctx->{_Way}} ){
 		my $hTags = $way->{'tags'};

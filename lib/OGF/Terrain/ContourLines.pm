@@ -36,8 +36,10 @@ sub writeContourTiles {
     my $hWays = separateWayClasses( $ctx->{_Way} );
 
     writeElevationWays( $ctx, $hWays, $hInfo );
+    writeRidgeWays( $ctx, $hWays, $hInfo );
     writeWaterWays( $ctx, $hWays, $hInfo );
     writeElevationNodes( $ctx, $hInfo );
+#   writeTerrainWays( $ctx, $hWays, $hInfo );
 
 	unless( $hOpt->{'nosave'} ){
         saveElevationTiles( $hInfo );
@@ -49,19 +51,26 @@ sub writeContourTiles {
 
 sub separateWayClasses {
     my( $hCtxWays ) = @_;
-	my( @coastWays, @contourWays, @waterWays );
+	my( @coastWays, @contourWays, @waterWays, @ridgeWays, @terrainWays );
 	foreach my $way ( values %$hCtxWays ){
 		my $hTags = $way->{'tags'};
+		next if ! $hTags;
 		if( $hTags->{'natural'} && $hTags->{'natural'} eq 'coastline' ){  # handle coastline first to give it priority if "ele" tag is also present
 			$way->{_elev} = 0;
 			push @coastWays, $way;
-		}elsif( $hTags && defined($hTags->{$ELEVATION_TAG}) ){
+		}elsif( defined($hTags->{$ELEVATION_TAG}) ){
 			next unless $hTags->{$ELEVATION_TAG} =~ /^-?[.\d]+$/;
 			$way->{_elev} = $hTags->{$ELEVATION_TAG};
 			push @contourWays, $way;
 #			print STDERR "\%\$way <", join('|',%$way), ">\n";  # _DEBUG_
-		}elsif( $hTags && $hTags->{'waterway'} ){
+		}elsif( $hTags->{'waterway'} ){
 			push @waterWays, $way;
+		}elsif( $hTags->{'ogf:terrain'} ){
+		    if( $hTags->{'ogf:terrain'} eq 'ridge' ){
+                push @ridgeWays, $way;
+		    }elsif( $hTags->{'ogf:terrain'} eq 'existing' ){
+                push @terrainWays, $way;
+            }
 		}
 	}
 	if( scalar(@contourWays) == 0 ){
@@ -71,6 +80,8 @@ sub separateWayClasses {
         _coastline => \@coastWays,
         _contour   => \@contourWays,
         _waterway  => \@waterWays,
+        _ridge     => \@ridgeWays,
+        _terrain   => \@terrainWays,
     };
     return $hWays;	
 }
@@ -84,27 +95,78 @@ sub writeElevationWays {
 	}
 }
 
+sub writeRidgeWays {
+    my( $ctx, $hWays, $hInfo ) = @_;
+    writeIntersectingWays( $ctx, $hWays, $hInfo, '_ridge' );
+}
+
+sub writeTerrainWays {
+ 	die qq/writeTerrainWays: NOT YET IMPLEMENTED !!!/;
+    my( $ctx, $hWays, $hInfo ) = @_;
+ 	foreach my $way ( @{$hWays->{_terrain}} ){
+ 		writeTerrainWay( $ctx, $way, $hInfo );
+ 	}
+}
+
+#sub writeWaterWays {
+#    my( $ctx, $hWays, $hInfo ) = @_;
+#    @{$hWays->{_waterway}} = sortHierarchical( $hWays->{_waterway} );
+#
+#	print STDERR "linear interpolation of waterways\n";
+#	my( $ct, $num ) = ( 0, scalar(@{$hWays->{_waterway}}) );
+#	foreach my $way ( @{$hWays->{_waterway}} ){
+#		++$ct;
+#		print STDERR "+ way ", $way->{'id'}, "  $ct/$num\n";
+#		my @isctAll;
+#		convertWayPoints( $ctx, $way, $hInfo );
+#		foreach my $wayC ( @{$hWays->{_contour}}, @{$hWays->{_coastline}} ){
+#			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayC->{_rect} );
+#			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayC->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayC->{_rect}]} );
+##			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
+#			map {$_->{_point}[2] = $wayC->{_elev}} @isct;
+#			push @isctAll, @isct if @isct;
+#		}
+#		next if ! @isctAll;
+#        $way->{_points} = addIntersectionPoints( $way->{_points}, \@isctAll );
+#        linearWayElevation( $way->{_points} );
+#        writeElevationWay( $ctx, $way, $hInfo );
+#	}
+#}
+
 sub writeWaterWays {
     my( $ctx, $hWays, $hInfo ) = @_;
-    @{$hWays->{_waterway}} = sortHierarchical( $hWays->{_waterway} );
+    writeIntersectingWays( $ctx, $hWays, $hInfo, '_waterway' );
+}
+
+sub writeIntersectingWays {
+    my( $ctx, $hWays, $hInfo, $isctTag ) = @_;
+    @{$hWays->{$isctTag}} = sortHierarchical( $hWays->{$isctTag} );
+
+    my @elevationWays;  # all ways from other categories, where elevation is already computed
+    foreach my $tag ( keys %$hWays ){
+        next if $tag eq $isctTag;
+        my @ways = grep {$_->{_points}} @{$hWays->{$tag}};
+        push @elevationWays, @ways;
+    }
+    my $hElevOpt = ($isctTag eq '_ridge')? {'localMax' => 1} : {};
 
 	print STDERR "linear interpolation of waterways\n";
-	my( $ct, $num ) = ( 0, scalar(@{$hWays->{_waterway}}) );
-	foreach my $way ( @{$hWays->{_waterway}} ){
+	my( $ct, $num ) = ( 0, scalar(@{$hWays->{$isctTag}}) );
+	foreach my $way ( @{$hWays->{$isctTag}} ){
 		++$ct;
 		print STDERR "+ way ", $way->{'id'}, "  $ct/$num\n";
 		my @isctAll;
 		convertWayPoints( $ctx, $way, $hInfo );
-		foreach my $wayC ( @{$hWays->{_contour}}, @{$hWays->{_coastline}} ){
-			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayC->{_rect} );
-			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayC->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayC->{_rect}]} );
+		foreach my $wayE ( @elevationWays ){
+			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayE->{_rect} );
+			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayE->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayE->{_rect}]} );
 #			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
-			map {$_->{_point}[2] = $wayC->{_elev}} @isct;
+			map {$_->{_point}[2] = $wayE->{_elev}} @isct;
 			push @isctAll, @isct if @isct;
 		}
 		next if ! @isctAll;
         $way->{_points} = addIntersectionPoints( $way->{_points}, \@isctAll );
-        linearWayElevation( $way->{_points} );
+        linearWayElevation( $way->{_points}, $hElevOpt );
         writeElevationWay( $ctx, $way, $hInfo );
 	}
 }
@@ -118,93 +180,6 @@ sub writeElevationNodes {
         setElevationPoint( $pt, int($node->{'tags'}{$ELEVATION_TAG}), $hInfo );
     }
 }
-
-
-
-sub writeContourTiles__ {
-	my( $ctx, $tileLayer, $aTileSize, $hOpt ) = @_;
-	$hOpt = {} if ! $hOpt;
-	$aTileSize = [ 256, 256 ] if ! $aTileSize;
-
-#	my $tileLayer = OGF::View::TileLayer->new( "contour:OGF:$level" );
-	$tileLayer = OGF::View::TileLayer->new( $tileLayer ) if ! ref($tileLayer);
-	my $hInfo = {
-		_tileLayer => $tileLayer,
-		_tileCache => {},
-		_bbox      => [ 180, 90, -180, -90 ],
-		_tileSize  => $aTileSize,
-		_add       => ($hOpt->{'add'} ? 1 : 0),
-	};
-	if( $hOpt->{'bounds'} ){
-	    my( $minLon, $minLat, $maxLon, $maxLat ) = ref($hOpt->{'bounds'}) ? @{$hOpt->{'bounds'}} : (split /,/, $hOpt->{'bounds'});
-		my( $x0, $y1, $x1, $y0 ) = ( $tileLayer->geo2cnv($minLon,$minLat), $tileLayer->geo2cnv($maxLon,$maxLat) );
-		$hInfo->{_bounds} = [ $x0, $y0, $x1, $y1 ];
-		$hInfo->{_range}  = $tileLayer->bboxTileRange([$minLon, $minLat, $maxLon, $maxLat]);
-	}
-
-	my( @coastWays, @contourWays, @waterWays );
-	foreach my $way ( values %{$ctx->{_Way}} ){
-		my $hTags = $way->{'tags'};
-		if( $hTags->{'natural'} && $hTags->{'natural'} eq 'coastline' ){  # handle coastline first to give it priority if "ele" tag is also present
-			$way->{_elev} = 0;
-			push @coastWays, $way;
-		}elsif( $hTags && defined($hTags->{$ELEVATION_TAG}) ){
-			next unless $hTags->{$ELEVATION_TAG} =~ /^-?[.\d]+$/;
-			$way->{_elev} = $hTags->{$ELEVATION_TAG};
-			push @contourWays, $way;
-#			print STDERR "\%\$way <", join('|',%$way), ">\n";  # _DEBUG_
-		}elsif( $hTags && $hTags->{'waterway'} ){
-			push @waterWays, $way;
-		}
-	}
-	if( scalar(@contourWays) == 0 ){
-		die qq/ERROR: Found no contour ways.\n/
-	}
-
-	print STDERR "write contour ways\n";
-	@contourWays = sort {$a->{_elev} <=> $b->{_elev}}  @contourWays;
-	foreach my $way ( @contourWays, @coastWays ){
-		writeElevationWay( $ctx, $way, $hInfo );
-	}
-
-    @waterWays = sortHierarchical( \@waterWays );
-
-	print STDERR "linear interpolation of waterways\n";
-	my( $ct, $num ) = ( 0, scalar(@waterWays) );
-	foreach my $way ( @waterWays ){
-		++$ct;
-		print STDERR "+ way ", $way->{'id'}, "  $ct/$num\n";
-		my @isctAll;
-		convertWayPoints( $ctx, $way, $hInfo );
-		foreach my $wayC ( @contourWays, @coastWays ){
-			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayC->{_rect} );
-			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayC->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayC->{_rect}]} );
-#			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
-			map {$_->{_point}[2] = $wayC->{_elev}} @isct;
-			push @isctAll, @isct if @isct;
-		}
-		next if ! @isctAll;
-        $way->{_points} = addIntersectionPoints( $way->{_points}, \@isctAll );
-        linearWayElevation( $way->{_points} );
-        writeElevationWay( $ctx, $way, $hInfo );
-	}
-
-	my $proj = $tileLayer->projection();
-    foreach my $node ( grep {$_->{'tags'} && defined $_->{'tags'}{$ELEVATION_TAG}} values %{$ctx->{_Node}} ){
-        minMaxArea( $hInfo->{_bbox}, $node );
-        my $pt = $proj->geo2cnv( [$node->{'lon'},$node->{'lat'}] );
-        setElevationPoint( $pt, int($node->{'tags'}{$ELEVATION_TAG}), $hInfo );
-    }
-
-	unless( $hOpt->{'nosave'} ){
-        saveElevationTiles( $hInfo );
-        delete $hInfo->{_tileCache};
-	}
-
-	return $hInfo;
-}
-
-
 
 
 
@@ -251,6 +226,24 @@ sub writeElevationWay {
 	}
 }
 
+sub writeTerrainWay {
+	my( $ctx, $way, $hInfo, $globalTile ) = @_;
+	convertWayPoints( $ctx, $way, $hInfo ) if ! $way->{_points};
+	my $num = $#{$way->{_points}};
+	print STDERR $way->{'id'}, " num=$num  elev=", $way->{_elev}, "\n";  # _DEBUG_
+
+	for( my $i = 0; $i < $num; ++$i ){
+		my( $ptA, $ptB ) = ( $way->{_points}[$i], $way->{_points}[$i+1] );
+		map {$_ = POSIX::floor($_+.5)} ( $ptA->[0], $ptA->[1], $ptB->[0], $ptB->[1] );
+		my @linePoints = OGF::Geo::Geometry::linePoints( $ptA, $ptB );
+		@linePoints = ( $ptA, @linePoints, $ptB );
+		foreach my $pt ( @linePoints ){
+            my $elev = 0;  # $globalTile->
+			setElevationPoint( $pt, $elev, $hInfo );
+		}
+	}
+}
+
 sub setElevationPoint {
 	my( $pt, $elev, $hInfo ) = @_;
 	my( $tx, $ty, $xt, $yt ) = $hInfo->{_tileLayer}->cnv2tile( $pt->[0], $pt->[1] );
@@ -285,12 +278,24 @@ sub addIntersectionPoints {
 }
 
 sub linearWayElevation {
-	my( $aPoints ) = @_;
+	my( $aPoints, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
 	my @elevIdx = grep {defined $aPoints->[$_][2]} (0..$#{$aPoints}); 
 #	print STDERR "\@elevIdx <", join('|',@elevIdx), ">\n";  # _DEBUG_
 	warn qq/linearElevation; no elevation point available\n/ if ! @elevIdx;
 	for( my $i = 0; $i < $#elevIdx; ++$i ){
-		linearSegmentElevation( $aPoints, $elevIdx[$i], $elevIdx[$i+1] );
+        my( $i0, $i1 ) = ( $elevIdx[$i], $elevIdx[$i+1] );
+        if( $hOpt->{'localMax'} && $i > 0 && $i+1 < $#elevIdx-1 ){
+            my( $i_0, $i_1 ) = ( $elevIdx[$i-1], $elevIdx[$i+2] );
+            my( $e_0, $e0, $e1, $e_1 ) = map {$aPoints->[$_][2]} ( $i_0, $i0, $i1, $i_1 );
+            if( $e0 == $e1 && ($e0 - $e_0) * ($e1 - $e_1) > 0 ){
+		        localMaximumElevation( $aPoints, $i_0, $i0, $i1, $i_1 );
+            }else{
+		        linearSegmentElevation( $aPoints, $i0, $i1 );
+            }
+        }else{
+		    linearSegmentElevation( $aPoints, $i0, $i1 );
+		}
 	}
 }
 
@@ -317,6 +322,53 @@ sub linearSegmentElevation {
 		$pt->[$zE] = $elevLin;
 	}
 }
+
+sub localMaximumElevation {
+	my( $aPoints, $i_0, $i0, $i1, $i_1 ) = @_;
+#	die qq/localMaximumElevation: NOT YET IMPLEMENTED !!!/;
+#	print STDERR "localMaximumElevation( $aPoints, $i_0, $i0, $i1, $i_1 )\n";  # _DEBUG_
+	my( $zE, $zD ) = ( 2, 3 );
+
+	$aPoints->[$i_0][$zD] = 0;
+	for( my $i = $i_0; $i < $i_1; ++$i ){
+		my( $pt0, $pt1 ) = ( $aPoints->[$i], $aPoints->[$i+1] );
+		my $dist = OGF::Geo::Geometry::dist( $pt0, $pt1 ); 
+		$pt1->[$zD] = $pt0->[$zD] + $dist;
+	}
+    my( $e_0, $e0, $e1, $e_1 ) = map {$aPoints->[$_][$zE]} ( $i_0, $i0, $i1, $i_1 );
+#	my $distTotal = $aPoints->[$i1][$zD];
+	my( $d0, $dist, $d1 ) = ( $aPoints->[$i0][$zD], $aPoints->[$i1][$zD] - $aPoints->[$i0][$zD], $aPoints->[$i_1][$zD] - $aPoints->[$i1][$zD] );
+    my( $dq0, $dq1 ) = ( ($e0 - $e_0)/$d0, ($e1 - $e_1)/$d1 );
+    my $dX = $dist * $dq1 / ($dq0 + $dq1);
+
+    my $cElev;
+    if( 0 ){
+        $cElev = sub {
+            my( $dd ) = @_;
+            my $t0 = $dd / $dist;
+            my $elev = ($dd <= $dX)? ($e0 + $dq0 * $t0) : ($e1 + $dq1 * (1 - $t0));
+            return $elev;
+        };
+    }else{
+        $cElev = sub {
+            my( $dd ) = @_;
+            my( $t0, $t1, $eX ) = ( $dd/$dist, 1 - $dd/$dist, $e0+$dq0*$dX );
+            my $elev = $t0*$t0*$e0 + 2*$t0*$t1*$eX + $t1*$t1*$e1;
+            return $elev;
+        };
+    }
+    # (1-t)^2 P0 + 2(1-t)t P1 + t^2 P2
+
+	for( my $i = $i0+1; $i < $i1; ++$i ){
+		my $pt = $aPoints->[$i];
+		my $dd = $pt->[$zD] - $d0;
+		my $elev = $cElev->( $dd );
+#		print STDERR "[$i] \$elevLin <", $elevLin, ">\n";  # _DEBUG_
+#		warn qq/Point elevation mismatch [$i]\n/ if defined($pt->[$zE]) && $pt->[$zE] != $elevLin;
+		$pt->[$zE] = $elev;
+	}
+}
+
 
 sub getTileArray {
 	my( $hInfo, $tx, $ty ) = @_;
@@ -563,9 +615,10 @@ sub sortHierarchical {
 			}
         }
 	}
-    my $ct = $#{$aWays} * $maxIter;
+    my $ct = scalar(@$aWays) * $maxIter;
 	while( @$aWays ){
 	    my $way = shift @$aWays;
+#	    print STDERR "  way: ", $way->{'id'}, "\n";  # _DEBUG_
         my $parentId = $parent{$way->{'id'}};
 	    if( $parentId && ! $ways{$parentId} ){
 			push @$aWays, $way;

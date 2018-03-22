@@ -27,12 +27,18 @@ my( $osmFile ) = @ARGV;
 usageError() if $opt{'h'};
 
 
+my $ADMIN_RELATION_QUERY = << '---EOF---';
+[timeout:1800][maxsize:4294967296];
+(
+  (relation["boundary"="administrative"]["admin_level"="2"];
+   relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|AR120-[0-9]{2})$"];);
+  >;
+);
+out;
+---EOF---
+
+
 my $aTerr = getTerritories();
-
-
-#my $osmFile = 'C:/usr/MapView/tmp/admin_polygons.osm';
-#my $osmFile = 'C:/usr/MapView/tmp/admin_polygons_ul202.osm';
-#my $avwThreshold = 100;
 
 if( ! $osmFile ){
 	$osmFile = 'C:/usr/MapView/tmp/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
@@ -236,19 +242,18 @@ sub addWayToRelation {
 sub fileExport_Overpass {
 	require OGF::Util::Overpass;
 	my( $outFile ) = @_;
-
 #   relation["boundary"="administrative"]["admin_level"="2"];
 
-    my $data = OGF::Util::Overpass::runQuery_remote( undef, << '    ---EOF---' );
-       [timeout:1800][maxsize:4294967296];
-       (
-         (relation["boundary"="administrative"]["admin_level"="2"];
-          relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|AR120-[0-9]{2})$"];);
-         >;
-       );
-       out;
-    ---EOF---
-
+#    my $data = OGF::Util::Overpass::runQuery_remote( undef, << '    ---EOF---' );
+#       [timeout:1800][maxsize:4294967296];
+#       (
+#         (relation["boundary"="administrative"]["admin_level"="2"];
+#          relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|AR120-[0-9]{2})$"];);
+#         >;
+#       );
+#       out;
+#    ---EOF---
+    my $data = OGF::Util::Overpass::runQuery_remote( undef, $ADMIN_RELATION_QUERY );
 	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
 }
 

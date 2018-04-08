@@ -19,6 +19,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 C:\Map\OGF\WW_elev\13\5735\5735_6001.bil
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:OGF:13:5911-5935:6563-6581
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 183,296 C:/Map/Elevation/tmp/temp_layer.cnr
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 358,256 C:/Map/Elevation/tmp/temp_layer.cnr
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev/
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev/2/1/1_1.bil
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:WebWW:8:766-770:1190-1194
@@ -30,6 +31,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Paxtar/elev/0
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:Paxtar:0:0-7:0-7
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/Map/Elevation/tmp/S25E123.hgt
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/Map/Elevation/Earth/N46E007.hgt
 
 
 

@@ -783,6 +783,17 @@ void set_pixel_max( map_tile t, int x, int y, VALUE val, VALUE maxVal ){
 	}
 }
 
+void set_pixel_min( map_tile t, int x, int y, VALUE val ){
+	int off;	
+	VALUE vPrev;
+
+	off = pixel_offset( t, x, y );
+	vPrev = t.tile[off];
+	if( val < vPrev && val != NO_ELEV_VALUE ){
+		t.tile[off] = val;
+	}
+}
+
 VALUE get_pixel( map_tile t, int x, int y ){
 	return t.tile[pixel_offset(t,x,y)];
 }

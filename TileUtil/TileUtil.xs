@@ -440,6 +440,19 @@ setPixel_max( dx, dy, tSrc, x, y, val, valMax )
 	}
 
 
+void
+setPixel_min( dx, dy, tSrc, x, y, val )
+	int     dx
+	int     dy
+	char *		tSrc
+	int     x
+	int     y
+	int     val
+	PPCODE:
+	{
+		set_pixel_min( data_tile(dx,dy,(TILE) tSrc), x, y, val );
+	}
+
 
 
 

@@ -75,6 +75,7 @@ map_tile inflate_tile( map_tile tSrc, int numX, int numY );
 int pixel_offset( map_tile t, int x, int y );
 void set_pixel( map_tile t, int x, int y, VALUE val );
 void set_pixel_max( map_tile t, int x, int y, VALUE val, VALUE maxVal );
+void set_pixel_min( map_tile t, int x, int y, VALUE val );
 VALUE get_pixel( map_tile t, int x, int y );
 
 map_tile data_tile( int dx, int dy, TILE tData );

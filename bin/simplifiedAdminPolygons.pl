@@ -26,7 +26,8 @@ usageInit( \%opt, qq/ h ogf /, << "*" );
 my( $osmFile ) = @ARGV;
 usageError() if $opt{'h'};
 
-
+my $COMPUTATION_ZOOM = 6;
+my $OUTFILE_NAME = 'ogf_polygons';
 my $ADMIN_RELATION_QUERY = << '---EOF---';
 [timeout:1800][maxsize:4294967296];
 (
@@ -36,9 +37,22 @@ my $ADMIN_RELATION_QUERY = << '---EOF---';
 );
 out;
 ---EOF---
-
-
+ 
 my $aTerr = getTerritories();
+
+#my $COMPUTATION_ZOOM = 12;
+#my $OUTFILE_NAME = 'roantra_municipalities';
+#my $ADMIN_RELATION_QUERY = << '---EOF---';
+#[timeout:1800][maxsize:4294967296];
+#(
+# relation["boundary"="administrative"]["admin_level"="8"]["ogf:area"~"^RO\\."];
+# >;
+#);
+#out;
+#---EOF---
+#
+#my $aTerr = [];
+
 
 if( ! $osmFile ){
 	$osmFile = 'C:/usr/MapView/tmp/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
@@ -46,7 +60,7 @@ if( ! $osmFile ){
 }
 
 
-my $tl = OGF::View::TileLayer->new( 'image:OGF:6:all' );
+my $tl = OGF::View::TileLayer->new( "image:OGF:$COMPUTATION_ZOOM:all" );
 my( $proj ) = $tl->{_proj};
 
 my $ctx = OGF::Data::Context->new();
@@ -168,7 +182,7 @@ foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
     }
 
     my $json = JSON::PP->new->indent(2)->space_after;
-    writePolygonJson( "C:/usr/MapView/tmp/ogf_polygons_$avwThreshold.json", $hPolygons );
+    writePolygonJson( "C:/usr/MapView/tmp/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
 }
 
 

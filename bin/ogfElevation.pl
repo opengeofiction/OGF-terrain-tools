@@ -84,6 +84,7 @@ if( $opt{'c'} ){
 	# tile levels
 	my( $tx20, $tx21, $ty20, $ty21 ) = map {$hInfo2->{_tileRange}{$_}} qw( _xMin _xMax _yMin _yMax );
 	my $infoDsc2 = "elev:WebWW:$wwLevel:$ty20-$ty21:$tx20-$tx21";
+	print STDERR $infoDsc2, "\n";  # _DEBUG_
 	my @zipList;
 	OGF::Util::TileLevel::convertMapLevel( $infoDsc2, 0, \@zipList );
 

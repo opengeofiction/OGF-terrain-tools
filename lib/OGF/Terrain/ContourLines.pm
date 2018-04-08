@@ -89,8 +89,9 @@ sub separateWayClasses {
 sub writeElevationWays {
     my( $ctx, $hWays, $hInfo ) = @_;
 	print STDERR "write contour ways\n";
-	@{$hWays->{_contour}} = sort {$a->{_elev} <=> $b->{_elev}}  @{$hWays->{_contour}};
-	foreach my $way ( @{$hWays->{_contour}}, @{$hWays->{_coastline}} ){
+	my @ways = sort {$a->{_elev} <=> $b->{_elev}} grep {$_->{_elev} != 0} @{$hWays->{_contour}};
+	my @waysZero = grep {$_->{_elev} == 0}  @{$hWays->{_contour}};
+	foreach my $way ( @ways, @waysZero, @{$hWays->{_coastline}} ){
 		writeElevationWay( $ctx, $way, $hInfo );
 	}
 }
@@ -667,6 +668,7 @@ sub sortConsecutive {
     }
     return @ways;
 }
+
 
 
 

@@ -68,7 +68,7 @@ our %INFO_MAP = (
         'tile'     => [ '%d/%d/%d_%d.%s', 'level', 'y', 'y', 'x', 'suffix' ],
         'size'     => [ 256, 256 ],
 #       'minMax'   => { baseLevel => 2, min_Y => 0, max_Y => 3, min_X => 0, max_X => 7 },
-        'minMax'   => { baseLevel => 0, min_Y => 0, max_Y => 3, min_X => 0, max_X => 7 },
+        'minMax'   => { baseLevel => 0, min_Y => 0, max_Y => 3, min_X => 0, max_X => 7, order_X => 1, order_Y => -1 },
         'image' => {
             'baseDir'  => [ $PATH_PREFIX.'/OGF/WW_elev_02' ],
         },

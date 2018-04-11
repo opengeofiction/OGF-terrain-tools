@@ -390,7 +390,7 @@ sub localMaximumElevation {
     my $dX = $dist * $dq1 / ($dq0 + $dq1);
 
     my $cElev;
-    if( 0 ){
+    if( $e0 >= 2000 ){
         $cElev = sub {
             my( $dd ) = @_;
             my $t0 = $dd / $dist;

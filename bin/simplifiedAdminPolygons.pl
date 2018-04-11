@@ -15,20 +15,27 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 
 # perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl
+# perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl -ds Roantra
 
 my %opt;
-usageInit( \%opt, qq/ h ogf /, << "*" );
-[-ogf]
+usageInit( \%opt, qq/ h ogf ds=s /, << "*" );
+[-ogf] [-ds <dataset>]
 
 -ogf    use ogfId as key
+-ds     "Roantra" or empty
 *
 
 my( $osmFile ) = @ARGV;
 usageError() if $opt{'h'};
 
-my $COMPUTATION_ZOOM = 6;
-my $OUTFILE_NAME = 'ogf_polygons';
-my $ADMIN_RELATION_QUERY = << '---EOF---';
+
+my( $aTerr, $COMPUTATION_ZOOM, $OUTFILE_NAME, $ADMIN_RELATION_QUERY );
+
+if( ! $opt{'ds'} ){
+    $aTerr = getTerritories();
+    $COMPUTATION_ZOOM = 6;
+    $OUTFILE_NAME = 'ogf_polygons';
+    $ADMIN_RELATION_QUERY = << '---EOF---';
 [timeout:1800][maxsize:4294967296];
 (
   (relation["boundary"="administrative"]["admin_level"="2"];
@@ -37,21 +44,23 @@ my $ADMIN_RELATION_QUERY = << '---EOF---';
 );
 out;
 ---EOF---
- 
-my $aTerr = getTerritories();
 
-#my $COMPUTATION_ZOOM = 12;
-#my $OUTFILE_NAME = 'roantra_municipalities';
-#my $ADMIN_RELATION_QUERY = << '---EOF---';
-#[timeout:1800][maxsize:4294967296];
-#(
-# relation["boundary"="administrative"]["admin_level"="8"]["ogf:area"~"^RO\\."];
-# >;
-#);
-#out;
-#---EOF---
-#
-#my $aTerr = [];
+}elsif( $opt{'ds'} eq 'Roantra' ){
+    $aTerr = [];
+    $COMPUTATION_ZOOM = 12;
+    $OUTFILE_NAME = 'roantra';
+    $ADMIN_RELATION_QUERY = << '---EOF---';
+[timeout:1800][maxsize:4294967296];
+(
+ relation["boundary"="administrative"]["ogf:area"~"^RO\\."];
+ >;
+);
+out;
+---EOF---
+
+}else{
+    die qq/Unknown dataset: "$opt{ds}"/;
+}
 
 
 if( ! $osmFile ){

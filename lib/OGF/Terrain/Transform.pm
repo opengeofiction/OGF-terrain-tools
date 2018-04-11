@@ -18,7 +18,8 @@ sub layerTransform {
     my $vtSrc = OGF::Util::GlobalTile->new( $dscSrc );
     my $vtTgt = OGF::Util::GlobalTile->new( $dscTgt );
 #   use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 5; print STDERR Data::Dumper->Dump( [$vtTgt], ['vtTgt'] ), "\n";  # _DEBUG_
-    my $aStrictBbox = $hOpt->{'strictBbox'} ? $bbox : undef;
+    my $aStrictBbox     = $hOpt->{'strictBbox'} ? $bbox : undef;
+    my $roantraDisplace = $hOpt->{'roantraDisplace'} ? 1 : 0;
 
     my( $minLon, $minLat, $maxLon, $maxLat ) = @$bbox;
     my( $tileWd, $tileHg ) = $vtTgt->{_layerInfo}->tileSize();
@@ -52,7 +53,7 @@ sub layerTransform {
 #                   print STDERR "tgt $tx $ty $x $y\n";
                     my $ptGeo = $vtTgt->tile2geo( [$tx, $ty, $x, $y] );
                     next if $aStrictBbox && ! inBbox( $aStrictBbox, $ptGeo );
-#                   $ptGeo->[0] -= 50;   ### Roantra specific ###
+                    $ptGeo->[0] -= 50 if $roantraDisplace;   ### Roantra specific ###
 #                   print STDERR "\@\$ptGeo <", join('|',@$ptGeo), ">\n";  # _DEBUG_
                     my $ptElev = $vtSrc->geo2cnv( $ptGeo );
 #                   print STDERR "\$ptElev <", join(',',@$ptElev), ">\n"; exit; # _DEBUG_

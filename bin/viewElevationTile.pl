@@ -32,6 +32,8 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:Paxtar:0:0-7:0-7
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/Map/Elevation/tmp/S25E123.hgt
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/Map/Elevation/Earth/N46E007.hgt
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev/6 -noExist
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:6:bbox=30.99,43.78992,31.32844,46.39 -forceRemake
 
 
 
@@ -50,7 +52,7 @@ my( $wd, $hg ) = ($SIZE =~ /,/)? (split /,/, $SIZE) : ( $SIZE, $SIZE );
 
 
 my $TILE_DATA = [];
-
+my %FILE_NAMES;
 #$OGF::Terrain::ElevationTile::SUPPORTED_BPP{'2'} = 's>' if $files[0] =~ /\.hgt$/;
 
 
@@ -79,7 +81,8 @@ $cnvS->Tk::bind( '<Motion>' => sub {
 	my( $x, $y ) = OGF::Util::Canvas::canvasEventPos( $cnvS );
 #	print STDERR ++$ct . "   \$x <", $x, ">  \$y <", $y, ">\n";  # _DEBUG_
 	my $text = "$x,$y";
-	$text .= $TILE_DATA->[$y][$x] if $TILE_DATA->[$y] && defined $TILE_DATA->[$y][$x];
+	$text .= ' ' . $TILE_DATA->[$y][$x] if $TILE_DATA->[$y] && defined $TILE_DATA->[$y][$x];
+	$text .= ' ' . getFileName( $x, $y, $wd, $hg );
 	$info = $text;
 } );
 
@@ -131,6 +134,7 @@ if( -d $files[0] ){
 #		print STDERR $item->{'y'}, " ", $item->{'x'}, "\n";
 		my $x0 = ($item->{'x'} - $tx) * $wd; 
 		my $y0 = $tileOrder_N ? ($ty - $item->{'y'}) * $hg : ($item->{'y'} - $ty) * $hg;
+        setTileName( $x0, $y0, $file );
         viewElevationTile( $cnv, $file, $x0,$y0, $wd, $hg, \%opt );
 	} );
 }
@@ -171,6 +175,19 @@ sub viewElevationTile {
     return ( $img, $photo );
 }
 
+
+sub setTileName {
+    my( $x0, $y0, $file ) = @_;
+    my $tag = ''. $y0 .'|'. $x0;
+    $FILE_NAMES{$tag} = $file;
+}
+
+sub getFileName {
+    my( $x, $y, $wd, $hg ) = @_;
+    my( $x0, $y0 ) = ( $wd * int($x/$wd), $hg * int($y/$hg) );
+    my $tag = ''. $y0 .'|'. $x0;
+    return $FILE_NAMES{$tag} || '';
+}
 
 
 

@@ -55,7 +55,7 @@ sub writeContourTiles {
 
 sub separateWayClasses {
     my( $hCtxWays ) = @_;
-	my( @coastWays, @contourWays, @waterWays, @ridgeWays, @terrainWays, @endpointWays );
+	my( @coastWays, @contourWays, @waterWays, @ridgeWays, @terrainWays, @terrainIsct, @endpointWays );
 	foreach my $way ( values %$hCtxWays ){
 		my $hTags = $way->{'tags'};
 		next if ! $hTags;
@@ -73,22 +73,27 @@ sub separateWayClasses {
 		    if( $hTags->{'ogf:terrain'} eq 'ridge' ){
                 push @ridgeWays, $way;
 		    }elsif( $hTags->{'ogf:terrain'} eq 'path' ){
+		        $way->{_terrainPath} = 1;
                 push @terrainWays, $way;
+		    }elsif( $hTags->{'ogf:terrain'} eq 'intersect' ){
+		        $way->{_terrainPath} = 1;
+                push @terrainIsct, $way;
 		    }elsif( $hTags->{'ogf:terrain'} eq 'endpoints' ){
                 push @endpointWays, $way;
             }
 		}
 	}
-	if( scalar(@contourWays) == 0 ){
-		die qq/ERROR: Found no contour ways.\n/
+	if( scalar(@contourWays) == 0 && scalar(@terrainWays) == 0 ){
+		die qq|ERROR: Found no contour/terrain ways.\n|;
 	}
     my $hWays = {
-        _coastline => \@coastWays,
-        _contour   => \@contourWays,
-        _waterway  => \@waterWays,
-        _ridge     => \@ridgeWays,
-        _terrain   => \@terrainWays,
-        _endpoint  => \@endpointWays,
+        _coastline   => \@coastWays,
+        _contour     => \@contourWays,
+        _waterway    => \@waterWays,
+        _ridge       => \@ridgeWays,
+        _terrain     => \@terrainWays,
+        _terrainIsct => \@terrainIsct,
+        _endpoint    => \@endpointWays,
     };
     return $hWays;	
 }
@@ -136,7 +141,7 @@ sub writeTerrainWays {
             my $node = $ctx->{_Node}{$nodeId};
             $node->{'tags'}{'ele'} = $cTerr->( $node->{'lon'}, $node->{'lat'} );
         }
-        writeElevationWay( $ctx, $way, $hInfo );
+        writeTerrainWay( $ctx, $way, $hInfo, $cTerr );
 	}
 }
 
@@ -182,6 +187,7 @@ sub writeIntersectingWays {
         push @elevationWays, @ways;
     }
     my $hElevOpt = ($isctTag eq '_ridge')? {'localMax' => 1} : {};
+    my $cTerr = $hInfo->{_terrain};
 
 	my( $ct, $num ) = ( 0, scalar(@{$hWays->{$isctTag}}) );
 	foreach my $way ( @{$hWays->{$isctTag}} ){
@@ -195,6 +201,9 @@ sub writeIntersectingWays {
 			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
             if( defined $wayE->{_elev} ){
 			    map {$_->{_point}[2] = $wayE->{_elev}} @isct;
+            }elsif( $wayE->{_terrainPath} ){
+                die qq/writeIntersectingWays: missing terrain function./ if ! $cTerr;
+			    map {$_->{_point}[2] = $cTerr->( $_->{_point}[0], $_->{_point}[1] )} @isct;
 			}else{
 			    map {$_->{_point}[2] = computeIntersectElevation($_,$wayE)} @isct;
 			}
@@ -275,7 +284,7 @@ sub writeElevationWay {
 }
 
 sub writeTerrainWay {
-	my( $ctx, $way, $hInfo, $globalTile ) = @_;
+	my( $ctx, $way, $hInfo, $cTerr ) = @_;
 	convertWayPoints( $ctx, $way, $hInfo ) if ! $way->{_points};
 	my $num = $#{$way->{_points}};
 	print STDERR $way->{'id'}, " num=$num  elev=", $way->{_elev}, "\n";  # _DEBUG_
@@ -286,7 +295,7 @@ sub writeTerrainWay {
 		my @linePoints = OGF::Geo::Geometry::linePoints( $ptA, $ptB );
 		@linePoints = ( $ptA, @linePoints, $ptB );
 		foreach my $pt ( @linePoints ){
-            my $elev = 0;  # $globalTile->
+            my $elev = $cTerr->( $pt->[0], $pt->[1] );
 			setElevationPoint( $pt, $elev, $hInfo );
 		}
 	}
@@ -373,7 +382,6 @@ sub linearSegmentElevation {
 
 sub localMaximumElevation {
 	my( $aPoints, $i_0, $i0, $i1, $i_1 ) = @_;
-#	die qq/localMaximumElevation: NOT YET IMPLEMENTED !!!/;
 #	print STDERR "localMaximumElevation( $aPoints, $i_0, $i0, $i1, $i_1 )\n";  # _DEBUG_
 	my( $zE, $zD ) = ( 2, 3 );
 

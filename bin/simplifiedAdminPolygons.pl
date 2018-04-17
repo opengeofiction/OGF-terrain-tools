@@ -48,12 +48,13 @@ out;
 }elsif( $opt{'ds'} eq 'Roantra' ){
     $aTerr = [];
     $COMPUTATION_ZOOM = 12;
-    $OUTFILE_NAME = 'roantra';
+    $OUTFILE_NAME = 'polygons';
     $ADMIN_RELATION_QUERY = << '---EOF---';
 [timeout:1800][maxsize:4294967296];
 (
- relation["boundary"="administrative"]["ogf:area"~"^RO\\."];
- >;
+  (relation["land_area"="administrative"]["ogf:area"~"^RO\\."];
+   relation["boundary"="administrative"]["ogf:area"~"^RO\\."];);
+  >;
 );
 out;
 ---EOF---

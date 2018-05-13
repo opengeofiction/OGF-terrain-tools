@@ -116,8 +116,11 @@ sub writeRidgeWays {
 
 sub writeEndpointWays {
     my( $ctx, $hWays, $hInfo ) = @_;
+    return if ! @{$hWays->{_endpoint}};
+
     my $cTerr = $hInfo->{_terrain};
     die qq/writeEndpointWays: missing terrain function./ if ! $cTerr;
+
 	print STDERR "linear interpolation of endpoint ways\n";
  	foreach my $way ( @{$hWays->{_endpoint}} ){
         my $node0 = $ctx->{_Node}{$way->{'nodes'}[0]};
@@ -130,8 +133,11 @@ sub writeEndpointWays {
 
 sub writeTerrainWays {
     my( $ctx, $hWays, $hInfo ) = @_;
+    return if ! @{$hWays->{_terrain}};
+
     my $cTerr = $hInfo->{_terrain};
     die qq/writeTerrainWays: missing terrain function./ if ! $cTerr;
+
 	print STDERR "write terrain paths\n";
 	my( $ct, $num ) = ( 0, scalar(@{$hWays->{_terrain}}) );
 	foreach my $way ( @{$hWays->{_terrain}} ){

@@ -37,7 +37,6 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 
 
-
 my %opt;
 usageInit( \%opt, qq/ bigEndian noRelief forceRemake noExist /, << "*" );
 <size> <file1> [<file2> ...] [-bigEndian] [-noRelief] [-fullscreen]
@@ -130,7 +129,7 @@ if( -d $files[0] ){
 	OGF::LayerInfo->tileIterator( $lrInfo, sub {
 		my( $item ) = @_;
 		my $file = $item->tileName();
-#		print STDERR "\$file <", $file, ">\n";  # _DEBUG_
+		print STDERR "\$file <", $file, ">\n";  # _DEBUG_
 #		print STDERR $item->{'y'}, " ", $item->{'x'}, "\n";
 		my $x0 = ($item->{'x'} - $tx) * $wd; 
 		my $y0 = $tileOrder_N ? ($ty - $item->{'y'}) * $hg : ($item->{'y'} - $ty) * $hg;

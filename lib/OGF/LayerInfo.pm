@@ -760,7 +760,7 @@ sub tileIterator {
 				for( my $x = $xMin; $x <= $xMax; ++$x ){
 					my $item = $info->copy( 'y' => $y, 'x' => $x );
 					my $fileName = $item->tileName();
-#					print STDERR "\$fileName <", $fileName, ">\n";  # _DEBUG_
+					print STDERR "\$fileName <", $fileName, ">\n";  # _DEBUG_
 					next unless -f $fileName || $ITERATOR_OPTS{'CREATE'} || $fileName =~ /^https?:/;
 					$cSub->( $item );
 				}

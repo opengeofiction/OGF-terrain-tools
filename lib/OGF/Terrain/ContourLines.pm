@@ -123,10 +123,11 @@ sub writeEndpointWays {
 
 	print STDERR "linear interpolation of endpoint ways\n";
  	foreach my $way ( @{$hWays->{_endpoint}} ){
+# 	    print STDERR "endpoint way ", $way->{'id'}, "\n";
         my $node0 = $ctx->{_Node}{$way->{'nodes'}[0]};
         my $node1 = $ctx->{_Node}{$way->{'nodes'}[-1]};
-        $node0->{'tags'}{'ele'} = $cTerr->( $node0->{'lon'}, $node0->{'lat'} );
-        $node1->{'tags'}{'ele'} = $cTerr->( $node1->{'lon'}, $node1->{'lat'} );
+        $node0->{'tags'}{'ele'} = $cTerr->( $node0 );
+        $node1->{'tags'}{'ele'} = $cTerr->( $node1 );
  	}
     writeIntersectingWays( $ctx, $hWays, $hInfo, '_endpoint' );
 }
@@ -141,11 +142,12 @@ sub writeTerrainWays {
 	print STDERR "write terrain paths\n";
 	my( $ct, $num ) = ( 0, scalar(@{$hWays->{_terrain}}) );
 	foreach my $way ( @{$hWays->{_terrain}} ){
+# 	    print STDERR "terrain way ", $way->{'id'}, "\n";
 		++$ct;
 		print STDERR "+ way ", $way->{'id'}, "  $ct/$num\n";
         foreach my $nodeId ( @{$way->{'nodes'}} ){
             my $node = $ctx->{_Node}{$nodeId};
-            $node->{'tags'}{'ele'} = $cTerr->( $node->{'lon'}, $node->{'lat'} );
+            $node->{'tags'}{'ele'} = $cTerr->( $node );
         }
         writeTerrainWay( $ctx, $way, $hInfo, $cTerr );
 	}
@@ -203,8 +205,9 @@ sub writeIntersectingWays {
 		convertWayPoints( $ctx, $way, $hInfo );
 		foreach my $wayE ( @elevationWays ){
 			next unless OGF::Geo::Geometry::rectOverlap( $way->{_rect}, $wayE->{_rect} );
+# 	        print STDERR "elevation way ", $way->{'id'}, "\n";
 			my @isct = OGF::Geo::Geometry::array_intersect( $way->{_points}, $wayE->{_points}, {'infoAll' => 1, 'rect' => [$way->{_rect},$wayE->{_rect}]} );
-			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
+#			use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [\@isct], ['*isct'] ), "\n";  # _DEBUG_
             if( defined $wayE->{_elev} ){
 			    map {$_->{_point}[2] = $wayE->{_elev}} @isct;
             }elsif( $wayE->{_terrainPath} ){
@@ -273,7 +276,7 @@ sub writeElevationWay {
 	my( $ctx, $way, $hInfo ) = @_;
 	convertWayPoints( $ctx, $way, $hInfo ) if ! $way->{_points};
 	my $num = $#{$way->{_points}};
-	print STDERR $way->{'id'}, " num=$num  elev=", $way->{_elev}, "\n";  # _DEBUG_
+	print STDERR $way->{'id'}, " num=$num  elev=", ((defined $way->{_elev})? $way->{_elev} : 'x'), "\n";  # _DEBUG_
 
 	for( my $i = 0; $i < $num; ++$i ){
 		my( $ptA, $ptB ) = ( $way->{_points}[$i], $way->{_points}[$i+1] );

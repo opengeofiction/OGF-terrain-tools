@@ -19,7 +19,9 @@ sub new {
 		_tileCount  => 0,
 		_maxTiles   => $MAX_TILES_DEFAULT,
 	};
-	if( $wwInfo =~ /\.cpx$/ ){
+	if( ref($wwInfo) eq 'OGF::View::TileLayer' ){
+		$self->{_tileLayer} = $wwInfo;
+	}elsif( $wwInfo =~ /\.cpx$/ ){
 		my $hBlocks = OGF::Util::extractFileBlocks( $wwInfo );
 		$self->{_tileLayer} = OGF::View::TileLayer->new( \$hBlocks->{'tlr'} );
 	}else{

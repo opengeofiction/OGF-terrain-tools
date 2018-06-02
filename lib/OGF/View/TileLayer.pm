@@ -135,6 +135,13 @@ sub tileInfoTag {
 	return $self->{_info}->copy( 'x' => $tx, 'y' => $ty )->toString();
 }
 
+sub tagTileInfo {
+    my( $self, $tileTag ) = @_;
+    my $wwInfo = OGF::LayerInfo->tileInfo( $tileTag );
+    return $wwInfo;
+}
+
+
 sub level {
 	my( $self ) = @_;
 	return $self->{_level};
@@ -217,6 +224,20 @@ sub bboxTileRange {
 	( $tx0, $tx1 ) = ( $tx1, $tx0 ) if $tx1 < $tx0;  # probably never happens
 	( $ty0, $ty1 ) = ( $ty1, $ty0 ) if $ty1 < $ty0;
 	return {'y' => [$ty0, $ty1], 'x' => [$tx0, $tx1]};
+}
+
+sub tileRangeBbox {
+	my( $self, $hTileRange ) = @_;
+	my( $tx0, $tx1 ) = @{$hTileRange->{'x'}};
+	my( $ty0, $ty1 ) = @{$hTileRange->{'y'}};
+	my( $orderX, $orderY, $numX, $numY ) = @{$self->{_tileOrder}};
+    ( $tx0, $tx1 ) = ($orderX > 0)? ( $tx0, $tx1+1 ) : ( $tx1, $tx0-1 );
+    ( $ty0, $ty1 ) = ($orderY > 0)? ( $ty1+1, $ty0 ) : ( $ty0-1, $ty1 );
+	my( $minLon, $minLat ) = $self->tile2geo( $tx0, $ty0, 0, 0 );
+	my( $maxLon, $maxLat ) = $self->tile2geo( $tx1, $ty1, 0, 0 );
+#	( $minLon, $maxLon ) = ( $maxLon, $minLon ) if $maxLon < $minLon;  # probably never happens
+#	( $minLat, $maxLat ) = ( $maxLat, $minLat ) if $maxLat < $minLat;
+	return [ $minLon, $minLat, $maxLon, $maxLat ];
 }
 
 

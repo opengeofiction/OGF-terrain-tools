@@ -55,7 +55,6 @@ my %FILE_NAMES;
 #$OGF::Terrain::ElevationTile::SUPPORTED_BPP{'2'} = 's>' if $files[0] =~ /\.hgt$/;
 
 
-
 my $main = MainWindow->new( -title => 'Tk::Widget Test' );
 initMainWindow( $main, $opt{'fullscreen'} );
 
@@ -122,6 +121,7 @@ if( -d $files[0] ){
 	die qq/ERROR: Cannot parse layer info./ if ! $lrInfo;
 	my $tileOrder_N = ($lrInfo->{'layer'} eq 'WebWW')? 1 : 0;
 	print STDERR "\$tileOrder_N <", $tileOrder_N, ">\n";  # _DEBUG_
+   printBboxInfo( $files[0], $lrInfo );
 
 	my( $tx, $ty ) = $lrInfo->getAttr( 'x', 'y' );
 	$tx = $tx->[0] if ref($tx) eq 'ARRAY';
@@ -175,6 +175,18 @@ sub viewElevationTile {
 }
 
 
+sub printBboxInfo {
+    require OGF::View::TileLayer;
+    my( $dsc, $lrInfo ) = @_;
+    $dsc =~ s/:[-\d]+:[-\d]+$/:all/;
+    print STDERR "\$dsc <", $dsc, ">\n";  # _DEBUG_
+    my $tlr = OGF::View::TileLayer->new( $dsc );
+    my $bbox = $tlr->tileRangeBbox( $lrInfo );
+    print STDERR 'bbox=', join(',', @$bbox), "\n";
+    exit;
+}
+
+
 sub setTileName {
     my( $x0, $y0, $file ) = @_;
     my $tag = ''. $y0 .'|'. $x0;
@@ -198,4 +210,8 @@ sub initMainWindow {
     $main->FullScreen( $fullScreen ? 1 : 0 );
     $main->bind( '<Control-KeyPress-Q>' => sub{ exit; } );
 }
+
+
+
+
 

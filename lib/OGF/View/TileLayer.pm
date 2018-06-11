@@ -292,7 +292,8 @@ sub min { $_[0] < $_[1] ? $_[0] : $_[1] }
 
 
 sub tmpRectLayer {
-	my( $self, $rect ) = @_;
+	my( $self, $rect, $hOpt ) = @_;
+    $hOpt = {} if ! $hOpt;
 
 	my( $orderX, $orderY, $numX, $numY ) = @{$self->{_tileOrder}};
 	my $proj4   = $self->{_proj}{_descriptor};
@@ -302,13 +303,14 @@ sub tmpRectLayer {
 
 	my( $x0, $y0, $x1, $y1 ) = @$rect;
 	my( $tileWd, $tileHg ) = ( $x1-$x0+1, $y1-$y0+1 );
+    my $contourFile = $hOpt->{'contourFile'} || "C:/Map/Elevation/tmp/temp_layer-$tileWd-$tileHg.cnr";
 
 	my $tlr = << "EOF";
 tileSize     $tileWd,$tileHg 
 tileOrder    $orderX,$orderY,$numX,$numY
 tileOffset   $x0,$y0
 
-tileImage    0,0    C:/Map/Elevation/tmp/temp_layer.cnr
+tileImage    0,0    $contourFile
 proj4        $proj4
 
 transform   X   $xs0 $xt0   $xs1 $xt1

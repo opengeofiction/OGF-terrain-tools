@@ -1005,7 +1005,7 @@ sub loadTile {
 			for( my $yp = 0; $yp < $sc; ++$yp ){
 				for( my $xp = 0; $xp < $sc; ++$xp ){
 					my $upLevelFile = $wwInfo->copy('level' => $upLevel, 'x' => $sc*$tx+$xp, 'y' => $sc*$ty+$yp)->tileName();
-					if( $upLevelFile =~ m|http://| ){
+					if( $upLevelFile =~ m|https?://| ){
 						$upLevelFile = OGF::LayerInfo::cachedUrlTile( $upLevelFile );
 					}
 					if( -f $upLevelFile ){

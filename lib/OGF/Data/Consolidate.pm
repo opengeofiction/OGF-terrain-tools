@@ -638,7 +638,7 @@ sub calculateRelationAreas {
 	}
 }
 
-# http://opengeofiction.net/api/0.6/relation/4465/full
+# https://opengeofiction.net/api/0.6/relation/4465/full
 
 sub calculateRelationAreas_wiki {
 	require OGF::Geo::Measure;
@@ -674,8 +674,8 @@ EOF
 		my $area = 0;
 		my @comment;
 
-		$type = "[http://opengeofiction.net/api/0.6/relation/$id/full $type]";
-		$id   = "[http://opengeofiction.net/relation/$id $id]";
+		$type = "[https://opengeofiction.net/api/0.6/relation/$id/full $type]";
+		$id   = "[https://opengeofiction.net/relation/$id $id]";
 
 		eval {  
 			die qq/relation is empty\n/ if ! @{$rel->{'members'}};
@@ -687,7 +687,7 @@ EOF
 		if( $@ ){
 			my $comment = $@;
 			$comment =~ s|\n$||;
-			$comment =~ s|node (\d+)|node [http://opengeofiction.net/node/$1 $1]|;
+			$comment =~ s|node (\d+)|node [https://opengeofiction.net/node/$1 $1]|;
 			push @comment, $comment;
 			warn "ERROR $id $name: $comment\n";
 		}
@@ -765,11 +765,11 @@ EOF
 		my $area = 0;
 		my @comment;
 
-#		$type = "[http://opengeofiction.net/api/0.6/relation/$id/full $type]";
-#		$id   = "[http://opengeofiction.net/relation/$id $id]";
+#		$type = "[https://opengeofiction.net/api/0.6/relation/$id/full $type]";
+#		$id   = "[https://opengeofiction.net/relation/$id $id]";
 
-		$type = htmlLink( "http://opengeofiction.net/api/0.6/relation/$id/full", $type );
-		$id   = htmlLink( "http://opengeofiction.net/relation/$id", $id );
+		$type = htmlLink( "https://opengeofiction.net/api/0.6/relation/$id/full", $type );
+		$id   = htmlLink( "https://opengeofiction.net/relation/$id", $id );
 
 		eval {  
 			die qq/relation is empty\n/ if ! @{$rel->{'members'}};
@@ -781,7 +781,7 @@ EOF
 		if( $@ ){
 			my $comment = $@;
 			$comment =~ s|\n$||;
-			$comment =~ s|node (\d+)|'node '.htmlLink("http://opengeofiction.net/node/$1",$1)|e;
+			$comment =~ s|node (\d+)|'node '.htmlLink("https://opengeofiction.net/node/$1",$1)|e;
 			push @comment, $comment;
 			warn "ERROR $id $name: $comment\n";
 		}
@@ -1169,7 +1169,7 @@ sub writeMultimap {
         'free' => {
 			_color => '#66cc22',
 			_title => [ '#id' ],
-			_text  => [ '#id', ' is free - you can [http://opengeofiction.net/message/new/admin request this territory.]' ],
+			_text  => [ '#id', ' is free - you can [https://opengeofiction.net/message/new/admin request this territory.]' ],
 		},
         'active' => {
 			_color => '#ffcc99',
@@ -1189,7 +1189,7 @@ sub writeMultimap {
         'inactive' => {
 			_color => '#eeff22',
 			_title => [ '#name' ],
-			_text  => [ '#id', ' is inactive - owned by user ', '#owner', ' - if you own this territory, please contact [http://opengeofiction.net/message/new/admin admin] or you may lose it.' ],
+			_text  => [ '#id', ' is inactive - owned by user ', '#owner', ' - if you own this territory, please contact [https://opengeofiction.net/message/new/admin admin] or you may lose it.' ],
 		},
         'reserved' => {
 			_color => '#dddddd',
@@ -1262,14 +1262,14 @@ EOF
         my $name   = ($status eq 'free')? $ogfId : $rel->{'tags'}{'name'};
         my $owner  = $rel->{'tags'}{'ogf:owner'} || "";
 		my $ownerU = URI::Escape::uri_escape($owner);
-		$owner = ($status =~ /active|collab/)? "[http://opengeofiction.net/user/$ownerU $owner]" : '';
+		$owner = ($status =~ /active|collab/)? "[https://opengeofiction.net/user/$ownerU $owner]" : '';
 		my $color  = $tp{$status}{_color};
 		my $deadline = ($status eq 'inactive')? '2015-05-31' : '';
 
 		my $row = << "EOF";
  |-
  | style="background:$color; border:2px solid #111111; padding:1em" align="center" | ''$status''
- | style="padding:1em" align="center" | [http://opengeofiction.net/relation/$relId $ogfId]
+ | style="padding:1em" align="center" | [https://opengeofiction.net/relation/$relId $ogfId]
  | style="padding:1em" | '''[[$name]]'''
  | style="padding:1em" | $owner 
  | style="padding:1em" align="center"| $deadline
@@ -1290,10 +1290,10 @@ sub evalTemplate {
 		if( $tp =~ /^#/ ){
 			if( $tp eq '#owner' ){
 				my $owner = $hInfo->{'owner'};
-				$str .= '[http://opengeofiction.net/user/'. URI::Escape::uri_escape($owner) ." $owner]";
+				$str .= '[https://opengeofiction.net/user/'. URI::Escape::uri_escape($owner) ." $owner]";
 			}elsif( $tp eq '#id' ){
 				my( $ogfId, $relId ) = ( $hInfo->{'ogfId'}, $hInfo->{'relId'} );
-				$str .= ($opt eq 'wiki')? "[[$ogfId]]" : "[http://opengeofiction.net/relation/$relId $ogfId]";
+				$str .= ($opt eq 'wiki')? "[[$ogfId]]" : "[https://opengeofiction.net/relation/$relId $ogfId]";
 			}elsif( $tp eq '#name' ){
 				$str .= '[['. $hInfo->{'name'} .']]';
 			}

@@ -283,7 +283,7 @@ sub fileExport_Overpass {
 
 sub getTerritories {
     require LWP;
-    my $URL_TERRITORIES = 'http://tile.opengeofiction.net/data/ogf_territories.json';
+    my $URL_TERRITORIES = 'https://tile.opengeofiction.net/data/ogf_territories.json';
 
     my $json = JSON::PP->new();
 	my $userAgent = LWP::UserAgent->new(

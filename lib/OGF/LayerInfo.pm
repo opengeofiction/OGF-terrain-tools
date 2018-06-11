@@ -109,7 +109,7 @@ our %INFO_MAP = (
         'proj4'    => '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs',
         'tile'     => [ '%d/%d/%d.%s', 'level', 'x', 'y', 'suffix' ],
         'image' => {
-            'baseDir'  => [ 'http://tile.opengeofiction.net/osmcarto' ],
+            'baseDir'  => [ 'https://tile.opengeofiction.net/osmcarto' ],
 #           'baseDir'  => [ '/opt/osm/Map/Common/Cache/opengeofiction.net/osmcarto' ],
         },
         'phys' => {
@@ -122,14 +122,14 @@ our %INFO_MAP = (
         },
     },
     'OGFT' => {
-        'baseDir' => [ 'http://tile.opengeofiction.net/topomap' ],
+        'baseDir' => [ 'https://tile.opengeofiction.net/topomap' ],
         'tile'    => [ '%d/%d/%d.%s', 'level', 'x', 'y', 'suffix' ],
         'size'    => [ 256, 256 ],
         'minMax'  => { baseLevel => 0, maxLevel => 16, min_Y => 0, max_Y => 0, min_X => 0, max_X => 0 },
         'proj4'   => '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs',
     },
     'OGFR' => {
-        'baseDir' => [ 'http://tile.opengeofiction.net/planet/Roantra' ],
+        'baseDir' => [ 'https://tile.opengeofiction.net/planet/Roantra' ],
         'tile'    => [ '%d/%d/%d.%s', 'level', 'x', 'y', 'suffix' ],
         'size'    => [ 256, 256 ],
         'minMax'  => { baseLevel => 0, maxLevel => 14, min_Y => 0, max_Y => 0, min_X => 0, max_X => 0 },

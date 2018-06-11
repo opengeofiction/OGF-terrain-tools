@@ -15,7 +15,7 @@ $OGF::TASKSERVICE_DIR  = 'C:/Map/OGF/taskService';
 		'file'     => $OGF::TASKSERVICE_DIR . '/ogfclient/tasklist.txt',
 		'options'  => {'interrupt' => 0},
 		'commands' => [ 'download', 'upload' ],
-		'server'   => 'http://opengeofiction.net',
+		'server'   => 'https://opengeofiction.net',
 	},
 );
 

@@ -34,7 +34,8 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1201 C:/Map/Elevation/Earth/N46E007.hgt
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 C:/Map/Sathria/elev/6 -noExist
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:6:bbox=30.99,43.78992,31.32844,46.39 -forceRemake
-
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:6:bbox=41.22852,47.27061,42.13469,47.92959 -forceRemake
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 3159,2857 C:/Map/Elevation/tmp/temp_layer-3159-2857.cnr
 
 
 my %opt;
@@ -121,7 +122,7 @@ if( -d $files[0] ){
 	die qq/ERROR: Cannot parse layer info./ if ! $lrInfo;
 	my $tileOrder_N = ($lrInfo->{'layer'} eq 'WebWW')? 1 : 0;
 	print STDERR "\$tileOrder_N <", $tileOrder_N, ">\n";  # _DEBUG_
-   printBboxInfo( $files[0], $lrInfo );
+#   printBboxInfo( $files[0], $lrInfo );
 
 	my( $tx, $ty ) = $lrInfo->getAttr( 'x', 'y' );
 	$tx = $tx->[0] if ref($tx) eq 'ARRAY';

@@ -98,6 +98,31 @@ sub separateWayClasses {
     return $hWays;	
 }
 
+sub getContourLevels {
+	my( $ctx, $tileLayer, $aTileSize, $hOpt ) = @_;
+	my $hInfo = {
+		_tileLayer => $tileLayer,
+		_tileCache => {},
+		_bbox      => [ 180, 90, -180, -90 ],
+		_tileSize  => $aTileSize,
+#		_add       => ($hOpt->{'add'} ? 1 : 0),
+	};
+    my $hWays = separateWayClasses( $ctx->{_Way} );
+
+    my %contourLevels;
+    foreach my $way ( @{$hWays->{_contour}} ){
+        convertWayPoints( $ctx, $way, $hInfo );
+        computeSegmentLengths( $way );
+        $contourLevels{$way->{_elev}} = [] if ! $contourLevels{$way->{_elev}};
+        push @{$contourLevels{$way->{_elev}}}, $way;
+    }
+    my @elev = sort {$a <=> $b} keys %contourLevels;
+    my @contourLevels = map {$contourLevels{$_}} @elev;
+
+    return \@contourLevels;
+}
+
+
 sub writeElevationWays {
     my( $ctx, $hWays, $hInfo ) = @_;
 	print STDERR "write contour ways\n";
@@ -252,6 +277,16 @@ sub convertWayPoints {
 		minMaxArea( $way->{_rect}, $pt );
 		$way->{_points}[$i] = $pt;		
 	}
+}
+
+sub computeSegmentLengths {
+    my( $way ) = @_;
+	my $aPoints = $way->{_points};
+	my $num = $#{$aPoints};
+    $way->{_segmentLength} = [];
+	for( my $i = 0; $i < $num; ++$i ){
+        $way->{_segmentLength}[$i] = OGF::Geo::Geometry::dist( $aPoints->[$i], $aPoints->[$i+1] );
+    }
 }
 
 sub writeElevationWay {

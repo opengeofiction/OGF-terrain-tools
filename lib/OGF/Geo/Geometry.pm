@@ -125,15 +125,130 @@ sub segmentDistance {
 	return wantarray ? ($dist, $dx, $dy) : $dist;
 }
 
+sub segmentDistance2 {
+	my( $xA0, $yA0, $xA1, $yA1 ) = ( $_[0][0], $_[0][1], $_[1][0], $_[1][1] );
+	my( $xB0, $yB0, $xB1, $yB1 ) = ( $_[2][0], $_[2][1] );
+
+	my( $dist, $dx, $dy );
+	if( $xA0 != $xA1 ){
+		( $xB1, $yB1 ) = ( ($yA1 - $yA0) / ($xA1 - $xA0) + $xB0, $yB0 - 1 );
+	}elsif( $yA0 != $yA1 ){
+		( $xB1, $yB1 ) = ( $xB0 - 1, ($xA1 - $xA0) / ($yA1 - $yA0) + $yB0 );
+	}else{
+		$dist = dist2( [$xA0,$yA0], [$xB0,$yB0] );
+		return $dist;
+	}
+
+	my $aI = lineIntersect( [$xA0,$yA0], [$xA1,$yA1], [$xB0,$yB0], [$xB1,$yB1] );
+	my( $xC, $yC, $cA ) = @$aI;
+#   return 	@$aI;
+	if( $cA <= 0 ){
+		$dist = dist2( [$xA0,$yA0], [$xB0,$yB0] );
+	}elsif( $cA >= 1 ){
+		$dist = dist2( [$xA1,$yA1], [$xB0,$yB0] );
+	}else{
+		$dist = dist2( [$xC,$yC], [$xB0,$yB0] );
+	}
+
+	return $dist;
+}
+
+sub segmentDistance_x {
+	my( $xA0, $yA0, $xA1, $yA1 ) = ( $_[0][0], $_[0][1], $_[1][0], $_[1][1] );
+	my( $xB0, $yB0 ) = ( $_[2][0], $_[2][1] );
+
+	my( $dist, $cA, $xC, $yC );
+    my( $dx, $dy, $xp, $yp ) = ( $xA1 - $xA0, $yA1 - $yA0, $xB0 - $xA0, $yB0 - $yA0 );
+    if( $dx == 0 && $dy == 0 ){
+        $cA = 0;
+    }else{
+        $cA = ($xp * $dx + $yp * $dy) / ($dx * $dx + $dy * $dy)
+    }
+
+	if( $cA < 0 ){
+        ( $xC, $yC ) = ( $xA0, $yA0 );
+	}elsif( $cA >= 1 ){
+        ( $xC, $yC ) = ( $xA1, $yA1 );
+    }else{
+        ( $xC, $yC ) = ( $xA0 + $cA * $dx, $yA0 + $cA * $dy );
+    }
+    $dist = dist2( [$xC,$yC], [$xB0,$yB0] );
+
+	return ( $dist, $cA );
+}
+
 sub linePointDist {
 	my( $aPoints, $pt ) = @_;
 	my( $minDist, $idx ) = ( 9999999 );
 	my $n = $#{$aPoints} - 1;
 	for( my $i = 0; $i <= $n; ++$i ){
-		my $dd = segmentDistance( $aPoints->[$i], $aPoints->[$i+1], $pt );
+		my $dd = segmentDistance2( $aPoints->[$i], $aPoints->[$i+1], $pt );
 		( $minDist, $idx ) = ( $dd, $i ) if $dd < $minDist;
 	}
+	$minDist = sqrt( $minDist );
 	return wantarray ? ($minDist,$idx) : $minDist;
+}
+
+sub linePointDist_x {
+	my( $pt, $aPoints, $aDL ) = @_;
+	my $minDP = 9_999_999;
+    my @list;
+	my $n = $#{$aPoints} - 1;
+	for( my $i = 0; $i <= $n; ++$i ){
+        my( $ptA, $ptB ) = ( $aPoints->[$i], $aPoints->[$i+1] );
+        my( $dP, $dL ) = ( dist($pt,$ptA), $aDL->[$i] );
+        $minDP = $dP if $dP < $minDP;
+        push @list, [ $dP, $dL, $ptA, $ptB, $i ];
+	}
+#	my $n1 = scalar(@list);
+    @list = grep {$_->[0] - $_->[1] <= $minDP} @list;
+#	my $n2 = scalar(@list);
+#	print STDERR "  $n1 -> $n2\n";
+	my( $minDS, $idx, $cX ) = ( 9_999_999 );
+    foreach my $aS ( @list ){
+        my( $dP, $dL, $ptA, $ptB, $i ) = @$aS;
+		my( $dd, $cA ) = segmentDistance_x( $ptA, $ptB, $pt );
+		( $minDS, $idx, $cX ) = ( $dd, $i, $cA ) if $dd < $minDS;
+    }
+	$minDS = sqrt( $minDS );
+	return ( $minDS, $idx, $cX );
+}
+
+
+sub linePointDist_x_01 {
+	my( $aPoints, $pt ) = @_;
+	my $minDP = 9_999_999;
+    my @list;
+	my $n = $#{$aPoints} - 1;
+	for( my $i = 0; $i <= $n; ++$i ){
+        my( $ptA, $ptB ) = ( $aPoints->[$i], $aPoints->[$i+1] );
+        my( $dP, $dL ) = ( dist($pt,$ptA), dist($ptA,$ptB) );
+        $minDP = $dP if $dP < $minDP;
+        push @list, [ $dP, $dL, $ptA, $ptB ];
+	}
+#	my $n1 = scalar(@list);
+#   @list = grep {$_->[0] - $_->[1] <= $minDP} @list;
+#	my $n2 = scalar(@list);
+#	print STDERR "  $n1 -> $n2\n";
+	my( $minDS, $idx ) = ( 9_999_999 );
+    for( my $i = 0; $i <= $n; ++$i ){
+        my( $dP, $dL, $ptA, $ptB ) = @{$list[$i]};
+        next unless $dP - $dL <= $minDP;
+#		my $dd = segmentDistance2( $ptA, $ptB, $pt );
+
+        my $dd;
+        my( $xC, $yC, $cA ) = segmentDistance2( $ptA, $ptB, $pt );
+        if( $cA <= 0 ){
+            $dd = $dP;
+        }elsif( $cA >= 1 ){
+            $dd = ($i < $n)? $list[$i+1][0] : dist($list[$i][3],$pt);
+        }else{
+            $dd = dist( [$xC,$yC], $pt );
+        }
+		( $minDS, $idx ) = ( $dd, $i ) if $dd < $minDS;
+    }
+#	$minDS = sqrt( $minDS );
+	return wantarray ? ($minDS,$idx) : $minDS;
 }
 
 
@@ -162,6 +277,13 @@ sub dist {
 #	print STDERR "\$x0 <", $x0, ">  \$y0 <", $y0, ">  \$x1 <", $x1, ">  \$y1 <", $y1, ">\n";  # _DEBUG_
 	my $dist = sqrt( ($x0 - $x1)*($x0 - $x1) + ($y0 - $y1)*($y0 - $y1) );
 	return $dist;
+}
+
+sub dist2 {
+	my( $pt0, $pt1 ) = @_;
+	my( $dx, $dy ) = ( $pt1->[0] - $pt0->[0], $pt1->[1] - $pt0->[1] );
+#	print STDERR "\$x0 <", $x0, ">  \$y0 <", $y0, ">  \$x1 <", $x1, ">  \$y1 <", $y1, ">\n";  # _DEBUG_
+	return $dx * $dx + $dy * $dy;
 }
 
 sub rdist {

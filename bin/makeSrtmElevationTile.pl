@@ -17,6 +17,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/makeSrtmElevationTile.pl Paxtar:0 1200 bbox=18.6,-45.94,37.86,-36.3
 # perl C:/usr/OGF-terrain-tools/bin/makeSrtmElevationTile.pl Roantra:4 1200 bbox=25.97,43.14,31.34,47.10
 # perl C:/usr/OGF-terrain-tools/bin/makeSrtmElevationTile.pl SathriaLCC:6 1200 bbox=41.22852,47.27061,42.13469,47.92959
+# perl C:/usr/OGF-terrain-tools/bin/makeSrtmElevationTile.pl SathriaLCC:6 1200 bbox=41.1,47.1,41.9,47.9
 
 
 my %opt;

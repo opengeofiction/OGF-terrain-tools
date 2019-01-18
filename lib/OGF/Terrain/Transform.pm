@@ -18,6 +18,7 @@ sub layerTransform {
     my $vtSrc = OGF::Util::GlobalTile->new( $dscSrc );
     my $vtTgt = OGF::Util::GlobalTile->new( $dscTgt );
 #   use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 5; print STDERR Data::Dumper->Dump( [$vtTgt], ['vtTgt'] ), "\n";  # _DEBUG_
+    my $bpp             = $hOpt->{'bpp'} || $vtTgt->{_layerInfo}->layerInfo('bpp',1) || 2;
     my $aStrictBbox     = $hOpt->{'strictBbox'} ? $bbox : undef;
     my $roantraDisplace = $hOpt->{'roantraDisplace'} ? 1 : 0;
 
@@ -28,6 +29,7 @@ sub layerTransform {
     my @tileNW = $vtTgt->geo2tile( $minLon, $maxLat );
     my @tileSE = $vtTgt->geo2tile( $maxLon, $minLat );
     print STDERR "\@tileNW <", join('|',@tileNW), ">  \@tileSE <", join('|',@tileSE), ">\n";  # _DEBUG_
+    ( $tileWd, $tileHg ) = ( $tileWd + 1, $tileHg + 1 ) if $hOpt->{'overlap'};
 
     # R:139 G:161  = 0
     $dscTgt =~ s/:all$//;
@@ -56,9 +58,9 @@ sub layerTransform {
                     $ptGeo->[0] -= 50 if $roantraDisplace;   ### Roantra specific ###
 #                   print STDERR "\@\$ptGeo <", join('|',@$ptGeo), ">\n";  # _DEBUG_
                     my $ptElev = $vtSrc->geo2cnv( $ptGeo );
-#                   print STDERR "\$ptElev <", join(',',@$ptElev), ">\n"; exit; # _DEBUG_
-#                   my( $xe, $ye ) = ( floor($ptElev->[0]+.5), floor($ptElev->[1]+.5) );
-#                   my $elev = $vtSrc->[$ye][$xe];
+#                   print STDERR "\$ptElev <", join(',',@$ptElev), ">\n";    # _DEBUG_
+#                   my $ttElev = $vtSrc->geo2tile( $ptGeo );                 # _DEBUG_
+#                   print STDERR "\@\$ttElev <", join('|',@$ttElev), ">\n";  # _DEBUG_
 
                     my( $xe, $ye ) = ( $ptElev->[0], $ptElev->[1] );
                     my( $x0, $y0 ) = ( floor($xe), floor($ye) );
@@ -73,7 +75,7 @@ sub layerTransform {
                 }
             }
 
-            my $data = makeTileFromArray( $aTile, 2 );
+            my $data = makeTileFromArray( $aTile, $bpp );
             makeFilePath( $file );
             writeToFile( $file, $data, undef, {-bin => 1, -mdir => 1} );
             unlink "$file.png" if -f "$file.png";

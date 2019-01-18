@@ -165,7 +165,7 @@ sub segmentDistance_x {
         $cA = ($xp * $dx + $yp * $dy) / ($dx * $dx + $dy * $dy)
     }
 
-	if( $cA < 0 ){
+	if( $cA <= 0 ){
         ( $xC, $yC ) = ( $xA0, $yA0 );
 	}elsif( $cA >= 1 ){
         ( $xC, $yC ) = ( $xA1, $yA1 );

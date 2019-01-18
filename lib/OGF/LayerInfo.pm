@@ -119,6 +119,10 @@ our %INFO_MAP = (
         'elev' => {
             'baseDir'  => [ $PATH_PREFIX.'/OGF/WW_elev' ],
             'tile'     => [ '%d/%d/%d_%d.%s', 'level', 'y', 'y', 'x', 'suffix' ],
+            'suffix'   => 'bil',
+#           'baseDir'  => [ $PATH_PREFIX.'/OGF/elev' ],
+#           'tile'     => [ '%d/%d/%d.%s', 'level', 'x', 'y', 'suffix' ],
+#           'suffix'   => 'ddm',
         },
     },
     'OGFT' => {
@@ -141,6 +145,18 @@ our %INFO_MAP = (
         'size'    => [ 256, 256 ],
         'minMax'  => { baseLevel => 0, maxLevel => 17, min_Y => 0, max_Y => 0, min_X => 0, max_X => 0 },
         'proj4'   => '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs',
+    },
+    'OpenGlobus' => {
+        'size'     => [ 32, 32 ],
+        'minMax'   => { baseLevel => 0, maxLevel => 19, min_Y => 0, max_Y => 0, min_X => 0, max_X => 0 },
+        'proj4'    => '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs',
+        'elev' => {
+            'baseDir'  => [ $PATH_PREFIX.'/OGF/OG_elev' ],
+            'suffix'   => 'ddm',
+            'bpp'      => 4,
+            'overlap'  => 1,
+            'tile'     => [ '%d/%d/%d.%s', 'level', 'y', 'x', 'suffix' ],
+        },
     },
     'Cesium' => {  # elev only
         'baseDir'  => [ $PATH_PREFIX.'/OGF/Cesium_elev' ],
@@ -280,8 +296,12 @@ sub tileArray {
 		$aTile = OGF::Util::PPM->new( $tmpFile, {-loadData => 1} )->{'data'};
 	}else{
 		require OGF::Terrain::ElevationTile;
+		my $bpp = $info->layerInfo( 'bpp', 1 ) || $BPP;
+		my $ovl = $info->layerInfo( 'overlap', 1 ) || 0;
+        ( $wdT, $hgT ) = ( $wdT+$ovl, $hgT+$ovl ) if $ovl;
 		my $data = $info->tileData( $file );
-		$aTile = OGF::Terrain::ElevationTile::makeArrayFromTile( $data, $wdT, $hgT, $BPP );
+#		print STDERR qq/$file wd=$wdT hg=$hgT bpp=$bpp\n/;  # _DEBUG_
+		$aTile = OGF::Terrain::ElevationTile::makeArrayFromTile( $data, $wdT, $hgT, $bpp );
 	}
 	return $aTile;
 }

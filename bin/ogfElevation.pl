@@ -64,6 +64,7 @@ if( $opt{'c'} ){
 	require OGF::Terrain::ElevationTile;
 
 	# makeElevationFromContour
+    print STDERR "--- makeElevationFromContour --- ", join(' ',@OSM_FILES), " ---\n";
 	my $infoDsc = "contour:OGF:$LEVEL:$ty0-$ty1:$tx0-$tx1";
 	OGF::Terrain::ElevationTile::setGlobalTileInfo( 256, 256, 2, 1 ) if $infoDsc =~ /:OGF:/;
 
@@ -74,22 +75,23 @@ if( $opt{'c'} ){
     } );
 
 	# makeSrtmElevationTile
+    print STDERR "--- makeSrtmElevationTile --- ", join(' ',@OSM_FILES), " ---\n";
 	$OGF::Terrain::Transform::OUTPUT_DIRECTORY = $OGF::TERRAIN_OUTPUT_DIR;
     OGF::Terrain::Transform::makeSrtmElevationTile( 'OGF', $LEVEL, $srtmSampSize, $bbox );
 
-	# make WW elevation
-	my( $dscSrc, $dscTgt ) = ( "elev:OGF:$LEVEL:all", "elev:WebWW:$wwLevel:all" );
-	my $hInfo2 = OGF::Terrain::Transform::layerTransform( $dscSrc, $dscTgt, $bbox );
-	
-	# tile levels
-	my( $tx20, $tx21, $ty20, $ty21 ) = map {$hInfo2->{_tileRange}{$_}} qw( _xMin _xMax _yMin _yMax );
-	my $infoDsc2 = "elev:WebWW:$wwLevel:$ty20-$ty21:$tx20-$tx21";
-	print STDERR $infoDsc2, "\n";  # _DEBUG_
-	my @zipList;
-	OGF::Util::TileLevel::convertMapLevel( $infoDsc2, 0, \@zipList );
-
-    my $zipFile = $OGF::TERRAIN_OUTPUT_DIR .'/wwtiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
-	OGF::Util::File::zipFileList( $zipFile, \@zipList );
+#	# make WW elevation   -->  deprecated
+#	my( $dscSrc, $dscTgt ) = ( "elev:OGF:$LEVEL:all", "elev:WebWW:$wwLevel:all" );
+#	my $hInfo2 = OGF::Terrain::Transform::layerTransform( $dscSrc, $dscTgt, $bbox );
+#	
+#	# tile levels
+#	my( $tx20, $tx21, $ty20, $ty21 ) = map {$hInfo2->{_tileRange}{$_}} qw( _xMin _xMax _yMin _yMax );
+#	my $infoDsc2 = "elev:WebWW:$wwLevel:$ty20-$ty21:$tx20-$tx21";
+#	print STDERR $infoDsc2, "\n";  # _DEBUG_
+#	my @zipList;
+#	OGF::Util::TileLevel::convertMapLevel( $infoDsc2, 0, \@zipList );
+#
+#   my $zipFile = $OGF::TERRAIN_OUTPUT_DIR .'/wwtiles-'. Date::Format::time2str('%Y%m%d-%H%M%S',time) .'.zip';
+#	OGF::Util::File::zipFileList( $zipFile, \@zipList );
 
 }else{
 	use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$bbox], ['bbox'] ), "\n";  # _DEBUG_

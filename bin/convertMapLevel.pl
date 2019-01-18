@@ -22,17 +22,21 @@ use OGF::Util::Usage qw( usageInit usageError );
 # convertMapLevel -sz 256,256 elev:OGF:9:dir=/Map/OGF/WW_contour/9 10
 # convertMapLevel -sz 1024,1024 elev:SathriaLCC:2:dir=/Map/Sathria/elev/2 0
 # perl C:\usr\OGF-terrain-tools\bin\convertMapLevel.pl -sz 1024,1024 elev:SathriaLCC:5:dir=/Map/Sathria/elev/5 0
- 
+# perl C:\usr\OGF-terrain-tools\bin\convertMapLevel.pl -sz 33,33 -bpp 4       elev:OpenGlobus:12:dir=/Map/OGF/OG_elev/12 0
+# perl C:\usr\OGF-terrain-tools\bin\convertMapLevel.pl -sz 33,33 -bpp 4 -zip  elev:OpenGlobus:12:1439-1502:2343-2404 0
 
 
 
 my %opt;
-usageInit( \%opt, qq/ sz=s zip /, << "*" );
+usageInit( \%opt, qq/ sz=s zip bpp=i /, << "*" );
 [-sz wd,hg] [-zip] <layerInfo> <target_level>
 *
 
 my( $layerDsc, $targetLevel ) = @ARGV;
 usageError() unless $layerDsc && defined($targetLevel);
+
+
+$OGF::Util::TileLevel::BPP = $opt{'bpp'} if $opt{'bpp'};
 
 
 #my( $tileWd, $tileHg ) = $opt{'sz'} ? split(',',$opt{'sz'}) : (512,512);

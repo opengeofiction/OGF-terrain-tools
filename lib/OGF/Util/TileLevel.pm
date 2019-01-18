@@ -8,6 +8,7 @@ our @ISA = qw( Exporter );
 our @EXPORT_OK = qw( convertToPnm convertFromPnm getTempFileNames );
 
 our $WWINFO_TYPE = 'image';
+our $BPP = 2;
 my $TMP_PNM_FILE = ($^O eq 'MSWin32')? 'C:\usr\tmp\TMP_TileLevelTools.ppm' : '/home/osm/Roantra/tmp/TMP_TileLevelTools.ppm';
 my $DEFAULT_FILE_DIR = ($^O eq 'MSWin32')? 'C:\Map\Common\DefaultFiles\\' : '/home/osm/Roantra/default/';
 
@@ -242,7 +243,7 @@ sub upLevelSplit {
 
 sub concat4img {
 	my( $wd, $hg, $img00, $img01, $img10, $img11, $imgOut ) = @_;
-	if( $imgOut =~ /\.(bil|terrain)$/ ){
+	if( $imgOut =~ /\.(bil|terrain|ddm)$/ ){
 		concat4img_BIL( $wd, $hg, $img00, $img01, $img10, $img11, $imgOut );
 		return;
 	}
@@ -277,7 +278,7 @@ sub concat4img_BIL {
 	my( $wd, $hg, $img00, $img01, $img10, $img11, $imgOut ) = @_;
 #	print STDERR "\$wd <", $wd, ">  \$hg <", $hg, ">  \$img00 <", $img00, ">  \$img01 <", $img01, ">  \$img10 <", $img10, ">  \$img11 <", $img11, ">  \$imgOut <", $imgOut, ">\n"; return; # _DEBUG_
 	print STDERR "\$wd <", $wd, ">  \$hg <", $hg, ">  \$imgOut <", $imgOut, ">\n"; # _DEBUG_
-	my( $aSet, $bpp, $w2, $h2 ) = ( [], 2, $wd/2, $hg/2 );
+	my( $aSet, $bpp, $w2, $h2 ) = ( [], $BPP, $wd/2, $hg/2 );
 
 	$aSet->[0][0] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img00, $wd, $hg, $bpp, 0 );
 	$aSet->[0][1] = OGF::Terrain::ElevationTile::makeArrayFromFile( $img01, $wd, $hg, $bpp, 0 );
@@ -297,7 +298,7 @@ sub concat4img_BIL {
 			}
 		}
 	}
-	my $dataOut = OGF::Terrain::ElevationTile::makeTileFromArray( $aDst, 2 );
+	my $dataOut = OGF::Terrain::ElevationTile::makeTileFromArray( $aDst, $bpp );
 	OGF::Util::File::writeToFile( $imgOut, $dataOut, undef, {-bin => 1} );
 }
 

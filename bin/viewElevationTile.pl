@@ -36,11 +36,19 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:6:bbox=30.99,43.78992,31.32844,46.39 -forceRemake
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:6:bbox=41.22852,47.27061,42.13469,47.92959 -forceRemake
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 3159,2857 C:/Map/Elevation/tmp/temp_layer-3159-2857.cnr
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 C:/TEMP/1055.ddm C:/TEMP/1056.ddm -bpp 4 -forceRemake
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:OGF:12:2720-2725:2900-2905
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 elev:OpenGlobus:14:7320-7330:12270-12280 -bpp 4
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 elev:OpenGlobus:12:bbox=89.10,18.31,89.93,18.85 -bpp 4
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 elev:OpenGlobus:12:bbox=83.41928,-58.51041,84.18434,-58.20117 -bpp 4
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 elev:OpenGlobus:12:bbox=121.2,-21.4,122,-21.2 -bpp 4
+
+
 
 
 my %opt;
-usageInit( \%opt, qq/ bigEndian noRelief forceRemake noExist /, << "*" );
-<size> <file1> [<file2> ...] [-bigEndian] [-noRelief] [-fullscreen]
+usageInit( \%opt, qq/ bigEndian noRelief forceRemake noExist bpp=i /, << "*" );
+<size> <file1> [<file2> ...] [-bigEndian] [-bpp <bpp>] [-noRelief] [-fullscreen]
 *
 
 my( $SIZE, @FILES ) = @ARGV;
@@ -49,7 +57,7 @@ usageError() unless $SIZE && @FILES;
 
 my( $size, @files ) = ( $SIZE, @FILES );
 my( $wd, $hg ) = ($SIZE =~ /,/)? (split /,/, $SIZE) : ( $SIZE, $SIZE );
-
+my $BPP = $opt{'bpp'} || 2;
 
 my $TILE_DATA = [];
 my %FILE_NAMES;
@@ -157,14 +165,20 @@ sub viewElevationTile {
     if( -f $pngFile && ! $opt{'forceRemake'} ){
         if( ! $opt{'noExist'} ){
             $photo = $cnv->Photo( -file => $pngFile );
+            my $photo2 = $cnv->Photo( -width => $wd * 4, -height => $hg * 4 ); $photo2->copy( $photo, -to => 0,0, -zoom => 4 ); $photo = $photo2;  # _DEBUG_
             $img = $cnv->createImage( $x0, $y0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
         }
         return ( $img, $photo );
     }
 
-	my $packTemplate = ($hOpt->{'bigEndian'} || $file =~ /\.hgt$/)? 's>' : 's';
-    my $aTile = $TILE_DATA = OGF::Terrain::ElevationTile::makeArrayFromFile( $file, $wd, $hg, 2, undef, $packTemplate );
+	my $packTemplate = 's';
+	$packTemplate = 's>' if ($hOpt->{'bigEndian'} || $file =~ /\.hgt$/);
+    $packTemplate = 'f' if $BPP == 4;
+    my $aTile = $TILE_DATA = OGF::Terrain::ElevationTile::makeArrayFromFile( $file, $wd, $hg, $BPP, undef, $packTemplate );
+#   use Data::Dumper; local $Data::Dumper::Indent = 0; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aTile], ['aTile'] ), "\n";  # _DEBUG_
+    printTileColumns( $aTile, 0, 32 );
     ( $photo, my $data, my $cSub ) = OGF::Terrain::PhysicalMap::makePhotoFromElev( $cnv, $aTile, $wd, $hg, $hOpt );
+#   my $photo2 = $cnv->Photo( -width => $wd * 4, -height => $hg * 4 ); $photo2->copy( $photo, -to => 0,0, -zoom => 4 ); $photo = $photo2;  # _DEBUG_
     $img = $cnv->createImage( $x0, $y0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
     $cSub->( $cnv ) if $cSub;
 
@@ -199,6 +213,14 @@ sub getFileName {
     my( $x0, $y0 ) = ( $wd * int($x/$wd), $hg * int($y/$hg) );
     my $tag = ''. $y0 .'|'. $x0;
     return $FILE_NAMES{$tag} || '';
+}
+
+sub printTileColumns {
+    my( $aTile, @idx ) = @_;
+    foreach my $i ( @idx ){
+        my @col = map {$aTile->[$_][$i]} (0..$#{$aTile});
+#       print STDERR "[$i] ", join(' ',@col), "\n";
+    }
 }
 
 

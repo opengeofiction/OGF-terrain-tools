@@ -6,8 +6,8 @@ use OGF::LayerInfo;
 use OGF::View::TileLayer;
 
 
-our $MAX_TILES_DEFAULT = 1500;
-our $CLEAR_TILES_CHUNK =  100;
+our $MAX_TILES_DEFAULT = 400;
+our $CLEAR_TILES_CHUNK = 100;
 
 sub new {
 	my( $pkg, $wwInfo, $hOpt ) = @_;

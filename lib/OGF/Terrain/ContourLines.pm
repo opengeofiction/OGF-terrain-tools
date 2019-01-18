@@ -112,7 +112,7 @@ sub getContourLevels {
     my %contourLevels;
     foreach my $way ( @{$hWays->{_contour}} ){
         convertWayPoints( $ctx, $way, $hInfo );
-        computeSegmentLengths( $way );
+#       computeSegmentLengths( $way );
         $contourLevels{$way->{_elev}} = [] if ! $contourLevels{$way->{_elev}};
         push @{$contourLevels{$way->{_elev}}}, $way;
     }

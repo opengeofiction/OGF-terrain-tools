@@ -90,7 +90,7 @@ sub initLayerInfo {
 		my( $worldWd, $worldHg ) = ( $sizeX * $to->[2], $sizeY * $to->[3] );
 		my $hTransf = { 'X' => [ -180 => 0, 180 => $worldWd ], 'Y' => [ -90 => $worldHg, 90 => 0 ] };
 		$self->{_proj} = OGF::View::Projection->new( '', $hTransf );
-	}elsif( $wwInfo->{'layer'} =~ /^(O[ST]M|OGF[TR]?)$/ ){
+	}elsif( $wwInfo->{'layer'} =~ /^(O[ST]M|OGF[TR]?|OpenGlobus)$/ ){
 #		$self->{_proj} = OGF::View::Projection->new( $dsc );
 		my( $lv, $sizeX, $sizeY ) = ( $self->{_level} = $wwInfo->{'level'}, $wwInfo->tileSize() );
 		$self->{_tileOrder} = [ 1, 1, 2**$lv, 2**$lv ];

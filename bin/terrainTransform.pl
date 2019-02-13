@@ -25,7 +25,7 @@ usageInit( \%opt, qq/ noExist strictBbox roantraDisplace bpp=i overlap targetLev
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl size=1024 bbox=41.22852,47.27061,42.13469,47.92959 src=elev:SathriaLCC:5:all tgt=elev:SathriaLCC:6:all -noExist
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl size=1024 bbox=30.99,43.78992,31.32844,46.39 src=elev:Roantra:4:all tgt=elev:SathriaLCC:6:all -strictBbox -roantraDisplace   # Roantra insert
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl bbox=25.97,43.14,31.346,47.10 src=elev:Roantra:4:all tgt=elev:OpenGlobus:13:all -roantraDisplace -bpp 4 -overlap   # Roantra -> OpenGlobus
-# perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl bbox=25.97,43.14,31.346,47.10 src=elev:Roantra:4:all tgt=elev:OGF:12:all -roantraDisplace -overlap   # Roantra -> OpenGlobus
+# perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl bbox=25.97,43.14,31.346,47.10 src=elev:Roantra:4:all tgt=elev:OGF:12:all -roantraDisplace   # Roantra -> OGF
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl bbox=89.10,18.31,89.93,18.85 src=elev:OGF:12:all tgt=elev:OpenGlobus:14:all -overlap -bpp 4 -targetLevel 0    # Khaiwoon -> OpenGlobus
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl bbox=83.41928,-58.51041,84.18434,-58.20117 src=elev:OGF:13:all tgt=elev:OpenGlobus:14:all -overlap -bpp 4 -targetLevel 0    # Tarrases
 # perl C:\usr\OGF-terrain-tools\bin\terrainTransform.pl bbox=89.10,18.31,89.93,18.85 src=elev:OpenGlobus:14:all tgt=elev:OpenGlobus:13:all -overlap    # Khaiwoon -> OpenGlobus

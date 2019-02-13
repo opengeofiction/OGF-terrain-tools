@@ -483,36 +483,59 @@ sub localMaximumElevation {
 
 
 sub getTileArray {
-	my( $hInfo, $tx, $ty ) = @_;
-	my $tag = "$tx:$ty";
-	if( ! $hInfo->{_tileCache}{$tag} ){	
-		my $tileName = $hInfo->{_tileLayer}->tileName( $tx, $ty );
-		print STDERR "tileName: ", $tileName, "\n";  # _DEBUG_
-		my( $wd, $hg ) = @{$hInfo->{_tileSize}};
-		my $aTile;
+    my( $hInfo, $tx, $ty ) = @_;
+    my $tag = "$tx:$ty";
+    if( ! $hInfo->{_tileCache}{$tag} ){    
+        my $tileName = $hInfo->{_tileLayer}->tileName( $tx, $ty );
+        print STDERR "tileName: ", $tileName, "\n";  # _DEBUG_
+        my( $wd, $hg ) = @{$hInfo->{_tileSize}};
+        my $aTile;
 
-		if( -f $tileName ){
-			if( $hInfo->{_add} ){
-				$aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
-			}elsif( $hInfo->{_range} && rangeBoundary($hInfo->{_range},$tx,$ty) ){
-				my $aRect = tileOverlap( $hInfo, $tx, $ty, $hInfo->{_bounds} );
-				$aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
-				clearSubtile( $aTile, $aRect, $OGF::Terrain::ElevationTile::NO_ELEV_VALUE );
-			}
-		}
-		if( ! $aTile ){
-			$aTile = OGF::Terrain::ElevationTile::makeTileArray( $OGF::Terrain::ElevationTile::NO_ELEV_VALUE, $wd, $hg );
-		}
-	
-		$hInfo->{_tileCache}{$tag} = $aTile;
-	}
-	return $hInfo->{_tileCache}{$tag};
+#       if( -f $tileName ){
+#           if( $hInfo->{_add} ){
+#               $aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
+#           }elsif( $hInfo->{_range} && rangeBoundary($hInfo->{_range},$tx,$ty) ){
+#               my $aRect = tileOverlap( $hInfo, $tx, $ty, $hInfo->{_bounds} );
+#               $aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
+#               clearSubtile( $aTile, $aRect, $OGF::Terrain::ElevationTile::NO_ELEV_VALUE );
+#           }
+#       }
+
+        if( -f $tileName ){
+            my $rb = $hInfo->{_range} ? rangeBoundary($hInfo->{_range},$tx,$ty) : -1;
+            if( $hInfo->{_add} || $rb >= 0 ){
+                $aTile = OGF::Terrain::ElevationTile::makeArrayFromFile( $tileName, $wd, $hg, $OGF::Terrain::ElevationTile::BPP );
+                if( $rb == 0 ){
+                    my $aRect = tileOverlap( $hInfo, $tx, $ty, $hInfo->{_bounds} );
+                    clearSubtile( $aTile, $aRect, $OGF::Terrain::ElevationTile::NO_ELEV_VALUE );
+                }
+            }
+        }
+        if( ! $aTile ){
+            $aTile = OGF::Terrain::ElevationTile::makeTileArray( $OGF::Terrain::ElevationTile::NO_ELEV_VALUE, $wd, $hg );
+        }
+    
+        $hInfo->{_tileCache}{$tag} = $aTile;
+    }
+    return $hInfo->{_tileCache}{$tag};
 }
 
-sub rangeBoundary {
+#sub rangeBoundary {
+#	my( $hRange, $tx, $ty ) = @_;
+#	my( $y0, $y1, $x0, $x1	) = ( $hRange->{'y'}[0], $hRange->{'y'}[1], $hRange->{'x'}[0], $hRange->{'x'}[1] );
+#	return (($ty == $y0 || $ty == $y1) && ($tx >= $x0 && $tx <= $x1)) || (($tx == $x0 || $tx == $x1) && ($ty >= $y0 && $ty <= $y1));
+#}
+
+sub rangeBoundary {    # outside = +1, inside = -1, boundary = 0
 	my( $hRange, $tx, $ty ) = @_;
 	my( $y0, $y1, $x0, $x1	) = ( $hRange->{'y'}[0], $hRange->{'y'}[1], $hRange->{'x'}[0], $hRange->{'x'}[1] );
-	return (($ty == $y0 || $ty == $y1) && ($tx >= $x0 && $tx <= $x1)) || (($tx == $x0 || $tx == $x1) && ($ty >= $y0 && $ty <= $y1));
+    my( $rb, $xM, $yM ) = ( 1, ($tx - $x0)*($tx - $x1), ($ty - $y0)*($ty - $y1) );
+    if( $xM == 0 && $yM < 0 || $xM < 0 && $yM == 0 ){
+        $rb = 0;
+    }elsif( $xM < 0 && $yM < 0 ){
+        $rb = -1;
+    }
+	return $rb;
 }
 
 sub tileOverlap {
@@ -576,6 +599,7 @@ sub saveElevationTiles {
 		setMinMaxRange( $hRange, $tx, $ty );
 		my $tileName = $hInfo->{_tileLayer}->tileName( $tx, $ty );
 		my $data = OGF::Terrain::ElevationTile::makeTileFromArray( $hTileCache->{$key}, $OGF::Terrain::ElevationTile::BPP );
+		print STDERR "write tile: ", $tileName, "\n";  # _DEBUG_
 		writeToFile( $tileName, $data, undef, {-bin => 1, -mdir => 1} );
 	}
 	$hInfo->{_tileRange} = $hRange;

@@ -42,7 +42,8 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 elev:OpenGlobus:12:bbox=89.10,18.31,89.93,18.85 -bpp 4
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 elev:OpenGlobus:12:bbox=83.41928,-58.51041,84.18434,-58.20117 -bpp 4
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 elev:OpenGlobus:12:bbox=121.2,-21.4,122,-21.2 -bpp 4
-
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:OGF:13:bbox=145.63929,-42.23521,145.83160,-42.11914
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 contour:OGF:13:bbox=145.63929,-42.23521,145.83160,-42.11914 -forceRemake
 
 
 

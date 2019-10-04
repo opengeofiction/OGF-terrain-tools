@@ -454,7 +454,8 @@ sub writeToXml {
 
 	my $text = "";
 	$file = \$text if ! defined( $file );
-	my $fh = OGF::Util::fileHandle( $file, '>:encoding(UTF-8)' );
+#	my $fh = OGF::Util::fileHandle( $file, '>:encoding(UTF-8)' );
+	my $fh = OGF::Util::fileHandle( $file, '>' );
 
 	$fh->print( qq|<?xml version='1.0' encoding='UTF-8'?>\n| );
 	$fh->print( qq|<osm version="0.6" generator="JOSM">\n| );
@@ -493,10 +494,12 @@ sub printXmlObject {
 sub printXmlNode {
     my( $fh, $node, $timeStamp, $user ) = @_;
     my( $id, $version, $lon, $lat ) = map {$node->{$_}} qw/id version lon lat/;
+    my $actionAttr  = $node->{'action'} ? qq|action="$node->{action}"| : "";
     my $versionAttr = $version ? qq|version="$version"| : "";
-    $fh->print( qq|  <node id="$id" $versionAttr lon="$lon" lat="$lat" visible="true" timestamp="$timeStamp" user="$user">\n| );
+    $fh->print( qq|  <node id="$id" $actionAttr $versionAttr lon="$lon" lat="$lat" visible="true" timestamp="$timeStamp" user="$user">\n| );
     printObjectTags( $fh, $node ) if $node->{'tags'};
     $fh->print( qq|  </node>\n| );
+#   $fh->print( qq|  <node id="$id" version="1" lon="$lon" lat="$lat"/>\n| );
 }
 
 sub printXmlWay {
@@ -504,6 +507,7 @@ sub printXmlWay {
     my( $id, $version ) = map {$way->{$_}} qw/id version/;
     my $versionAttr = $version ? qq|version="$version"| : "";
     $fh->print( qq|  <way id="$id" $versionAttr visible="true" timestamp="$timeStamp" user="$user">\n| );
+#   $fh->print( qq|  <way id="$id" version="1">\n| );
     foreach my $nodeId ( @{$way->{'nodes'}} ){
         $fh->print( qq|    <nd ref="$nodeId"/>\n| );
     }
@@ -529,6 +533,7 @@ sub printObjectTags {
 	my( $fh, $obj ) = @_;
 	foreach my $key ( keys %{$obj->{'tags'}} ){
 		my $val = $obj->{'tags'}{$key};
+		$val =~ s/"/\&quot;/g;
 		$fh->print( qq|    <tag k="$key" v="$val"/>\n| );
 	}
 }

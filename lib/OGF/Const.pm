@@ -4,7 +4,7 @@ use warnings;
 
 
 $OGF::TASKSERVICE_SCRIPT = 'C:/usr/MapView/bin/ogfTaskService.pl';
-$OGF::TASKSERVICE_DIR  = 'C:/Map/OGF/taskService';
+$OGF::TASKSERVICE_DIR  = 'D:/Map/OGF/taskService';
 %OGF::TASKSERVICE_ADDR = (
 	'tiles' => {
 		'file'     => $OGF::TASKSERVICE_DIR . '/tiles/tasklist.txt',

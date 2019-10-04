@@ -15,11 +15,12 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 
 # perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl
+# perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl -od /home/lkind/ogf
 # perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl -ds Roantra
 
 my %opt;
-usageInit( \%opt, qq/ h ogf ds=s /, << "*" );
-[-ogf] [-ds <dataset>]
+usageInit( \%opt, qq/ h ogf ds=s od=s /, << "*" );
+[-ogf] [-ds <dataset>] [-od <output_directory>]
 
 -ogf    use ogfId as key
 -ds     "Roantra" or empty
@@ -29,6 +30,7 @@ my( $osmFile ) = @ARGV;
 usageError() if $opt{'h'};
 
 
+my $OUTPUT_DIR = $opt{'od'} || 'C:/usr/MapView/tmp';
 my( $aTerr, $COMPUTATION_ZOOM, $OUTFILE_NAME, $ADMIN_RELATION_QUERY );
 
 if( ! $opt{'ds'} ){
@@ -39,7 +41,7 @@ if( ! $opt{'ds'} ){
 [timeout:1800][maxsize:4294967296];
 (
   (relation["boundary"="administrative"]["admin_level"="2"];
-   relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|AR120-[0-9]{2})$"];);
+   relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|(AR120|UL106|AR001b)-[0-9]{2}|AR120-3[23][a-z])$"];);
   >;
 );
 out;
@@ -66,6 +68,7 @@ out;
 
 if( ! $osmFile ){
 	$osmFile = 'C:/usr/MapView/tmp/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
+	$osmFile = $OUTPUT_DIR . '/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
     fileExport_Overpass( $osmFile ) if ! -f $osmFile;
 }
 
@@ -84,6 +87,10 @@ our %VERIFY_IGNORE = (
     481   => 'UL130',  # Alora, Takora region (indyroads)
     10386 => 'TA333',  # Egani, southern islands   
     24874 => 'PE070',  # ???
+    21935 => 'TA113d', # Ajanjo, part of San Marcos (sude)
+#   43801 => 'UL111',  # deleted by Stjur
+#   43803 => 'UL115',  # deleted by Stjur
+    61490 => 'TA114a',    # Kesland Islands, Antigo nuclear base 
     91121 => 'AR120-00',  # AR120 capital region, missing ogf:id
 );
 
@@ -103,6 +110,8 @@ foreach my $way ( values %{$ctx->{_Way}} ){
 	$hSharedBorders->{$key} = [] if ! $hSharedBorders->{$key};
 	push @{$hSharedBorders->{$key}}, $way->{'id'};
 }
+
+writeRegionInfo( $ctx, "C:/usr/MapView/tmp/admin_regions.json" );
 
 
 foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
@@ -192,7 +201,8 @@ foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
     }
 
     my $json = JSON::PP->new->indent(2)->space_after;
-    writePolygonJson( "C:/usr/MapView/tmp/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
+#   writePolygonJson( "C:/usr/MapView/tmp/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
+    writePolygonJson( "$OUTPUT_DIR/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
 }
 
 
@@ -231,6 +241,34 @@ sub verifyTerritories {
     }
     return \@errors;
 }
+
+sub writeRegionInfo {
+    my( $ctx, $outFile ) = @_;
+#   my %rtags = ('AN' => 'Antarephia', 'TA' => 'Tarephia', 'AR120' => 'South Archanta', 'UL106' => 'East Uletha');
+    my %rtags = ('AN' => 'Antarephia', 'TA' => 'Tarephia');
+    my %regionInfo;
+    foreach my $hRel ( values %{$ctx->{_Relation}} ){
+        my( $ogfId, $region ) = ( $hRel->{'tags'}{'ogf:id'}, $hRel->{'tags'}{'is_in:continent'} );
+        if( ! $region ){
+#           my( $rtag ) = ($ogfId =~ /^([A-Z]{2}(?:106|120)?)/g);
+            my( $rtag ) = ($ogfId =~ /^([A-Z]{2})/g);
+            $region = $rtags{$rtag} if $rtag && $rtags{$rtag};
+            $region = 'South Archanta' if $ogfId =~ /^AR120-3[23][a-z]/;
+            $region = 'North Archanta' if $ogfId =~ /^AR001b-/;
+        }
+#       push @regionInfo, {
+#           'rel'    => $hRel->{'id'},
+#           'ogfId'  => $ogfId,
+#           'region' => $region,
+#       };
+        $regionInfo{$hRel->{'id'}} = $region if $region;
+    }
+
+    my $json = JSON::PP->new->indent(2)->space_after;
+    my $text = $json->encode( \%regionInfo );
+    OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
+}
+
 
 sub verifyPolygon {
     my( $aPol ) = @_;
@@ -283,7 +321,8 @@ sub fileExport_Overpass {
 
 sub getTerritories {
     require LWP;
-    my $URL_TERRITORIES = 'https://tile.opengeofiction.net/data/ogf_territories.json';
+#   my $URL_TERRITORIES = 'https://tile.opengeofiction.net/data/ogf_territories.json';
+    my $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
 
     my $json = JSON::PP->new();
 	my $userAgent = LWP::UserAgent->new(

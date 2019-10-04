@@ -155,7 +155,7 @@ our %INFO_MAP = (
             'suffix'   => 'ddm',
             'bpp'      => 4,
             'overlap'  => 1,
-            'tile'     => [ '%d/%d/%d.%s', 'level', 'y', 'x', 'suffix' ],
+            'tile'     => [ '%d/%d/%d.%s', 'level', 'x', 'y', 'suffix' ],
         },
     },
     'Cesium' => {  # elev only

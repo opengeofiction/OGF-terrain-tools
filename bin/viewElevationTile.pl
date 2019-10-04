@@ -44,6 +44,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 33 elev:OpenGlobus:12:bbox=121.2,-21.4,122,-21.2 -bpp 4
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 elev:OGF:13:bbox=145.63929,-42.23521,145.83160,-42.11914
 # perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 256 contour:OGF:13:bbox=145.63929,-42.23521,145.83160,-42.11914 -forceRemake
+# perl C:/usr/OGF-terrain-tools/bin/viewElevationTile.pl 1024 elev:SathriaLCC:0:all
 
 
 
@@ -166,7 +167,7 @@ sub viewElevationTile {
     if( -f $pngFile && ! $opt{'forceRemake'} ){
         if( ! $opt{'noExist'} ){
             $photo = $cnv->Photo( -file => $pngFile );
-            my $photo2 = $cnv->Photo( -width => $wd * 4, -height => $hg * 4 ); $photo2->copy( $photo, -to => 0,0, -zoom => 4 ); $photo = $photo2;  # _DEBUG_
+#           my $photo2 = $cnv->Photo( -width => $wd * 4, -height => $hg * 4 ); $photo2->copy( $photo, -to => 0,0, -zoom => 4 ); $photo = $photo2;  # _DEBUG_
             $img = $cnv->createImage( $x0, $y0, -image => $photo, -anchor => 'nw', -tags => 'tile' );
         }
         return ( $img, $photo );

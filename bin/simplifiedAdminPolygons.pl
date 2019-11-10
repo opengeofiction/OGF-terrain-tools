@@ -41,7 +41,7 @@ if( ! $opt{'ds'} ){
 [timeout:1800][maxsize:4294967296];
 (
   (relation["boundary"="administrative"]["admin_level"="2"];
-   relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|(AR120|UL106|AR001b)-[0-9]{2}|AR120-3[23][a-z])$"];);
+   relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|(AR120|UL106|AR001b)-[0-9]{2}|AR120-3[23][a-z])|AR045-(02|04|06|08|09|11|12)|AR045-(01|03|05|07|10)[a-z]$"];);
   >;
 );
 out;

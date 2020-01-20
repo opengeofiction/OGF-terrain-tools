@@ -21,6 +21,7 @@ sub layerTransform {
     my $bpp             = $hOpt->{'bpp'} || $vtTgt->{_layerInfo}->layerInfo('bpp',1) || 2;
     my $aStrictBbox     = $hOpt->{'strictBbox'} ? $bbox : undef;
     my $roantraDisplace = $hOpt->{'roantraDisplace'} ? 1 : 0;
+    my $aZipList        = $hOpt->{'zipList'} || undef;
 
     my( $minLon, $minLat, $maxLon, $maxLat ) = @$bbox;
     my( $tileWd, $tileHg ) = $vtTgt->{_layerInfo}->tileSize();
@@ -79,6 +80,7 @@ sub layerTransform {
             makeFilePath( $file );
             writeToFile( $file, $data, undef, {-bin => 1, -mdir => 1} );
             unlink "$file.png" if -f "$file.png";
+            push @$aZipList, $file if $aZipList;
         }
     }
 

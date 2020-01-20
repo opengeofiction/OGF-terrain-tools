@@ -36,18 +36,20 @@ my $srtmSampSize = 1200;
 $OGF::Terrain::ContourLines::ELEVATION_TAG = $opt{'et'} || 'ele';
 
 
-
 my $aBounds = OGF::Terrain::ContourLines::boundsFromFileName( $OSM_FILES[0] );
 #use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aBounds], ['aBounds'] ), "\n";  exit; # _DEBUG_
 $opt{'bounds'} = $aBounds if $aBounds;
 
 
+my $tStart = time();
+print STDERR "--- writeContourTiles --- ", join(' ',@OSM_FILES), " ---\n";
 my $ctx = OGF::Data::Context->new();
 foreach my $file ( @OSM_FILES ){
 	print STDERR "load OSM file: $file\n";
 	$ctx->loadFromFile( $file );
 }
 my $hInfo = OGF::Terrain::ContourLines::writeContourTiles( $ctx, "contour:OGF:$LEVEL", undef, \%opt );
+print STDERR "--- writeContourTiles --- ", time() - $tStart, " sec ---\n";
 
 
 my( $hRange, $bbox ) = ( $hInfo->{_tileRange}, $hInfo->{_bbox} );
@@ -73,11 +75,13 @@ if( $opt{'c'} ){
         my( $item ) = @_;
         OGF::Terrain::ElevationTile::makeElevationFile( $item );
     } );
+    print STDERR "--- makeElevationFromContour --- ", time() - $tStart, " sec ---\n";
 
 	# makeSrtmElevationTile
     print STDERR "--- makeSrtmElevationTile --- ", join(' ',@OSM_FILES), " ---\n";
 	$OGF::Terrain::Transform::OUTPUT_DIRECTORY = $OGF::TERRAIN_OUTPUT_DIR;
     OGF::Terrain::Transform::makeSrtmElevationTile( 'OGF', $LEVEL, $srtmSampSize, $bbox );
+    print STDERR "--- makeSrtmElevationTile --- ", time() - $tStart, " sec ---\n";
 
 #	# make WW elevation   -->  deprecated
 #	my( $dscSrc, $dscTgt ) = ( "elev:OGF:$LEVEL:all", "elev:WebWW:$wwLevel:all" );
@@ -106,6 +110,7 @@ if( $opt{'c'} ){
     print STDERR "----- next cmd -----\n$cmdMakeElev\n$cmdMakeSRTM\n$cmdConvertElev\n";
 }
 
+print STDERR "--- END --- ", join(' ',@OSM_FILES), " ---\n";
 
 
 

@@ -882,6 +882,7 @@ sub diffOgfFiles {
 }
 
 sub boundingRectangle {
+    require OGF::View::Projection;
 	my( $self, $proj ) = @_;
 	$proj = OGF::View::Projection->identity() if ! $proj;
 	my( $ct, $xMin, $yMin, $xMax, $yMax ) = ( 0 );

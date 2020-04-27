@@ -23,7 +23,7 @@ usageInit( \%opt, qq/ h ogf ds=s od=s /, << "*" );
 [-ogf] [-ds <dataset>] [-od <output_directory>]
 
 -ogf    use ogfId as key
--ds     "Roantra" or empty
+-ds     "Roantra", "AN134cd" or empty
 *
 
 my( $osmFile ) = @ARGV;
@@ -56,6 +56,19 @@ out;
 (
   (relation["land_area"="administrative"]["ogf:area"~"^RO\\."];
    relation["boundary"="administrative"]["ogf:area"~"^RO\\."];);
+  >;
+);
+out;
+---EOF---
+
+}elsif( $opt{'ds'} eq 'AN134cd' ){
+    $aTerr = getTerritories();
+    $COMPUTATION_ZOOM = 6;
+    $OUTFILE_NAME = 'ogf_polygons';
+    $ADMIN_RELATION_QUERY = << '---EOF---';
+[timeout:1800][maxsize:4294967296];
+(
+  (relation["boundary"="administrative"]["ogf:id"~"^AN134[cd]$"];);
   >;
 );
 out;

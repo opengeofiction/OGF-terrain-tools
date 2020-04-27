@@ -113,10 +113,10 @@ my $hSharedBorders = {};
 foreach my $way ( values %{$ctx->{_Way}} ){
 	my @rel = sort keys %{$ctx->{_rev_info}{$way->uid}};
 	my $key = join( ':', @rel );
-	print STDERR "\$key <", $key, ">\n";  # _DEBUG_
-
+	
 	my $num = scalar( @rel );
 	if( !($num == 1 || $num == 2) ){
+		print STDERR "\$key <", $key, ">\n";  # _DEBUG_
 		warn qq/Error: way $way->{id} is element of $num relations\n/;
 	}
 

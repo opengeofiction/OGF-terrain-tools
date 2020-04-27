@@ -262,7 +262,8 @@ sub writeRegionInfo {
     my %regionInfo;
     foreach my $hRel ( values %{$ctx->{_Relation}} ){
         my( $ogfId, $region ) = ( $hRel->{'tags'}{'ogf:id'}, $hRel->{'tags'}{'is_in:continent'} );
-        if( ! $region ){
+        next if( !defined $ogfId );
+		if( ! $region ){
 #           my( $rtag ) = ($ogfId =~ /^([A-Z]{2}(?:106|120)?)/g);
             my( $rtag ) = ($ogfId =~ /^([A-Z]{2})/g);
             $region = $rtags{$rtag} if $rtag && $rtags{$rtag};

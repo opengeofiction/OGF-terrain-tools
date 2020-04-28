@@ -32,6 +32,7 @@ usageError() if $opt{'h'};
 
 my $OUTPUT_DIR = $opt{'od'} || 'C:/usr/MapView/tmp';
 my( $aTerr, $COMPUTATION_ZOOM, $OUTFILE_NAME, $ADMIN_RELATION_QUERY );
+our $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
 
 if( ! $opt{'ds'} ){
     $aTerr = getTerritories();
@@ -62,9 +63,10 @@ out;
 ---EOF---
 
 }elsif( $opt{'ds'} eq 'AN134cd' ){
+	$URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration/AN134cd?action=raw';
     $aTerr = getTerritories();
     $COMPUTATION_ZOOM = 6;
-    $OUTFILE_NAME = 'ogf_polygons';
+    $OUTFILE_NAME = 'ogf_polygons_AN134cd';
     $ADMIN_RELATION_QUERY = << '---EOF---';
 [timeout:1800][maxsize:4294967296];
 (
@@ -337,8 +339,6 @@ sub fileExport_Overpass {
 
 sub getTerritories {
     require LWP;
-#   my $URL_TERRITORIES = 'https://tile.opengeofiction.net/data/ogf_territories.json';
-    my $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
 
     my $json = JSON::PP->new();
 	my $userAgent = LWP::UserAgent->new(

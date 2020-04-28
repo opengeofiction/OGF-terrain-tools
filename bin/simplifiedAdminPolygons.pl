@@ -97,16 +97,17 @@ $ctx->setReverseInfo();
 #die qq/Relation $rel->{id} doesn't have an ogf:id\n/ if ! $relKey;
 
 our %VERIFY_IGNORE = (
-    481   => 'UL130',  # Alora, Takora region (indyroads)
-    10386 => 'TA333',  # Egani, southern islands   
-    24874 => 'PE070',  # ???
-    21935 => 'TA113d', # Ajanjo, part of San Marcos (sude)
-#   43801 => 'UL111',  # deleted by Stjur
-#   43803 => 'UL115',  # deleted by Stjur
-    61490 => 'TA114a',    # Kesland Islands, Antigo nuclear base 
-    91121 => 'AR120-00',  # AR120 capital region, missing ogf:id
+#   481   => 'UL130',   # Alora, Takora region (indyroads); no problem
+#   10386 => 'TA333',   # Egani, southern islands; deleted by isleño
+#   24874 => 'PE070',   # ???; deleted by Luciano
+#   21935 => 'TA113d',  # Ajanjo, part of San Marcos (sude)
+#   43801 => 'UL111',   # deleted by Stjur
+#   43803 => 'UL115',   # deleted by Stjur
+#   61490 => 'TA114a',  # Kesland Islands, Antigo nuclear base; no problem
+#   91121 => 'AR120-00',# AR120 capital region, missing ogf:id; no problem
+    179507 => 'AN134c', # problematic relation, "polygon not closed" but is?
+    179506 => 'AN134d', # problematic relation, "polygon not closed" but is?
 );
-
 
 my $hSharedBorders = {};
 
@@ -236,19 +237,20 @@ sub verifyTerritories {
         if( $hPolygons->{$relId} ){
             $errText = verifyPolygon( $hPolygons->{$relId} );
         }else{
-            unless( $VERIFY_IGNORE{$relId} || $ogfId eq 'AN399' ){  # AN399 = antarctic islands
-	            $errText = 'Missing polygon';
-	        }
+	        $errText = 'Missing polygon';
 		}
         print STDERR $ogfId;
         if( $errText ){
             print STDERR " ", $errText;
-            my $err = {
-                _ogfId => $ogfId,
-                _rel   => $relId,
-                _text  => $errText,
-            };
-            push @errors, $err;
+			
+            unless( $VERIFY_IGNORE{$relId} ) {
+				my $err = {
+					_ogfId => $ogfId,
+					_rel   => $relId,
+					_text  => $errText,
+				};
+				push @errors, $err;
+			}
         }
         print STDERR "\n";
     }

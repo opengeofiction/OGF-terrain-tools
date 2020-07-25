@@ -7,9 +7,6 @@ use feature 'unicode_strings' ;
 use utf8;
 
 $OVERPASS = 'https://osm3s.opengeofiction.net/api/interpreter?data=';
-$CONTINENT = 'AR';
-$QUERY = qq(rel["type"="boundary"]["admin_level"]["ogf:id"~"^$CONTINENT"];out;);
-$URL = $OVERPASS . uri_escape($QUERY);
 $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
 $CHANGESETS = 'https://opengeofiction.net/api/0.6/changesets?display_name=';
 $APIUSER = 'https://opengeofiction.net/api/0.6/user/';
@@ -29,6 +26,8 @@ USAGE
 	exit 1;
 }
 $CONTINENT = $ARGV[0];
+$QUERY = qq(rel["type"="boundary"]["admin_level"]["ogf:id"~"^$CONTINENT"];out;);
+$URL = $OVERPASS . uri_escape($QUERY);
 
 # load map relations
 $userAgent = LWP::UserAgent->new(keep_alive => 20);
@@ -54,8 +53,7 @@ $aTerr = $json->decode($resp);
 print "relation,ogf:id,owner,status,const,ogf:id map,is in,comment,edits,last edit,deadline,comment\n";
 foreach $hTerr ( @$aTerr )
 {
-	next unless( $hTerr->{ogfId} =~ /$CONTINENT/ or $hTerr->{ogfId} =~ /AR120\-/ );
-	#next if( $hTerr->{ogfId} =~ /AR120-/ );
+	next unless( $hTerr->{ogfId} =~ /$CONTINENT/ );
 	$rel = $hTerr->{rel};
 	if( exists $map{$rel} )
 	{
@@ -64,7 +62,7 @@ foreach $hTerr ( @$aTerr )
 		$edits = '';
 		if( 1 )
 		{
-			if( $hTerr->{owner} ne 'admin' )
+			if( $hTerr->{owner} ne 'admin' and $hTerr->{owner} ne '' )
 			{
 				$user = '';
 				$url = $CHANGESETS . $hTerr->{owner};
@@ -97,7 +95,7 @@ foreach $hTerr ( @$aTerr )
 		{
 			$constraint_summary .= substr $constraint, 0, 1;
 		}
-		print "$rel,$hTerr->{ogfId},$hTerr->{owner},$hTerr->{status},$constraint_summary,$map{$rel}{id},$map{$rel}{is_in},in JSON & OGF map,$edits,$last,$hTerr->{deadline},$hTerr->{comment}\n";
+		print "$rel,$hTerr->{ogfId},$hTerr->{owner},$hTerr->{status},$constraint_summary,$map{$rel}{id},$map{$rel}{is_in},in JSON & OGF map,$edits,$last,$hTerr->{deadline},\"$hTerr->{comment}\"\n";
 		$map_territory{$rel} = undef;
 	}
 	else
@@ -115,4 +113,8 @@ foreach $rel ( sort values %map_territory )
 	$relations .= "$rel,";
 }
 
-print "\n$relations\n";
+# sometime useful to print out ID of all the relations - e.g. to load into JOSM
+if( 0 )
+{
+	print "\n$relations\n";
+}

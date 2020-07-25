@@ -1,3 +1,4 @@
+#! /usr/bin/perl -w
 use LWP;
 use URI::Escape;
 use JSON::PP;
@@ -35,12 +36,15 @@ $resp = $userAgent->get($URL);
 print STDERR "URL: $URL\n";
 foreach ( split "\n", decode('utf-8', $resp->content) )
 {
-	$rel = $1 if( /<relation id=\"(\d+)\"/ );
-	$map{$rel}{id}     = $1 if( /k=\"ogf:id\" v=\"(.+)\"/ );
-	$map{$rel}{owner}  = $1 if( /k=\"ogf:owner\" v=\"(.+)\"/ );
-	$map{$rel}{is_in}  = $1 if( /k=\"is_in:continent\" v=\"(.+)\"/ );
-	$map{$rel}{status}  = 'dogshit';
-	$map_territory{$rel} = $rel;
+	if( /<relation id=\"(\d+)\"/ )
+	{
+		$rel = $1;
+		$map_territory{$rel} = $rel;
+		$map{$rel}{id}       = 'unknown';
+		$map{$rel}{is_in}    = 'unknown';
+	}
+	$map{$rel}{id}     = $1 if( defined $rel and /k=\"ogf:id\" v=\"(.+)\"/ );
+	$map{$rel}{is_in}  = $1 if( defined $rel and /k=\"is_in:continent\" v=\"(.+)\"/ );
 }
 
 # load JSON territories
@@ -54,38 +58,47 @@ print "relation,ogf:id,owner,status,const,ogf:id map,is in,comment,edits,last ed
 foreach $hTerr ( @$aTerr )
 {
 	next unless( $hTerr->{ogfId} =~ /$CONTINENT/ );
-	$rel = $hTerr->{rel};
+	my $rel = $hTerr->{rel};
+	my $last = '';
+	my $edits = '';
 	if( exists $map{$rel} )
 	{
 		# get last edit by the user
-		$last = '';
-		$edits = '';
 		if( 1 )
 		{
 			if( $hTerr->{owner} ne 'admin' and $hTerr->{owner} ne '' )
 			{
-				$user = '';
-				$url = $CHANGESETS . $hTerr->{owner};
-				$content = get($url);
-				foreach $line ( split "\n", $content )
+				# get the numeric user id
+				my $user = '';
+				my $url = $CHANGESETS . $hTerr->{owner};
+				my $content = get($url);
+				if( defined $content )
 				{
-					# uid="468" 
-					$user = $1 if( $line =~ /uid\=\"(\d+)\"/ );
-					# 2019-01-22T10:32:36Z
-					$last = $1 if( $line =~ /created_at\=\"([0-9\-T\:Z]+)\"/ );
-					last if( $last ne '' and $user ne '' );
-				}
-				
-				if( $user ne '' )
-				{
-					$url = $APIUSER . $user;
-					$content = get($url);
 					foreach $line ( split "\n", $content )
 					{
-						# <changesets count="2073"/>
-						$edits = $1 if( $line =~ /changesets\s+count\=\"(\d+)\"/ );
-						last if( $edits ne '' );
+						# uid="468" 
+						$user = $1 if( $line =~ /uid\=\"(\d+)\"/ );
+						# 2019-01-22T10:32:36Z
+						$last = $1 if( $line =~ /created_at\=\"([0-9\-T\:Z]+)\"/ );
+						last if( $last ne '' and $user ne '' );
 					}
+				
+					# get user edits
+					if( $user ne '' )
+					{
+						my $url = $APIUSER . $user;
+						my $content = get($url);
+						foreach $line ( split "\n", $content )
+						{
+							# <changesets count="2073"/>
+							$edits = $1 if( $line =~ /changesets\s+count\=\"(\d+)\"/ );
+							last if( $edits ne '' );
+						}
+					}
+				}
+				else
+				{
+					$last = 'ERROR username';
 				}
 			}
 		}
@@ -95,8 +108,10 @@ foreach $hTerr ( @$aTerr )
 		{
 			$constraint_summary .= substr $constraint, 0, 1;
 		}
+		print STDERR "$hTerr->{ogfId} --> $rel\n";
 		print "$rel,$hTerr->{ogfId},$hTerr->{owner},$hTerr->{status},$constraint_summary,$map{$rel}{id},$map{$rel}{is_in},in JSON & OGF map,$edits,$last,$hTerr->{deadline},\"$hTerr->{comment}\"\n";
-		$map_territory{$rel} = undef;
+		
+		delete $map_territory{$rel};
 	}
 	else
 	{
@@ -113,7 +128,7 @@ foreach $rel ( sort values %map_territory )
 	$relations .= "$rel,";
 }
 
-# sometime useful to print out ID of all the relations - e.g. to load into JOSM
+# sometimes useful to print out ID of all the relations - e.g. to load into JOSM
 if( 0 )
 {
 	print "\n$relations\n";

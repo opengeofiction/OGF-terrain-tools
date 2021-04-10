@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl -w -CSDA
 
 use strict;
 use warnings;
@@ -34,6 +34,7 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 	{
 		my $id             = '';
 		my $name           = '';
+		my $profile        = '';
 		my $created        = '';
 		my $latest         = '';
 		my $admin          = 'N';
@@ -50,6 +51,7 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 			{
 				$id      = $1;
 				$name    = $2;
+				$profile = "$BASE/user/$name";
 				$created = $3;
 			}
 			$admin      = 'Y' if( $line =~ /<administrator\/>/ );
@@ -84,7 +86,7 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 			}
 			next if( $FULL == 0 and $changesets == 0 );
 			print "$id,$name,$BASE/user/$name,$created,$latest,$admin,$mod,$changesets,$blocks,$blocks_active,$blocked,$blocked_active\n";
-			print STDERR "$id: $name,$created,$latest,$admin,$mod,$changesets,$blocks,$blocks_active,$blocked,$blocked_active\n";
+			printf STDERR "$id: %-55s %20s %3d %d/%d\n", $profile, $latest, $changesets, $blocks, $blocks_active;
 		}
 	}
 }

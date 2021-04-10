@@ -23,7 +23,7 @@ usageInit( \%opt, qq/ h ogf ds=s od=s /, << "*" );
 [-ogf] [-ds <dataset>] [-od <output_directory>]
 
 -ogf    use ogfId as key
--ds     "Roantra", "AN134cd" or empty
+-ds     "Roantra" or empty
 *
 
 my( $osmFile ) = @ARGV;
@@ -42,7 +42,7 @@ if( ! $opt{'ds'} ){
 [timeout:1800][maxsize:4294967296];
 (
   (relation["boundary"="administrative"]["admin_level"="2"];
-   relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|(AR050|AR120|UL106|AR001b)-[0-9]{2}|AR120-3[23][a-z]|AR120-31a|AR045-(02|04|06|08|09|11|12|13)|AR045-(01|03|05|07|10)[a-z]|UL[0-9]{2}[a-z]+)$"];);
+   relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|(AR050|AR120|UL106|AR001b)-[0-9]{2}|AR045-(02|04|06|08|09|11|12|13)|AR045-(01|03|05|07|10)[a-z]|UL[0-9]{2}[a-z]+)$"];);
   >;
 );
 out;
@@ -57,20 +57,6 @@ out;
 (
   (relation["land_area"="administrative"]["ogf:area"~"^RO\\."];
    relation["boundary"="administrative"]["ogf:area"~"^RO\\."];);
-  >;
-);
-out;
----EOF---
-
-}elsif( $opt{'ds'} eq 'AN134cd' ){
-	$URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration/AN134cd?action=raw';
-    $aTerr = getTerritories();
-    $COMPUTATION_ZOOM = 6;
-    $OUTFILE_NAME = 'ogf_polygons_AN134cd';
-    $ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
-(
-  (relation["boundary"="administrative"]["ogf:id"~"^AN134[cd]$"];);
   >;
 );
 out;
@@ -107,8 +93,8 @@ our %VERIFY_IGNORE = (
 #   43803 => 'UL115',   # deleted by Stjur
 #   61490 => 'TA114a',  # Kesland Islands, Antigo nuclear base; no problem
 #   91121 => 'AR120-00',# AR120 capital region, missing ogf:id; no problem
-    179507 => 'AN134c', # problematic relation, "polygon not closed" but is?
-    179506 => 'AN134d', # problematic relation, "polygon not closed" but is?
+#   179507 => 'AN134c', # problematic relation, "polygon not closed" but is?
+#   179506 => 'AN134d', # problematic relation, "polygon not closed" but is?
 );
 
 my $hSharedBorders = {};
@@ -300,7 +286,7 @@ sub verifyPolygon {
         }
     }else{
         my( $x0, $y0, $x1, $y1 ) = ( $aPol->[0][0], $aPol->[0][1], $aPol->[-1][0], $aPol->[-1][1] );
-        $errText = ($x0 == $x1 && $y0 == $y1)? '' : 'Polygon not closed';
+        $errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between $x0,$y0 and $x1,$y1)";
     }
     return $errText;
 }

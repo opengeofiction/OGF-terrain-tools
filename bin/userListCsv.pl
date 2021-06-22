@@ -5,6 +5,8 @@ use warnings;
 use LWP::Simple;
 use OGF::Util::Usage qw( usageInit usageError );
 
+$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
+
 my $BASE = 'https://opengeofiction.net';
 my $API  = "$BASE/api/0.6";
 
@@ -23,11 +25,11 @@ my $FULL     = $opt{'full'} ? 1 : 0;
 print STDERR "Users: $START_ID > $END_ID\n";
 
 print "id,name,link,created,latest,admin,mod,changesets,blocks,blocks_active,blocked,blocked_active\n";
+my $last_id = undef;
 for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 {
 	# the OGF server API doesn't support the "users" request, so one at a time...
 	my $url = "$API/user/$userid";
-	#print "$url\n";
 	
 	my $content = get($url);
 	if( defined $content )
@@ -70,6 +72,8 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 		}
 		if( defined $id )
 		{
+			$last_id = $id;
+			
 			# get last edit by the user
 			my $url = "$API/changesets?user=$id";
 			my $content = get($url);
@@ -86,7 +90,12 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 			}
 			next if( $FULL == 0 and $changesets == 0 );
 			print "$id,$name,$BASE/user/$name,$created,$latest,$admin,$mod,$changesets,$blocks,$blocks_active,$blocked,$blocked_active\n";
-			printf STDERR "$id: %-55s %20s %3d %d/%d\n", $profile, $latest, $changesets, $blocks, $blocks_active;
+			my $block = '';
+			$block = 'b' if( $blocks > 0 );
+			$block = 'B' if( $blocks_active > 0 );
+			printf STDERR "$id: %-55s %20s %3d %s\n", $profile, $latest, $changesets, $block;
 		}
 	}
 }
+print STDERR "$last_id\n" if( defined $last_id );
+

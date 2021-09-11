@@ -8,7 +8,7 @@ use File::Basename;
 use POSIX 'strftime';
 use OGF::Util::Usage qw( usageInit usageError );
 
-my $TOO_NEW = 30; # seconds
+my $TOO_NEW = 60; # seconds
 my $TMP_DIR = '/tmp/scpFileIfNotUpdating';
 my $START   = strftime '%Y%m%d%H%M%S', gmtime;
 

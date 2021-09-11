@@ -10,6 +10,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 my $TOO_NEW = 30; # seconds
 my $TMP_DIR = '/tmp/scpFileIfNotUpdating';
+my $START   = strftime '%Y%m%d%H%M%S', gmtime;
 
 my %opt;
 usageInit( \%opt, qq/ h file=s dest=s timestamp/, << "*" );
@@ -21,9 +22,10 @@ usageInit( \%opt, qq/ h file=s dest=s timestamp/, << "*" );
 *
 my $SRC_FILE = $opt{'file'};
 my $DST_SPEC = $opt{'dest'};
-my $TSTAMP   = (defined $opt{'timestamp'}) ? 1 : 0;
+my $TSTAMP   = (defined $opt{'timestamp'}) ? "-$START" : '';
 usageError() if( $opt{'h'} or !defined $SRC_FILE or !defined $DST_SPEC );
 
+print "Starting: $START\n";
 unless( -r $SRC_FILE )
 {
 	print STDERR "$SRC_FILE does not exist, or not readable\n";
@@ -46,7 +48,7 @@ my $saved_cksum = undef;
 $saved_cksum = `cat "$tmp_file.cksum"` if( -f "$tmp_file.cksum" );
 unless( (!defined $saved_cksum) or ($saved_cksum ne $cksum) )
 {
-	print STDERR "$SRC_FILE has already been copied recently\n";
+	print STDERR "Same $SRC_FILE has already been copied recently\n";
 	exit 1;
 }
 system "cp \"$SRC_FILE\" \"$tmp_file\"";
@@ -55,7 +57,7 @@ system "cat \"$tmp_file\" | cksum > \"$tmp_file.cksum\"";
 # build up destination path for scp
 my($filename, undef, $suffix) = fileparse $tmp_file, qr/\..+/;
 my $username = $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
-my $timestamp = ($TSTAMP == 1) ? (strftime '-%Y%m%d%H%M%S', gmtime) : '';
-my $dest = "$username\@$DST_SPEC/$filename$timestamp$suffix";
+my $dest = "$username\@$DST_SPEC/$filename$TSTAMP$suffix";
 
-system "scp $tmp_file $dest";
+print "Copying...\nscp -B $tmp_file $dest\n";
+system "scp -B $tmp_file $dest";

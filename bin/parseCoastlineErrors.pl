@@ -2,7 +2,7 @@
 # Parse errors from an osmcoastline db file to JSON for display in wiki
 # (note: Does not use DBI::Spatialite due to Proj4 issues on Ubuntu 20.04)
 
-use lib '/opt/opengeofiction/OGF-terrain-tools';
+use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
 use File::Basename;

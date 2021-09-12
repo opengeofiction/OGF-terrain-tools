@@ -42,7 +42,7 @@ while( my $file = readdir $dh )
 {
 	next unless( $file =~ /^$DB_PREFIX.+$DB_SUFFIX$/ );
 	my (undef,undef,undef,undef,undef,undef,undef,undef,undef,$mtime) = stat "$SRC_DIR/$file";
-	if( (time - $mtime > 5) and ($mtime > $newest) )
+	if( (time - $mtime > 15) and ($mtime > $newest) )
 	{
 		$newest = $mtime;
 		$newest_file = $file;

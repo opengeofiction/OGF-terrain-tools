@@ -28,7 +28,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 my $DB_PREFIX = 'ogf-coastlines-unsplit';
 my $DB_SUFFIX = 'db';
 my $CHECK_POINTS = 1;
-my $CHECK_LINES  = 0;
+my $CHECK_LINES  = 1;
 
 my %opt;
 usageInit( \%opt, qq/ h dir=s dest=s cleanup=i/, << "*" );
@@ -58,7 +58,7 @@ while( my $file = readdir $dh )
 {
 	next unless( $file =~ /^$DB_PREFIX.+$DB_SUFFIX$/ );
 	my (undef,undef,undef,undef,undef,undef,undef,undef,undef,$mtime) = stat "$SRC_DIR/$file";
-	if( (time - $mtime > 30) and ($mtime > $newest) )
+	if( (time - $mtime > 5) and ($mtime > $newest) )
 	{
 		$newest = $mtime;
 		$newest_file = $file;
@@ -92,16 +92,24 @@ if( $CLEANUP > 0 )
 
 # connect to database
 $newest_file = "$SRC_DIR/$newest_file";
-my $dbh = DBI->connect("dbi:Spatialite:dbname=$newest_file","","");
-my $dbcreated = $dbh->selectrow_array('SELECT timestamp FROM meta', undef);
+#my $dbh = DBI->connect("dbi:Spatialite:dbname=$newest_file","","");
+my $dbcreated = `echo "SELECT timestamp FROM meta;"| spatialite $newest_file `;
+chomp $dbcreated;
+print "Created: $dbcreated\n";
 
 # add WGS84 to SRIDs
-my $srid_exists = $dbh->selectrow_array('SELECT srid FROM spatial_ref_sys WHERE srid=4326', undef);
-if( !defined $srid_exists )
+#my $srid_exists = $dbh->selectrow_array('SELECT srid FROM spatial_ref_sys WHERE srid=4326', undef);
+#if( !defined $srid_exists )
+#{
+#	my $sth = $dbh->prepare("INSERT INTO spatial_ref_sys(srid,auth_name,auth_srid,ref_sys_name,proj4text,srtext) VALUES (?,?,?,?,?,?)");
+#	$sth->execute(4326, 'epsg', 4326, 'WGS 84', '+proj=longlat +datum=WGS84 +no_defs', 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]');
+#	$sth->finish();
+#}
+unless( `echo 'SELECT srid FROM spatial_ref_sys WHERE srid=4326;' | spatialite $newest_file ` =~ /^4326/ )
 {
-	my $sth = $dbh->prepare("INSERT INTO spatial_ref_sys(srid,auth_name,auth_srid,ref_sys_name,proj4text,srtext) VALUES (?,?,?,?,?,?)");
-	$sth->execute(4326, 'epsg', 4326, 'WGS 84', '+proj=longlat +datum=WGS84 +no_defs', 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]');
-	$sth->finish();
+	open my $sql, '|-', "spatialite $newest_file | cat";
+	print $sql qq{INSERT INTO spatial_ref_sys(srid,auth_name,auth_srid,ref_sys_name,proj4text,srtext) VALUES (4326, 'epsg', 4326, 'WGS 84', '+proj=longlat +datum=WGS84 +no_defs', 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]');};
+	close $sql;
 }
 
 # open temp file and output header
@@ -110,7 +118,7 @@ print "Writing to: $temp_dest\n";
 my $OUTPUT;
 unless( open $OUTPUT, '>', $temp_dest )
 {
-	$dbh->disconnect();
+	#$dbh->disconnect();
 	print STDERR "Cannot open $temp_dest for writing\n";
 	exit 1;
 }
@@ -119,23 +127,22 @@ print $OUTPUT <<EOF;
 EOF
 
 # the business: check points
-my($geom,$osm_id,$error,$n);
-$n = 0;
+my $n = 0;
 my %nodes = ();
 if( $CHECK_POINTS == 1 )
 {
 	print "Checking points...\n";
 	
 	# prepare SQL statement
-	my $sth = $dbh->prepare("SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_points")
-		or die "prepare statement failed: $dbh->errstr()";
-	$sth->execute() or die "execution failed: $dbh->errstr()"; 
-
-	# loop through each row of the result set, and print it
-	while( ($geom,$osm_id,$error) = $sth->fetchrow() )
+	#my $sth = $dbh->prepare("SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_points")
+	#	or die "prepare statement failed: $dbh->errstr()";
+	#$sth->execute() or die "execution failed: $dbh->errstr()"; 
+	foreach my $line( `echo "SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_points;"| spatialite $newest_file `)
 	{
+		chomp $line;
+		my ($geom,$osm_id,$error) = split /\|/, $line;
 		my $sub = substr $geom, 0, 70;
-		printf "P: %-70s / %d / %s\n", $sub, $osm_id, $error;
+		printf "P: %-70s / %s / %s\n", $sub, $osm_id, $error;
 		
 		if( $geom =~ /^POINT\(([\-\d]+\.[\d]+) ([\-\d]+\.[\d]+)\)$/ )
 		{
@@ -217,20 +224,20 @@ EOF
 			++$n;
 		}
 	}
-	$sth->finish();
+	#$sth->finish();
 }
 
 # and now check lines
 if( $CHECK_LINES == 1 )
 {
 	# prepare SQL statement
-	my $sth = $dbh->prepare("SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_lines")
-		or die "prepare statement failed: $dbh->errstr()";
-	$sth->execute() or die "execution failed: $dbh->errstr()"; 
-
-	# loop through each row of the result set, and print it
-	while( ($geom,$osm_id,$error) = $sth->fetchrow() )
+	#my $sth = $dbh->prepare("SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_lines")
+	#	or die "prepare statement failed: $dbh->errstr()";
+	#$sth->execute() or die "execution failed: $dbh->errstr()"; 
+	foreach my $line( `echo "SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_lines;"| spatialite $newest_file `)
 	{
+		chomp $line;
+		my ($geom,$osm_id,$error) = split /\|/, $line;
 		my $sub = substr $geom, 0, 70;
 		printf "L: %-70s / %d / %s\n", $sub, $osm_id, $error;
 		
@@ -280,12 +287,12 @@ EOF
 			print STDERR "Unknown line: $geom,$osm_id,$error\n";
 		}
 	}
-	$sth->finish();
+	#$sth->finish();
 }
 
 # tidy up
 print $OUTPUT "    },\n" unless( $n == 0 );
-$dbh->disconnect();
+#$dbh->disconnect();
 
 # meta information
 my $nowutc = strftime '%Y-%m-%d %H:%M UTC', gmtime;

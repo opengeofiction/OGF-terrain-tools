@@ -65,7 +65,7 @@ if( $CLEANUP > 0 )
 		next unless( $file =~ /^$DB_PREFIX.+$DB_SUFFIX$/ );
 		next if( $file eq $newest_file ); # don't remove rug!
 		my (undef,undef,undef,undef,undef,undef,undef,undef,undef,$mtime) = stat "$SRC_DIR/$file";
-		if( (time - $mtime) > (60 * $CLEANUP) )
+		if( (time - $mtime) > (3600 * $CLEANUP) )
 		{
 			print "Removing old $DB_SUFFIX: $file\n";
 			system "rm $SRC_DIR/$file";

@@ -1,27 +1,11 @@
 #! /usr/bin/perl -w -CSDA
 # Parse errors from an osmcoastline db file to JSON for display in wiki
-#
-# sudo apt install libspatialite7
-# apt install cpanminus
-# apt install  libgeos-c1v5 libgeos++-dev apt install libproj-dev
-# cpanm DBD::Spatialite
-# apt install libsqlite3-mod-spatialite
-# libdbd-sqlite3-perl
-# get https://download.osgeo.org/proj/proj-4.9.3.tar.gz extract
-# ./configure --prefix=/opt/opengeofiction/sw-proj4
-# make
-# sudo make install
-# cpanm DBD::Spatialite
-
-
-
+# (note: Does not use DBI::Spatialite due to Proj4 issues on Ubuntu 20.04)
 
 use lib '/opt/opengeofiction/OGF-terrain-tools';
 use strict;
 use warnings;
 use File::Basename;
-use DBI;
-use Data::Dumper;
 use POSIX 'strftime';
 use OGF::Util::Usage qw( usageInit usageError );
 
@@ -92,19 +76,11 @@ if( $CLEANUP > 0 )
 
 # connect to database
 $newest_file = "$SRC_DIR/$newest_file";
-#my $dbh = DBI->connect("dbi:Spatialite:dbname=$newest_file","","");
 my $dbcreated = `echo "SELECT timestamp FROM meta;"| spatialite $newest_file `;
 chomp $dbcreated;
 print "Created: $dbcreated\n";
 
 # add WGS84 to SRIDs
-#my $srid_exists = $dbh->selectrow_array('SELECT srid FROM spatial_ref_sys WHERE srid=4326', undef);
-#if( !defined $srid_exists )
-#{
-#	my $sth = $dbh->prepare("INSERT INTO spatial_ref_sys(srid,auth_name,auth_srid,ref_sys_name,proj4text,srtext) VALUES (?,?,?,?,?,?)");
-#	$sth->execute(4326, 'epsg', 4326, 'WGS 84', '+proj=longlat +datum=WGS84 +no_defs', 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]');
-#	$sth->finish();
-#}
 unless( `echo 'SELECT srid FROM spatial_ref_sys WHERE srid=4326;' | spatialite $newest_file ` =~ /^4326/ )
 {
 	open my $sql, '|-', "spatialite $newest_file | cat";
@@ -132,11 +108,6 @@ my %nodes = ();
 if( $CHECK_POINTS == 1 )
 {
 	print "Checking points...\n";
-	
-	# prepare SQL statement
-	#my $sth = $dbh->prepare("SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_points")
-	#	or die "prepare statement failed: $dbh->errstr()";
-	#$sth->execute() or die "execution failed: $dbh->errstr()"; 
 	foreach my $line( `echo "SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_points;"| spatialite $newest_file `)
 	{
 		chomp $line;
@@ -224,16 +195,12 @@ EOF
 			++$n;
 		}
 	}
-	#$sth->finish();
 }
 
 # and now check lines
 if( $CHECK_LINES == 1 )
 {
-	# prepare SQL statement
-	#my $sth = $dbh->prepare("SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_lines")
-	#	or die "prepare statement failed: $dbh->errstr()";
-	#$sth->execute() or die "execution failed: $dbh->errstr()"; 
+	print "Checking lines...\n";
 	foreach my $line( `echo "SELECT AsText(Transform(GEOMETRY,4326)) AS geom, osm_id, error FROM error_lines;"| spatialite $newest_file `)
 	{
 		chomp $line;
@@ -287,12 +254,10 @@ EOF
 			print STDERR "Unknown line: $geom,$osm_id,$error\n";
 		}
 	}
-	#$sth->finish();
 }
 
 # tidy up
 print $OUTPUT "    },\n" unless( $n == 0 );
-#$dbh->disconnect();
 
 # meta information
 my $nowutc = strftime '%Y-%m-%d %H:%M UTC', gmtime;

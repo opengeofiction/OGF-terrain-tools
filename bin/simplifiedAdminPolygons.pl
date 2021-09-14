@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 
-use lib '/opt/osm/perl5';
+use lib '/opt/opengeofiction/OGF-terrain-tools';
 use strict;
 use warnings;
 use JSON::PP;
@@ -13,11 +13,6 @@ use OGF::Data::Context;
 use OGF::View::TileLayer;
 use OGF::Util::Usage qw( usageInit usageError );
 
-
-# perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl
-# perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl -od /home/lkind/ogf
-# perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl -ds Roantra
-
 my %opt;
 usageInit( \%opt, qq/ h ogf ds=s od=s /, << "*" );
 [-ogf] [-ds <dataset>] [-od <output_directory>]
@@ -29,10 +24,9 @@ usageInit( \%opt, qq/ h ogf ds=s od=s /, << "*" );
 my( $osmFile ) = @ARGV;
 usageError() if $opt{'h'};
 
-
-my $OUTPUT_DIR = $opt{'od'} || 'C:/usr/MapView/tmp';
+my $OUTPUT_DIR = $opt{'od'} || '/tmp';
 my( $aTerr, $COMPUTATION_ZOOM, $OUTFILE_NAME, $ADMIN_RELATION_QUERY );
-our $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
+our $URL_TERRITORIES = 'https://wiki.opengeofiction.net/index.php/OpenGeofiction:Territory_administration?action=raw';
 
 if( ! $opt{'ds'} ){
     $aTerr = getTerritories();
@@ -82,9 +76,6 @@ my $ctx = OGF::Data::Context->new();
 $ctx->loadFromFile( $osmFile );
 $ctx->setReverseInfo();
 
-#my $relKey = $opt{'ogf'} ? $rel->{'tags'}{'ogf:id'} : $rel->{'id'};
-#die qq/Relation $rel->{id} doesn't have an ogf:id\n/ if ! $relKey;
-
 our %VERIFY_IGNORE = (
 #   481   => 'UL130',   # Alora, Takora region (indyroads); no problem
 #   10386 => 'TA333',   # Egani, southern islands; deleted by isleño
@@ -117,7 +108,8 @@ foreach my $way ( values %{$ctx->{_Way}} ){
 writeRegionInfo( $ctx, $OUTPUT_DIR . '/admin_regions.json' );
 
 
-foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
+#foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
+foreach my $avwThreshold ( 100 ){
 
     my $ctx3 = OGF::Data::Context->new();
     $ctx3->{_Node} = $ctx->{_Node};
@@ -204,7 +196,6 @@ foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
     }
 
     my $json = JSON::PP->new->indent(2)->space_after;
-#   writePolygonJson( "C:/usr/MapView/tmp/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
     writePolygonJson( "$OUTPUT_DIR/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
 }
 

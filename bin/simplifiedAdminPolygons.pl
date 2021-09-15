@@ -191,6 +191,13 @@ foreach my $avwThreshold ( 100 ){
         my $aErrors = verifyTerritories( $hPolygons, $aTerr );
         if( @$aErrors ){
             use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aErrors], ['aErrors'] ), "\n";  # _DEBUG_
+			
+			
+			my $outFile = "errors.json";
+			my $json = JSON::PP->new->indent(2)->space_after;
+			my $text = $json->encode( \@$aErrors );
+			OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
+	
             exit;
         }
     }
@@ -278,7 +285,8 @@ sub verifyPolygon {
         }
     }else{
         my( $x0, $y0, $x1, $y1 ) = ( $aPol->[0][0], $aPol->[0][1], $aPol->[-1][0], $aPol->[-1][1] );
-        $errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between $x0,$y0 and $x1,$y1)";
+        #$errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between $x0,$y0 and $x1,$y1)";
+        $errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between [https://opengeofiction.net/#map=16/$x0/$y0 A] and [https://opengeofiction.net/#map=16/$x1/$y1 B])";
     }
     return $errText;
 }

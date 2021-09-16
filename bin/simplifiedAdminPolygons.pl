@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 
-use lib '/opt/opengeofiction/OGF-terrain-tools';
+use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
 use JSON::PP;

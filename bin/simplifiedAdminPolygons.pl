@@ -14,11 +14,13 @@ use OGF::View::TileLayer;
 use OGF::Util::Usage qw( usageInit usageError );
 
 my %opt;
-usageInit( \%opt, qq/ h ogf ds=s od=s /, << "*" );
-[-ogf] [-ds <dataset>] [-od <output_directory>]
+usageInit( \%opt, qq/ h ogf ds=s od=s copyto=s /, << "*" );
+[-ogf] [-ds <dataset>] [-od <output_directory>] [-copyto <publish_directory>]
 
 -ogf    use ogfId as key
--ds     "Roantra" or empty
+-ds     "Roantra", "test" or empty
+-od     Location to output JSON files
+-copyto Location to publish JSON files for wiki use
 *
 
 my( $osmFile ) = @ARGV;
@@ -43,6 +45,20 @@ if( ! $opt{'ds'} ){
 out;
 ---EOF---
 
+}elsif( $opt{'ds'} eq 'test' ){
+	$URL_TERRITORIES = 'https://wiki.opengeofiction.net/index.php/OpenGeofiction:Territory_administration/test?action=raw';
+    $aTerr = getTerritories();
+    $COMPUTATION_ZOOM = 6;
+    $OUTFILE_NAME = 'test_polygons';
+    $ADMIN_RELATION_QUERY = << '---EOF---';
+[timeout:1800][maxsize:4294967296];
+(
+  (relation["boundary"="administrative"]["ogf:id"~"^AR120-0[1-9]$"];);
+  >;
+);
+out;
+---EOF---
+
 }elsif( $opt{'ds'} eq 'Roantra' ){
     $aTerr = [];
     $COMPUTATION_ZOOM = 12;
@@ -61,7 +77,7 @@ out;
     die qq/Unknown dataset: "$opt{ds}"/;
 }
 
-
+# an .osm file can be specified as the last commandline argument, otherwise get from Overpass
 if( ! $osmFile ){
 	$osmFile = 'C:/usr/MapView/tmp/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
 	$osmFile = $OUTPUT_DIR . '/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
@@ -77,6 +93,7 @@ $ctx->loadFromFile( $osmFile );
 $ctx->setReverseInfo();
 
 our %VERIFY_IGNORE = (
+# all know errors cleared, these were historic ones:
 #   481   => 'UL130',   # Alora, Takora region (indyroads); no problem
 #   10386 => 'TA333',   # Egani, southern islands; deleted by isleño
 #   24874 => 'PE070',   # ???; deleted by Luciano
@@ -188,15 +205,38 @@ foreach my $avwThreshold ( 100 ){
     };
 
     if( $avwThreshold == 100 ){
+		my $outFile = "$OUTPUT_DIR/${OUTFILE_NAME}_errors.json";
+		my $exit = 0;
         my $aErrors = verifyTerritories( $hPolygons, $aTerr );
         if( @$aErrors ){
             use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aErrors], ['aErrors'] ), "\n";  # _DEBUG_
-            exit;
+			
+			my $json = JSON::PP->new->indent(2)->space_after;
+			my $text = $json->encode( \@$aErrors );
+			OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
+            $exit = 1;
         }
+		else
+		{
+			my $text = '[]';
+			OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
+		}
+		
+		if( $opt{'copyto'} and -d $opt{'copyto'} ) {
+			my $publishFile = $opt{'copyto'} . "/territory_errors.json";
+			system "cp \"$outFile\" \"$publishFile\"";
+		}
+		
+		exit if( $exit == 1 );
     }
 
     my $json = JSON::PP->new->indent(2)->space_after;
-    writePolygonJson( "$OUTPUT_DIR/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
+	my $outFile = "$OUTPUT_DIR/${OUTFILE_NAME}_${avwThreshold}.json";
+    writePolygonJson( $outFile, $hPolygons );
+	if( $opt{'copyto'} and -d $opt{'copyto'} ) {
+		my $publishFile = $opt{'copyto'} . "/territory.json";
+		system "cp \"$outFile\" \"$publishFile\"";
+	}
 }
 
 
@@ -278,7 +318,8 @@ sub verifyPolygon {
         }
     }else{
         my( $x0, $y0, $x1, $y1 ) = ( $aPol->[0][0], $aPol->[0][1], $aPol->[-1][0], $aPol->[-1][1] );
-        $errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between $x0,$y0 and $x1,$y1)";
+        #$errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between $x0,$y0 and $x1,$y1)";
+        $errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between [https://opengeofiction.net/#map=16/$x0/$y0 A] and [https://opengeofiction.net/#map=16/$x1/$y1 B])";
     }
     return $errText;
 }

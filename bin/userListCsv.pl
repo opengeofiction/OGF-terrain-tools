@@ -1,31 +1,44 @@
 #! /usr/bin/perl -w -CSDA
 
+use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
+use JSON::PP;
 use LWP::Simple;
+use OGF::Util::File;
 use OGF::Util::Usage qw( usageInit usageError );
 
-$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
-
-my $BASE = 'https://opengeofiction.net';
-my $API  = "$BASE/api/0.6";
+my $BASE  = 'https://opengeofiction.net';
+my $API   = "$BASE/api/0.6";
 
 my %opt;
-usageInit( \%opt, qq/ h start=i end=i full /, << "*" );
-[-start <userid> -end <userid> -full]
+usageInit( \%opt, qq/ h output=s cache=s start=i end=i full /, << "*" );
+[-output <file.json> -cache <userid.cache> -start <userid> -end <userid> -full]
 
--start   start list at this user id (default     0)
--end     end list at this user id   (default 30000)
+-output  output to JSON file
+-cache   read latest user ID from last run, run for latest - 100 .. latest + 50
+-start   start list at this user id (default 24700)
+-end     end list at this user id   (default 24800)
 -full    include users with 0 changesets
 *
 usageError() if $opt{'h'};
-my $START_ID = $opt{'start'} ||     0;
-my $END_ID   = $opt{'end'}   || 30000;
+my $OUTPUT   = $opt{'output'} || 'users.json';
+my $START_ID;
+my $END_ID;
+if( $opt{'cache'} and -r $opt{'cache'} )
+{
+	my $cachepoint = `cat $opt{'cache'}`;
+	$START_ID = $cachepoint - 100;
+	$END_ID   = $cachepoint +  50;
+	print "Cached user: $cachepoint\n";
+}
+$START_ID = $opt{'start'} || 24700 if( !defined $START_ID );
+$END_ID   = $opt{'end'}   || 24800 if( !defined $END_ID );
 my $FULL     = $opt{'full'} ? 1 : 0;
-print STDERR "Users: $START_ID > $END_ID\n";
+print "Users: $START_ID .. $END_ID\n";
 
-print "id,name,link,created,latest,admin,mod,changesets,blocks,blocks_active,blocked,blocked_active\n";
 my $last_id = undef;
+my @matching_users;
 for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 {
 	# the OGF server API doesn't support the "users" request, so one at a time...
@@ -89,13 +102,35 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 				}
 			}
 			next if( $FULL == 0 and $changesets == 0 );
-			print "$id,$name,$BASE/user/$name,$created,$latest,$admin,$mod,$changesets,$blocks,$blocks_active,$blocked,$blocked_active\n";
 			my $block = '';
 			$block = 'b' if( $blocks > 0 );
 			$block = 'B' if( $blocks_active > 0 );
-			printf STDERR "$id: %-55s %20s %3d %s\n", $profile, $latest, $changesets, $block;
+			my $userdetails = {
+				id           => $id,
+				name         => $name,
+				profile      => "$BASE/user/$name",
+				created      => $created,
+				latest       => $latest,
+				admin        => $admin,
+				mod          => $mod,
+				changesets   => $changesets,
+				block_status => $block
+			};
+			push @matching_users, $userdetails;
+			
+			printf "$id: %-55s %20s %3d %s\n", $profile, $latest, $changesets, $block;
 		}
 	}
 }
 print STDERR "$last_id\n" if( defined $last_id );
 
+# output JSON
+my $json = JSON::PP->new->indent(2)->space_after;
+my @reverse = reverse @matching_users;
+my $text = $json->encode( \@reverse );
+OGF::Util::File::writeToFile( $OUTPUT, $text, '>:encoding(UTF-8)' );
+
+if( $opt{'cache'} and defined $last_id )
+{
+	OGF::Util::File::writeToFile( $opt{'cache'}, $last_id, '>:encoding(UTF-8)' );
+}

@@ -3,6 +3,7 @@
 use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
+use URI::Escape;
 use JSON::PP;
 use LWP::Simple;
 use OGF::Util::File;
@@ -66,7 +67,7 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 			{
 				$id      = $1;
 				$name    = $2;
-				$profile = "$BASE/user/$name";
+				$profile = "$BASE/user/" . uri_escape $name;
 				$created = $3;
 			}
 			$admin      = 'Y' if( $line =~ /<administrator\/>/ );
@@ -108,7 +109,7 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 			my $userdetails = {
 				id           => $id,
 				name         => $name,
-				profile      => "$BASE/user/$name",
+				profile      => $profile,
 				created      => $created,
 				latest       => $latest,
 				admin        => $admin,

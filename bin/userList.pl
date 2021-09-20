@@ -67,7 +67,7 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 			{
 				$id      = $1;
 				$name    = $2;
-				$profile = "$BASE/user/" . uri_escape $name;
+				$profile = "$BASE/user/" . uri_escape_utf8 $name;
 				$created = $3;
 			}
 			$admin      = 'Y' if( $line =~ /<administrator\/>/ );

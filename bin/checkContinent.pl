@@ -1,4 +1,6 @@
 #! /usr/bin/perl -w
+# Checks OGF territory ownership against user activity
+
 use LWP;
 use URI::Escape;
 use JSON::PP;
@@ -6,6 +8,9 @@ use LWP::Simple;
 use Encode;
 use feature 'unicode_strings' ;
 use utf8;
+use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
+use OGF::Util::File;
+use OGF::Util::Usage qw( usageInit usageError );
 
 $OVERPASS = 'https://osm3s.opengeofiction.net/api/interpreter?data=';
 $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
@@ -15,18 +20,19 @@ $APIUSER = 'https://opengeofiction.net/api/0.6/user/';
 binmode(STDOUT, ":utf8");
 
 # check command line
-if( @ARGV != 1 )
-{
-	print <<USAGE;
-Checks OGF territory ownership against user activity
 
-USAGE:
- $0 XX > output.csv
- Where XX is the appropriate continent code used in the ogf:id properties, e.g. AR for Archanta
-USAGE
-	exit 1;
-}
-$CONTINENT = $ARGV[0];
+my %opt;
+usageInit( \%opt, qq/ h cont=s json=s /, << "*" );
+[-cont <id> -json <file.json>]
+
+-cont  continent code used in the ogf:id properties, e.g. AR for Archanta
+-json  output to JSON file
+*
+usageError() if $opt{'h'};
+usageError() if !$opt{'cont'};
+$CONTINENT = $opt{'cont'};
+$JSON_FILE = $opt{'json'};
+
 $QUERY = qq(rel["type"="boundary"]["admin_level"]["ogf:id"~"^$CONTINENT"];out;);
 $URL = $OVERPASS . uri_escape($QUERY);
 
@@ -39,12 +45,14 @@ foreach ( split "\n", decode('utf-8', $resp->content) )
 	if( /<relation id=\"(\d+)\"/ )
 	{
 		$rel = $1;
-		$map_territory{$rel} = $rel;
-		$map{$rel}{id}       = 'unknown';
-		$map{$rel}{is_in}    = 'unknown';
+		$map_territory{$rel}    = $rel;
+		$map{$rel}{id}          = '';
+		$map{$rel}{is_in}       = '';
+		$map{$rel}{admin_level} = '';
 	}
-	$map{$rel}{id}     = $1 if( defined $rel and /k=\"ogf:id\" v=\"(.+)\"/ );
-	$map{$rel}{is_in}  = $1 if( defined $rel and /k=\"is_in:continent\" v=\"(.+)\"/ );
+	$map{$rel}{id}           = $1 if( defined $rel and /k=\"ogf:id\" v=\"(.+)\"/ );
+	$map{$rel}{is_in}        = $1 if( defined $rel and /k=\"is_in:continent\" v=\"(.+)\"/ );
+	$map{$rel}{admin_level}  = $1 if( defined $rel and /k=\"admin_level\" v=\"(.+)\"/ );
 }
 
 # load JSON territories
@@ -54,7 +62,7 @@ $json = JSON::PP->new();
 $aTerr = $json->decode($resp);
 
 # print JSON territories, matched against map ones
-print "relation,ogf:id,owner,status,const,ogf:id map,is in,comment,edits,last edit,deadline,comment\n";
+print "relation,ogf:id,owner,status,const,ogf:id map,is in,validity,edits,last edit,deadline,comment\n";
 foreach $hTerr ( @$aTerr )
 {
 	next unless( $hTerr->{ogfId} =~ /$CONTINENT/ );
@@ -111,11 +119,43 @@ foreach $hTerr ( @$aTerr )
 		print STDERR "$hTerr->{ogfId} --> $rel\n";
 		print "$rel,$hTerr->{ogfId},$hTerr->{owner},$hTerr->{status},$constraint_summary,$map{$rel}{id},$map{$rel}{is_in},in JSON & OGF map,$edits,$last,$hTerr->{deadline},\"$hTerr->{comment}\"\n";
 		
+		my $details = {
+			relation    => $rel,
+			ogf_id      => $hTerr->{ogfId},
+			owner       => $hTerr->{owner},
+			status      => $hTerr->{status},
+			constraints => $hTerr->{constraints},
+			map_ogf_id  => $map{$rel}{id},
+			is_in       => $map{$rel}{is_in},
+			validity    => 'in JSON & OGF map',
+			edits       => $edits,
+			last_edit   => $last,
+			deadline    => $hTerr->{deadline},
+			comment     => $hTerr->{comment}
+		};
+		push @territory_details, $details;
+		
 		delete $map_territory{$rel};
 	}
 	else
 	{
 		print "$rel,$hTerr->{ogfId},$hTerr->{owner},$hTerr->{status},,,,in JSON\n";
+		
+		my $details = {
+			relation    => $rel,
+			ogf_id      => $hTerr->{ogfId},
+			owner       => $hTerr->{owner},
+			status      => $hTerr->{status},
+			constraints => $hTerr->{constraints},
+			#map_ogf_id  => $map{$rel}{id},
+			#is_in       => $map{$rel}{is_in},
+			validity    => 'in JSON only',
+			#edits       => $edits,
+			#last_edit   => $last,
+			deadline    => $hTerr->{deadline},
+			comment     => $hTerr->{comment}
+		};
+		push @territory_details, $details;
 	}
 	$relations .= "$rel,";
 }
@@ -124,8 +164,35 @@ foreach $hTerr ( @$aTerr )
 foreach $rel ( sort values %map_territory )
 {
 	next unless defined( $rel );
-	print "$rel,,,,,$map{$rel}{id},$map{$rel}{is_in},in OGF map\n";
+	my $validity = 'in OGF map only';
+	$validity = 'continental relation' if ( $map{$rel}{admin_level} eq '0' );
+	print "$rel,,,,,$map{$rel}{id},$map{$rel}{is_in},$validity\n";
+	
+	my $details = {
+		relation    => $rel,
+		#ogf_id      => $hTerr->{ogfId},
+		#owner       => $hTerr->{owner},
+		#status      => $hTerr->{status},
+		#constraints => $hTerr->{constraints},
+		map_ogf_id  => $map{$rel}{id},
+		is_in       => $map{$rel}{is_in},
+		validity    => $validity,
+		#edits       => $edits,
+		#last_edit   => $last,
+		#deadline    => $hTerr->{deadline},
+		#comment     => $hTerr->{comment}
+	};
+	push @territory_details, $details;
+	
 	$relations .= "$rel,";
+}
+
+# output JSON file
+if( $JSON_FILE )
+{
+	my $json = JSON::PP->new->indent(2)->space_after;
+	my $text = $json->encode( \@territory_details );
+	OGF::Util::File::writeToFile( $JSON_FILE, $text, '>:encoding(UTF-8)' );
 }
 
 # sometimes useful to print out ID of all the relations - e.g. to load into JOSM

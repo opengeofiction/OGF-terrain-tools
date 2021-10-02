@@ -14,8 +14,9 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 $OVERPASS = 'https://osm3s.opengeofiction.net/api/interpreter?data=';
 $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
-$CHANGESETS = 'https://opengeofiction.net/api/0.6/changesets?display_name=';
-$APIUSER = 'https://opengeofiction.net/api/0.6/user/';
+$BASE = 'https://opengeofiction.net';
+$CHANGESETS = "$BASE/api/0.6/changesets?display_name=";
+$APIUSER = "$BASE/api/0.6/user/";
 
 binmode(STDOUT, ":utf8");
 
@@ -123,11 +124,14 @@ foreach $hTerr ( @$aTerr )
 			relation    => $rel,
 			ogf_id      => $hTerr->{ogfId},
 			owner       => $hTerr->{owner},
+			profile     => "$BASE/user/" . uri_escape_utf8($hTerr->{owner}),
 			status      => $hTerr->{status},
 			constraints => $hTerr->{constraints},
-			map_ogf_id  => $map{$rel}{id},
+			map_ogf_id  => ($hTerr->{ogfId} ne $map{$rel}{id}) ? $map{$rel}{id} : '',
+			map_ogf_idx => $map{$rel}{id},
 			is_in       => $map{$rel}{is_in},
 			validity    => 'in JSON & OGF map',
+			valid_flag  => 'valid',
 			edits       => $edits,
 			last_edit   => $last,
 			deadline    => $hTerr->{deadline},
@@ -145,13 +149,11 @@ foreach $hTerr ( @$aTerr )
 			relation    => $rel,
 			ogf_id      => $hTerr->{ogfId},
 			owner       => $hTerr->{owner},
+			profile     => "$BASE/user/" . uri_escape_utf8($hTerr->{owner}),
 			status      => $hTerr->{status},
 			constraints => $hTerr->{constraints},
-			#map_ogf_id  => $map{$rel}{id},
-			#is_in       => $map{$rel}{is_in},
 			validity    => 'in JSON only',
-			#edits       => $edits,
-			#last_edit   => $last,
+			valid_flag  => 'invalid',
 			deadline    => $hTerr->{deadline},
 			comment     => $hTerr->{comment}
 		};
@@ -166,21 +168,16 @@ foreach $rel ( sort values %map_territory )
 	next unless defined( $rel );
 	my $validity = 'in OGF map only';
 	$validity = 'continental relation' if ( $map{$rel}{admin_level} eq '0' );
+	my $valid_flag = 'invalid';
+	$valid_flag = 'valid' if ( $map{$rel}{admin_level} eq '0' );
 	print "$rel,,,,,$map{$rel}{id},$map{$rel}{is_in},$validity\n";
 	
 	my $details = {
 		relation    => $rel,
-		#ogf_id      => $hTerr->{ogfId},
-		#owner       => $hTerr->{owner},
-		#status      => $hTerr->{status},
-		#constraints => $hTerr->{constraints},
 		map_ogf_id  => $map{$rel}{id},
 		is_in       => $map{$rel}{is_in},
 		validity    => $validity,
-		#edits       => $edits,
-		#last_edit   => $last,
-		#deadline    => $hTerr->{deadline},
-		#comment     => $hTerr->{comment}
+		valid_flag  => $valid_flag
 	};
 	push @territory_details, $details;
 	

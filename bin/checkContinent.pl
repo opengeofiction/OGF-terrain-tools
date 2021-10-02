@@ -121,21 +121,20 @@ foreach $hTerr ( @$aTerr )
 		print "$rel,$hTerr->{ogfId},$hTerr->{owner},$hTerr->{status},$constraint_summary,$map{$rel}{id},$map{$rel}{is_in},in JSON & OGF map,$edits,$last,$hTerr->{deadline},\"$hTerr->{comment}\"\n";
 		
 		my $details = {
-			relation    => $rel,
-			ogf_id      => $hTerr->{ogfId},
-			owner       => $hTerr->{owner},
-			profile     => "$BASE/user/" . uri_escape_utf8($hTerr->{owner}),
-			status      => $hTerr->{status},
-			constraints => $hTerr->{constraints},
-			map_ogf_id  => ($hTerr->{ogfId} ne $map{$rel}{id}) ? $map{$rel}{id} : '',
-			map_ogf_idx => $map{$rel}{id},
-			is_in       => $map{$rel}{is_in},
-			validity    => 'in JSON & OGF map',
-			valid_flag  => 'valid',
-			edits       => $edits,
-			last_edit   => $last,
-			deadline    => $hTerr->{deadline},
-			comment     => $hTerr->{comment}
+			relation     => $rel,
+			ogf_id       => $hTerr->{ogfId},
+			ogf_id_issue => ($hTerr->{ogfId} eq $map{$rel}{id}) ? 'F' : 'T',
+			owner        => $hTerr->{owner},
+			profile      => "$BASE/user/" . uri_escape_utf8($hTerr->{owner}),
+			status       => $hTerr->{status},
+			constraints  => $hTerr->{constraints},
+			is_in        => $map{$rel}{is_in},
+			validity     => 'in JSON & OGF map',
+			valid_flag   => 'valid',
+			edits        => $edits,
+			last_edit    => $last,
+			deadline     => $hTerr->{deadline},
+			comment      => $hTerr->{comment}
 		};
 		push @territory_details, $details;
 		
@@ -146,16 +145,17 @@ foreach $hTerr ( @$aTerr )
 		print "$rel,$hTerr->{ogfId},$hTerr->{owner},$hTerr->{status},,,,in JSON\n";
 		
 		my $details = {
-			relation    => $rel,
-			ogf_id      => $hTerr->{ogfId},
-			owner       => $hTerr->{owner},
-			profile     => "$BASE/user/" . uri_escape_utf8($hTerr->{owner}),
-			status      => $hTerr->{status},
-			constraints => $hTerr->{constraints},
-			validity    => 'in JSON only',
-			valid_flag  => 'invalid',
-			deadline    => $hTerr->{deadline},
-			comment     => $hTerr->{comment}
+			relation     => $rel,
+			ogf_id       => $hTerr->{ogfId},
+			ogf_id_issue => 'F',
+			owner        => $hTerr->{owner},
+			profile      => "$BASE/user/" . uri_escape_utf8($hTerr->{owner}),
+			status       => $hTerr->{status},
+			constraints  => $hTerr->{constraints},
+			validity     => 'in JSON only',
+			valid_flag   => 'invalid',
+			deadline     => $hTerr->{deadline},
+			comment      => $hTerr->{comment}
 		};
 		push @territory_details, $details;
 	}
@@ -173,13 +173,14 @@ foreach $rel ( sort values %map_territory )
 	print "$rel,,,,,$map{$rel}{id},$map{$rel}{is_in},$validity\n";
 	
 	my $details = {
-		relation    => $rel,
-		owner       => 'admin',
-		profile     => "$BASE/user/admin",
-		map_ogf_id  => $map{$rel}{id},
-		is_in       => $map{$rel}{is_in},
-		validity    => $validity,
-		valid_flag  => $valid_flag
+		relation     => $rel,
+		ogf_id       => $map{$rel}{id},
+		ogf_id_issue => 'F',
+		owner        => 'admin',
+		profile      => "$BASE/user/admin",
+		is_in        => $map{$rel}{is_in},
+		validity     => $validity,
+		valid_flag   => $valid_flag
 	};
 	push @territory_details, $details;
 	

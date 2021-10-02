@@ -174,6 +174,8 @@ foreach $rel ( sort values %map_territory )
 	
 	my $details = {
 		relation    => $rel,
+		owner       => 'admin',
+		profile     => "$BASE/user/admin",
 		map_ogf_id  => $map{$rel}{id},
 		is_in       => $map{$rel}{is_in},
 		validity    => $validity,

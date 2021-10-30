@@ -208,6 +208,9 @@ if( $CHECK_LINES == 1 )
 		my $sub = substr $geom, 0, 70;
 		printf "L: %-70s / %d / %s\n", $sub, $osm_id, $error;
 		
+		# skip entry which is all Uletha
+		next if( $gemo =~ /^LINESTRING\(57\.939619 31\.642077/ );
+		
 		if( $geom =~ /^LINESTRING\(([\-\d]+\.[\d]+) ([\-\d]+\.[\d]+)/ )
 		{
 			my $lat1 = $2; my $lon1 = $1;

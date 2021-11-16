@@ -4,97 +4,47 @@
 use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
-use DBI;
+use POSIX;
 use OGF::Util::Usage qw( usageInit usageError );
-
-my $LOG_DIR = '/var/www/html/opengeofiction.net/log';
-my $ACCESS_LOG = 'access.log';
-my $ROTATES = 4;
-my $min_changeset_id = 0;
 
 # parse commandline options
 my %opt;
-usageInit( \%opt, qq/ h host=s user=s db=s password=s/, << "*" );
--host <hostname> -user <username> -db <database> -password <password>
+usageInit( \%opt, qq/ h host=s user=s db=s password=s od=s/, << "*" );
+-host <hostname> -user <username> -db <database> -password <password> -od <output_directory>
 
 -host     database hostname, defaults to localhost
 -user     database username
 -db       database
 -password database password
+-od       output directory
 *
-my $DB_HOST  = (defined $opt{'host'}) ? $opt{'host'} : 'localhost';
-my $DB_USER  = $opt{'user'};
-my $DB       = $opt{'db'};
-my $DB_PASS  = $opt{'password'};
+my $DB_HOST    = $opt{'host'} || 'localhost';
+my $DB_USER    = $opt{'user'};
+my $DB         = $opt{'db'};
+my $DB_PASS    = $opt{'password'};
+my $OUTPUT_DIR = $opt{'od'} || '/tmp';
 usageError() if( $opt{'h'} or !defined $DB_USER or !defined $DB or !defined $DB_PASS );
 
-# connect to database
-my $dbh = DBI->connect("dbi:Pg:dbname=$DB;host=$DB_HOST", $DB_USER, $DB_PASS, {AutoCommit => 0, RaiseError => 1, PrintError => 1});
+# we want to get all changesets within a "UNIX week", offset slightly from current time
+my $HOUR = 3600;
+my $WEEK = 604800;
+my $nowish = time - $HOUR; # 1 hour ago
+$nowish = 1636588800 - 4000;
+my $from = floor($nowish / $WEEK) * $WEEK;
+my $to = ceil($nowish / $WEEK) * $WEEK;
 
-# create the changeset_ip table if needed and get the latest changeset ID
-my $sql = <<'SQL';
-CREATE TABLE IF NOT EXISTS changeset_ip(
-  changeset_id bigint            NOT NULL,
-  user_ip      inet              NOT NULL,
-  user_agent   character varying,
-  PRIMARY KEY(changeset_id, user_agent),
-  FOREIGN KEY(changeset_id) REFERENCES changesets(id)
-);
-SQL
-$dbh->do($sql);
-my $id = $dbh->selectrow_array('SELECT max(changeset_id) FROM changeset_ip');
-$min_changeset_id = $id if( defined $id );
-print "Max changeset IP: $id\n" if( defined $id );
+# name the output based on the start time
+my $output = strftime 'changesets-%Y%m%d-%H%M%S', gmtime $from;
+$output = "$OUTPUT_DIR/$output.txt";
 
-# create the changesets_with_ip view
-my $sql = <<'SQL';
-CREATE OR REPLACE VIEW changesets_with_ip AS
-  SELECT c.id AS changeset_id, c.created_at AS created_at, c.num_changes AS num_changes, c.user_id AS user_id, u.display_name AS display_name, u.creation_ip::inet AS user_creation_ip, u.creation_time AS user_creation_time, u.languages AS user_languages, CONCAT_WS(',', u.email, NULLIF(u.new_email, '')) AS user_emails, u.changesets_count AS changeset_counts, ip.user_ip AS changesest_ip, ip.user_agent AS changeset_user_agent
-  FROM changesets c, users u, changeset_ip ip
-  WHERE c.user_id = u.id AND c.id = ip.changeset_id;
-SQL
-$dbh->do($sql);
+# build up SQL query
+my $sql = "SELECT changeset_id, created_at, num_changes, user_id, display_name, user_creation_ip, user_creation_time, user_languages, user_emails, changeset_counts, changesest_ip, changeset_user_agent FROM changesets_with_ip WHERE created_at >= to_timestamp($from) AT TIME ZONE 'UTC' AND created_at < to_timestamp($to) AT TIME ZONE 'UTC' ORDER BY created_at;";
 
-# prepare insert
-$sql = 'INSERT INTO changeset_ip(changeset_id, user_ip, user_agent) VALUES(?, ?, ?) ON CONFLICT DO NOTHING';
-my $sth = $dbh->prepare($sql);
+# debug
+print "db: postgresql://$DB_USER\@$DB_HOST/$DB\n";
+print "selecting user changesets between: $from and $to\n";
+print "output to $output\n";
+print "sql query: $sql\n";
 
-# loop over the access logs, oldest first
-for( my $log = $ROTATES; $log >= 0; $log-- )
-{
-	# the latest log is uncompressed, the others have been rotated and compressed
-	my $logfile = $LOG_DIR . '/' . $ACCESS_LOG . '.' . $log . '.gz';
-	$logfile = $LOG_DIR . '/' . $ACCESS_LOG if( $log == 0 );
-	if( ! -e $logfile )
-	{
-		print "$logfile does not exist\n";
-		next;
-	}
-	my $cat = ($log == 0) ? '/bin/cat ' : '/bin/zcat';
-	
-	# open the log, pipe it in to decompress
-	print STDERR "LOG: $cat $logfile\n";
-	open IN, "$cat $logfile |" or die "$cat $logfile: $!";
-	while( <IN> )
-	{
-		# chomp & condense one or more whitespace character to one single space
-		chomp; s/\s+/ /go;
-
-		#  break each apache access_log record into nine variables
-		my($ip, undef, undef, undef, $http_request, undef, undef, undef, $user_agent) = /^(\S+) (\S+) (\S+) \[(.+)\] \"(.+)\" (\S+) (\S+) \"(.*)\" \"(.*)\"/o;
-		if( $http_request =~ /^PUT \/api\/0\.6\/changeset\/(\d+)\/close/ )
-		{
-			my $changeset_id = $1;
-			if( $changeset_id > $min_changeset_id )
-			{
-				print "$changeset_id | $ip | $user_agent\n";
-				$sth->execute($changeset_id, $ip, $user_agent);
-			}
-		}
-	}
-	close IN;
-}
-
-# get out of here
-$dbh->commit;
-$dbh->disconnect();
+# and user psql to write out the file - just becasue it was done like this in the past, keep file format same
+system "PGPASSWORD='$DB_PASS' psql -h $DB_HOST -U $DB_USER -d $DB --no-align --tuples-only --output $output -c \"$sql\"";

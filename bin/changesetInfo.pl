@@ -29,7 +29,6 @@ usageError() if( $opt{'h'} or !defined $DB_USER or !defined $DB or !defined $DB_
 my $HOUR = 3600;
 my $WEEK = 604800;
 my $nowish = time - $HOUR; # 1 hour ago
-$nowish = 1636588800 - 4000;
 my $from = floor($nowish / $WEEK) * $WEEK;
 my $to = ceil($nowish / $WEEK) * $WEEK;
 

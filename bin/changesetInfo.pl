@@ -47,3 +47,27 @@ print "sql query: $sql\n";
 
 # and user psql to write out the file - just becasue it was done like this in the past, keep file format same
 system "PGPASSWORD='$DB_PASS' psql -h $DB_HOST -U $DB_USER -d $DB --no-align --tuples-only --output $output -c \"$sql\"";
+
+# data retention policy - remove all IP addresses older than 90 days
+my $NINETY_DAYS = 7776000;
+if( opendir my $dh, $OUTPUT_DIR )
+{
+	while( my $file = readdir $dh )
+	{
+		if( $file =~ /^changesets-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.txt$/ )
+		{
+			my $t = mktime $6, $5, $4, $3, $2 - 1, $1 - 1900;
+			$t += $WEEK; # base on the newest entry within the file
+			if( time - $t > $NINETY_DAYS )
+			{
+				print "FILE $file - DELETE\n";
+				unlink "$OUTPUT_DIR/$file";
+			}
+			else
+			{
+				print "FILE $file - keep\n";
+			}
+		}
+	}
+	closedir $dh;
+}

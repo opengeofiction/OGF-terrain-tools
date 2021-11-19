@@ -47,7 +47,7 @@ $min_changeset_id = $id if( defined $id );
 print "Max changeset IP: $id\n" if( defined $id );
 
 # create the changesets_with_ip view
-my $sql = <<'SQL';
+$sql = <<'SQL';
 CREATE OR REPLACE VIEW changesets_with_ip AS
   SELECT c.id AS changeset_id, c.created_at AS created_at, c.num_changes AS num_changes, c.user_id AS user_id, u.display_name AS display_name, u.creation_ip::inet AS user_creation_ip, u.creation_time AS user_creation_time, u.languages AS user_languages, CONCAT_WS(',', u.email, NULLIF(u.new_email, '')) AS user_emails, u.changesets_count AS changeset_counts, ip.user_ip AS changesest_ip, ip.user_agent AS changeset_user_agent
   FROM changesets c, users u, changeset_ip ip
@@ -94,6 +94,12 @@ for( my $log = $ROTATES; $log >= 0; $log-- )
 	}
 	close IN;
 }
+
+# data retention policy - remove all IP addresses older than 90 days
+my $sql = <<'SQL';
+DELETE FROM changeset_ip ip USING changesets ch WHERE ip.changeset_id = ch.id AND ch.created_at < NOW() - INTERVAL '90 days';
+SQL
+$dbh->do($sql);
 
 # get out of here
 $dbh->commit;

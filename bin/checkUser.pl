@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#! /usr/bin/perl -w
 # 
 
 use lib '/opt/opengeofiction/OGF-terrain-tools/lib';

@@ -42,7 +42,7 @@ die "file does not exist" unless( -f $filename );
 my $json;
 {
 	local $/; 
-	open my $fh, "<", "lonowai.geojson";
+	open my $fh, "<", $filename;
 	$json = <$fh>;
 	close $fh;
 }

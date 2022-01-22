@@ -14,10 +14,10 @@ sub fileExport_Overpass($$);
 
 # parse options
 my %opt;
-usageInit( \%opt, qq/ h ds=s od=s copyto=s /, << "*" );
-[-ds <dataset>] [-od <output_directory>] [-copyto <publish_directory>]
+usageInit( \%opt, qq/ h cont=s od=s copyto=s /, << "*" );
+[-cont <continent>] [-od <output_directory>] [-copyto <publish_directory>]
 
--ds     two character continent ID, or unset for all
+-cont   two character continent ID, or unset for all
 -od     Location to output JSON files
 -copyto Location to publish JSON files for wiki use
 *
@@ -29,7 +29,7 @@ my $PUBLISH_DIR = ($opt{'copyto'} and -d $opt{'copyto'}) ? $opt{'copyto'} : unde
 
 # build up Overpass query to get the top level admin_level=0 continent relations
 my $idFilter = '["ogf:id"~"^[A-Z]{2}$"]';
-$idFilter = '["ogf:id"="' . $opt{'ds'} . '"]' if( $opt{'ds'} );
+$idFilter = '["ogf:id"="' . $opt{'cont'} . '"]' if( $opt{'cont'} );
 my $ADMIN_CONTINENT_QUERY = << "---EOF---";
 [timeout:1800][maxsize:4294967296];
 (

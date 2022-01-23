@@ -3,7 +3,6 @@
 use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
-use Date::Format;
 use File::Copy;
 use OGF::Data::Context;
 use OGF::Util::File;
@@ -41,9 +40,9 @@ out;
 
 # an .osm file can be specified as the last commandline argument, otherwise get from Overpass
 if( ! $osmFile ){
-	$osmFile = $OUTPUT_DIR . '/continent_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
+	$osmFile = $OUTPUT_DIR . '/continent_polygons.osm';
 	print "QUERY: $ADMIN_CONTINENT_QUERY\n" if ! -f $osmFile;
-    fileExport_Overpass $osmFile, $ADMIN_CONTINENT_QUERY  if ! -f $osmFile;
+    fileExport_Overpass $osmFile, $ADMIN_CONTINENT_QUERY;
 }
 
 # load in continent relations
@@ -103,6 +102,7 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	}
 }
 
+print "complete\n";
 
 sub fileExport_Overpass($$)
 {

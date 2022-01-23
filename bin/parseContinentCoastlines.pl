@@ -96,8 +96,10 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	if( $PUBLISH_DIR )
 	{
 		my $publishFile = $PUBLISH_DIR . '/' . $osmFile;
-		copy $workingFile, $publishFile;
 		print "publish to: $publishFile\n";
+		copy $workingFile, $publishFile;
+		print "compress to: $publishFile.gz\n";
+		system "gzip -f $publishFile";
 	}
 }
 

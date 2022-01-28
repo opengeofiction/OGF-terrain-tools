@@ -186,9 +186,15 @@ if( $PUBLISH_DIR )
 {
 	print "publish $polygon_fn to $PUBLISH_DIR...\n";
 	copy $polygon_fn, $PUBLISH_DIR;
+	my $polygon_fn_latest = build_filename $PUBLISH_DIR, $FN_POLYGONS, undef, undef, undef, 'json';
+	print "publish $polygon_fn to $polygon_fn_latest...\n";
+	copy $polygon_fn, $polygon_fn_latest;
 	
 	print "publish $activity_fn to $PUBLISH_DIR...\n";
 	copy $activity_fn, $PUBLISH_DIR;
+	my $activity_fn_latest = build_filename $PUBLISH_DIR, $FN_ACTIVITY, undef, undef, undef, 'json';
+	print "publish $activity_fn to $activity_fn_latest...\n";
+	copy $activity_fn, $activity_fn_latest;
 	
 	print "publish $template_fn to $PUBLISH_DIR...\n";
 	copy $template_fn, $PUBLISH_DIR;

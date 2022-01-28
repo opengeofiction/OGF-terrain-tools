@@ -14,14 +14,14 @@ sub fileExport_Overpass($$);
 sub build_filename($$$$$$);
 sub latlon_to_key($$$$);
 sub key_to_latlon($);
+sub key_to_name($);
 sub classify($);
 sub midpoint($$$$);
 
 my ($MAX_LAT, $MIN_LON, $MIN_LAT, $MAX_LON) = (90, -180, -90, 180);
-#my ($MAX_LAT, $MIN_LON, $MIN_LAT, $MAX_LON) = (45, 105, 43, 109);
-my $FN_ACTIVITY = 'ogf-activity';
-my $FN_POLYGONS = 'ogf-activity-polygons';
-my $FN_TEMPLATE = 'ogf-activity-template';
+my $FN_ACTIVITY = 'activity';
+my $FN_POLYGONS = 'activity-polygons';
+my $FN_TEMPLATE = 'activity-template';
 
 # parse arguments
 my %opt;
@@ -49,7 +49,6 @@ usageError() if( ($OVERPASS ne 'local') and ($OVERPASS ne 'remote') and ($OVERPA
 my $DAY = 86400;
 my $yesterday = floor((time - $DAY) / $DAY) * $DAY;
 my $yesterday_fmt = strftime '%Y-%m-%dT%H:%M:%SZ', gmtime $yesterday;
-my $filename = strftime "$FN_ACTIVITY-%Y%m%d-$DEGINCR°", gmtime $yesterday;
 print "Changes in $DEGINCR degree squares since $yesterday_fmt\n";
 
 # build up overpass query strings, working around 1MB max - break into chunks
@@ -124,7 +123,6 @@ if( open F, ">$polygon_fn" )
 	{
 		my($latN, $lonW, $latS, $lonE) = key_to_latlon $key;
 		print F ",\n" unless( $first++ == 0 );
-		#print F "\"$key\": [[$latN, $lonW], [$latN, $lonE], [$latS, $lonE], [$latS, $lonW], [$latN, $lonW]]";
 		print F "\"$key\": [[$latN, $lonW], [$latN, $lonE], [$latS, $lonE], [$latS, $lonW]]";
 	}
 	print F "\n}\n";
@@ -140,17 +138,11 @@ if( open F, ">$activity_fn" )
 	foreach my $key( keys %squares )
 	{
 		my($latN, $lonW, $latS, $lonE) = key_to_latlon $key;
+		my $name = key_to_name $key;
 		my $class = classify $squares{$key};
 		my $midpoint = midpoint $latN, $lonW, $latS, $lonE;
 		print F ",\n" unless( $first++ == 0 );
-		print F qq/\t{\n\t\t"key": "$key",\n\t\t"name": "$latN,$lonW; $latS,$lonE",\n\t\t"total": "$squares{$key}",\n\t\t"class": "$class",\n\t\t"midpoint": "$midpoint"\n\t}/;
-		# print F << "EOF"
-	# {
-		# "key": "$key",
-		# "total": "$squares{$key}",
-		# "classification": "high"
-	# }
-# EOF
+		print F qq/\t{\n\t\t"key": "$key",\n\t\t"name": "$name",\n\t\t"total": "$squares{$key}",\n\t\t"class": "$class",\n\t\t"midpoint": "$midpoint"\n\t}/;
 	}
 	print F "\n]\n";
 	close F;
@@ -189,6 +181,19 @@ EOF
 	close F;
 }
 
+# and copy for web
+if( $PUBLISH_DIR )
+{
+	print "publish $polygon_fn to $PUBLISH_DIR...\n";
+	copy $polygon_fn, $PUBLISH_DIR;
+	
+	print "publish $activity_fn to $PUBLISH_DIR...\n";
+	copy $activity_fn, $PUBLISH_DIR;
+	
+	print "publish $template_fn to $PUBLISH_DIR...\n";
+	copy $template_fn, $PUBLISH_DIR;
+}
+	
 exit;
 
 ##################################################
@@ -254,6 +259,19 @@ sub key_to_latlon($)
 		$lonE = ($8 eq 'W') ? -$7 : $7 + 0;
 	}
 	($latN, $lonW, $latS, $lonE);
+}
+
+##################################################
+sub key_to_name($)
+{
+	my($key) = @_;
+	if( $key =~ /^(\d{2})([NS])(\d{3})([EW])/ )
+	{
+		my $lat = $1 + 0;
+		my $lon = $3 + 0;
+		return "$lat$2, $lon$4";
+	}
+	return "unknown";
 }
 
 ##################################################

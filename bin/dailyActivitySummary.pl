@@ -46,10 +46,13 @@ usageError() if( (defined $PUBLISH_DIR) and (!-d $PUBLISH_DIR) );
 usageError() if( ($OVERPASS ne 'local') and ($OVERPASS ne 'remote') and ($OVERPASS ne 'nop') );
 
 # calculate time base
+my $startedat = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime;
 my $DAY = 86400;
 my $yesterday = floor((time - $DAY) / $DAY) * $DAY;
 my $yesterday_fmt = strftime '%Y-%m-%dT%H:%M:%SZ', gmtime $yesterday;
+my $yesterday_fmtday = strftime '%Y-%m-%d', gmtime $yesterday;
 print "Changes in $DEGINCR degree squares since $yesterday_fmt\n";
+print "Started: $startedat\n";
 
 # build up overpass query strings, working around 1MB max - break into chunks
 my $QUERY_START = "[out:csv(name, total; true; \",\")][timeout:1800][maxsize:4294967296];\n";
@@ -141,10 +144,20 @@ if( open F, ">$activity_fn" )
 		my $name = key_to_name $key;
 		my $class = classify $squares{$key};
 		my $midpoint = midpoint $latN, $lonW, $latS, $lonE;
-		print F ",\n" unless( $first++ == 0 );
-		print F qq/\t{\n\t\t"key": "$key",\n\t\t"name": "$name",\n\t\t"total": "$squares{$key}",\n\t\t"class": "$class",\n\t\t"midpoint": "$midpoint"\n\t}/;
+		#print F ",\n" unless( $first++ == 0 );
+		print F qq/\t{\n\t\t"key": "$key",\n\t\t"name": "$name",\n\t\t"total": "$squares{$key}",\n\t\t"class": "$class",\n\t\t"midpoint": "$midpoint"\n\t},\n/;
 	}
-	print F "\n]\n";
+	
+	# meta information
+	my $nowutc = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime;
+	print F <<EOF;
+	{
+		"control": "InfoBox",
+		"text": "Daily activity check, for <b>$yesterday_fmtday</b> - completed at $nowutc",
+		"started" : "$startedat"
+	}
+]
+EOF
 	close F;
 }
 
@@ -199,6 +212,9 @@ if( $PUBLISH_DIR )
 	print "publish $template_fn to $PUBLISH_DIR...\n";
 	copy $template_fn, $PUBLISH_DIR;
 }
+
+my $finishedat = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime;
+print "Finished: $finishedat\n";
 	
 exit;
 

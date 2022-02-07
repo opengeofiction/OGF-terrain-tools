@@ -27,7 +27,7 @@ unless( open $OUTPUT, '>', $temp_dest )
 	print STDERR "Cannot open $temp_dest for writing\n";
 	exit 1;
 }
-print $OUTPUT "date, time, load1, load15, mem, memfree, memused, memcached, swap, swapfree, swapused, memavail\n";
+print $OUTPUT "datetime, load1, load15, mem, memfree, memused, memcached, swap, swapfree, swapused, memavail\n";
 
 # read in top data
 print "reading: $SRC_DIR\n";
@@ -51,7 +51,7 @@ while( my $file = readdir $dh )
 			my($mem, $memfree, $memused, $memcached);
 			while( <$F> )
 			{
-				$time = "$1:$2" if( /top - (\d{2}):(\d{2}):(\d{2})/ );
+				$time = "$1:$2:00" if( /top - (\d{2}):(\d{2}):(\d{2})/ );
 				($load1, $load15) = ($1, $3) if( /load average: (\d+.\d+), (\d+.\d+), (\d+.\d+)/ );
 				($mem, $memfree, $memused, $memcached) = ($1, $2, $3, $4) if( /MiB Mem :\s+(\d+.\d+) total,\s+(\d+.\d+) free,\s+(\d+.\d+) used,\s+(\d+.\d+) buff\/cache/ );
 				if( /^MiB Swap:\s+(\d+.\d+) total,\s+(\d+.\d+) free,\s+(\d+.\d+) used.\s+(\d+.\d+) avail Mem/ )
@@ -60,7 +60,7 @@ while( my $file = readdir $dh )
 					my($swap, $swapfree, $swapused, $memavail) = ($1, $2, $3, $4);
 					
 					# output CSV
-					print $OUTPUT "$date, $time, $load1, $load15, $mem, $memfree, $memused, $memcached, $swap, $swapfree, $swapused, $memavail\n";
+					print $OUTPUT "$date $time, $load1, $load15, $mem, $memfree, $memused, $memcached, $swap, $swapfree, $swapused, $memavail\n";
 					$lasttime = $time;
 				}
 			}
@@ -73,4 +73,5 @@ closedir $dh;
 # finish up and move file
 close $OUTPUT;
 print "Moving $temp_dest to $DST_FILE\n";
-system "mv $temp_dest $DST_FILE";
+system "perl -e 'print scalar <>, sort <>;' < $temp_dest > $DST_FILE"; # sort it too
+system "rm $temp_dest";

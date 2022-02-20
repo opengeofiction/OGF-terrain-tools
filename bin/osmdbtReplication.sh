@@ -62,13 +62,13 @@ ${BIN}/osmdbt-create-diff --config ${CONFIG} --with-comment
 # summary of changes in last hour
 echo
 echo "Change files created in last 60 minutes:"
-cd $(grep changes_dir /opt/opengeofiction/osmdbt/etc/osmdbt-config.yaml | cut -d' ' -f 2)
+cd $(grep changes_dir ${CONFIG} | cut -d' ' -f 2)
 find . -type f -name '*.gz' -mmin -60 -ls | sort -k 11
 
 # old done logs
 echo
 echo "Remove done logs, older than 6 hours:"
-cd $(grep log_dir /opt/opengeofiction/osmdbt/etc/osmdbt-config.yaml | cut -d' ' -f 2)
+cd $(grep log_dir ${CONFIG} | cut -d' ' -f 2)
 find . -type f -name '*log.done' -mmin +360 -ls -delete | sort -k 11
 
 # not done logs

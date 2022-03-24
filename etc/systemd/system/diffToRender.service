@@ -1,0 +1,12 @@
+[Unit]
+Description=OpenGeofiction API to tile replication
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=/opt/opengeofiction/bin/diffToRenderContinuous.sh ogf-carto
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

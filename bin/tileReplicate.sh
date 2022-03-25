@@ -5,16 +5,15 @@
 # Before running updates, the replication needs to be set up with the sequence
 # pyosmium-get-changes -I can be used to do this
 #
-# tileReplicate.sh ogf-carto https://ogfdata.rent-a-planet.com/replication/minute ogfcartogis /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.style /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.lua
-
+# tileReplicate.sh ogf-carto https://ogfdata.rent-a-planet.com/replication/minute ogfcartogis /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.style /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.lua /var/www/html/test.rent-a-planet.com/public_html/ogf-carto-replication-in/state.txt
 
 BASE=/opt/opengeofiction/render
 
 # parse arguments
-if [ $# -ne 5 ]; then
+if [ $# -ne 6 ]; then
 	cat <<USAGE
 Usage:
-	$0 style-name server db style-script transform-script
+	$0 style-name server db style-script transform-script copy-sequence-to
 USAGE
 	exit 1
 fi
@@ -23,6 +22,7 @@ SERVER=$2
 DB=$3
 STYLE_SCRIPT=$4
 TRANSFORM_SCRIPT=$5
+COPY_SEQUENCE_TO=$6
 
 # setup working dir
 DIR=${BASE}/${STYLE}
@@ -92,6 +92,9 @@ do
         if [ $buffers -gt 0 ]
         then
             ln -f ${file} changes-latest.osc.gz
+			
+			echo $(date) > ${COPY_SEQUENCE_TO}
+			cat sequence.txt >> ${COPY_SEQUENCE_TO}
         fi
 
 		# Expire tiles

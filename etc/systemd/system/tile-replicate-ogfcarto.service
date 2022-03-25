@@ -1,0 +1,15 @@
+[Unit]
+Description=OpenGeofiction API to tile replication for ogf-carto
+Wants=postgresql.service
+After=postgresql.service
+
+[Service]
+User=ogf
+Group=ogf
+Type=exec
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/tileReplicate.sh ogf-carto https://ogfdata.rent-a-planet.com/replication/minute ogfcartogis /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.style /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.lua
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

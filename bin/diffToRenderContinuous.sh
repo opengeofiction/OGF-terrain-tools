@@ -44,7 +44,9 @@ while true; do
 	log="$LOG/diff-to-render-$(date +%Y%m%d).log"
 	
 	# call the replication & render script
+	echo "==> step started $started" >> $log
 	$SCRIPT $STYLE >> $log 2>&1
+	echo "==> step completed $(date)" >> $log
 	
 	# do we need to sleep a little?
 	end_time=$SECONDS

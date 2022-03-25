@@ -2,7 +2,7 @@
 # load one diff to render v0.4
 
 WORKINGDIR="/opt/geofictician/planet-data/ogieff/ogf-carto/replication-in"
-sudo -u luciano mv -f "$WORKINGDIR/diff-to-render.log" "$WORKINGDIR/diff-to-render.log.last"
+
 sudo -u luciano mv -f "$WORKINGDIR/expiry.list" "$WORKINGDIR/expiry.list.last"
 sudo -u luciano osmosis --read-replication-interval \
   workingDirectory="$WORKINGDIR" \

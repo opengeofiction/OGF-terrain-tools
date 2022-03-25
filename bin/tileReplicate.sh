@@ -74,7 +74,7 @@ do
 
         # Apply the changes to the database
 		# (removed --flat-nodes and added --expire-tiles, --expire-output)
-        echo osm2pgsql --database ${DB} --slim --append --number-processes=1 \
+        osm2pgsql --database ${DB} --slim --append --number-processes=1 \
 				  --expire-tiles=5-19 --expire-output=${efile} \
                   --multi-geometry \
                   --hstore \
@@ -95,7 +95,7 @@ do
         fi
 
 		# Expire tiles
-		echo render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5 from ${efile}
+		render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5 from ${efile}
 
         # Delete old downloads & expiry lists
         find . -name 'changes-*.gz' -mmin +300 -exec rm -f {} \;

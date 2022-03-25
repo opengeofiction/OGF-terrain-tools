@@ -44,7 +44,7 @@ while true; do
 	log="$LOG/diff-to-render-$(date +%Y%m%d).log"
 	
 	# call the replication & render script
-	$SCRIPT $STYLE >> $log
+	$SCRIPT $STYLE >> $log 2>&1
 	
 	# do we need to sleep a little?
 	end_time=$SECONDS

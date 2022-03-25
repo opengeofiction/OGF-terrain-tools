@@ -2,6 +2,7 @@
 # load diff to render continuously v0.2
 
 BASE=/opt/opengeofiction/render
+SCRIPT=/opt/opengeofiction/OGF-terrain-tools/bin/diffToRender.sh
 MINLOOP=30
 
 # check argument
@@ -42,21 +43,18 @@ while true; do
 	# build up log filename
 	log="$LOG/diff-to-render-$(date +%Y%m%d).log"
 	
-	# do work
-	number=$RANDOM
-	let "number %= 100"
-	echo "Going to take $number seconds -- $log" >> $log
-	sleep $number
+	# call the replication & render script
+	$SCRIPT $STYLE >> $log
 	
 	# do we need to sleep a little?
 	end_time=$SECONDS
 	elapsed=$((end_time - start_time))
 	if [ $elapsed -lt $MINLOOP ]; then
 		sleep_for=$((MINLOOP - elapsed))
-		echo "=================> diff-to-render-step started $started; completed $(date); wait for $sleep_for secs"
+		echo "==> step started $started; completed $(date); wait for $sleep_for secs"
 		sleep $sleep_for
 	else
-		echo "=================> diff-to-render-step started $started; completed $(date)"
+		echo "==> step started $started; completed $(date)"
 	fi
 done
 

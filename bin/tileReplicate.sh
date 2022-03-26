@@ -98,7 +98,8 @@ do
         fi
 
 		# Expire tiles
-		sudo -u luciano render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5 < ${efile}
+		#sudo -u luciano cat ${efile} | sudo -u luciano render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5 
+		cat ${efile} | render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5
 
         # Delete old downloads & expiry lists
         find . -name 'changes-*.gz' -mmin +300 -exec rm -f {} \;

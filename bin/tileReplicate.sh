@@ -74,7 +74,7 @@ do
 
         # Apply the changes to the database
 		# (removed --flat-nodes and added --expire-tiles, --expire-output)
-        osm2pgsql --database ${DB} --slim --append --number-processes=1 \
+        sudo -u ogf osm2pgsql --database ${DB} --slim --append --number-processes=1 \
 				  --expire-tiles=5-19 --expire-output=${efile} \
                   --multi-geometry \
                   --hstore \

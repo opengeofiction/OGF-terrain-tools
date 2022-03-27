@@ -27,7 +27,7 @@ COPY_SEQUENCE_TO=$6
 # setup working dir
 DIR=${BASE}/${STYLE}
 LOG=${BASE}/${STYLE}/log
-mkdir -p ${BASE}/expire-queue ${LOG}
+mkdir -p ${DIR}/expire-queue ${LOG}
 cd ${DIR}
 
 # Define exit handler

@@ -99,7 +99,7 @@ do
         fi
 		
         # Queue these changes for expiry processing
-        ln ${file} expire-queue/${file}
+        ln ${efile} expire-queue/${efile}
 		
 		# Expire tiles
 		#sudo -u luciano cat ${efile} | sudo -u luciano render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5 

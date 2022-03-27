@@ -36,7 +36,7 @@ chmod a+rwx expire-queue
 
 # Define exit handler
 function onexit {
-    [ -f sequence-prev.txt ] && mv sequence-prev.txt sequence.txt
+	[ -f sequence-prev.txt ] && mv sequence-prev.txt sequence.txt
 }
 
 # Send output to the log
@@ -53,84 +53,84 @@ while true
 do
 	echo "Loop: "$(date)
 	
-    # Work out the name of the next file
-    file="changes-$(cat sequence.txt).osc.gz"
+	# Work out the name of the next file
+	file="changes-$(cat sequence.txt).osc.gz"
 	efile="expiry-$(cat sequence.txt).list"
 	rm -f ${file} 2> /dev/null
 	rm -f ${efile} 2> /dev/null
 
-    # Save sequence file so we can rollback if an error occurs
-    cp sequence.txt sequence-prev.txt
+	# Save sequence file so we can rollback if an error occurs
+	cp sequence.txt sequence-prev.txt
 
-    # Fetch the next set of changes
-    pyosmium-get-changes --server=${SERVER} --sequence-file=sequence.txt --outfile=${file}
+	# Fetch the next set of changes
+	pyosmium-get-changes --server=${SERVER} --sequence-file=sequence.txt --outfile=${file}
 
-    # Save exit status
-    status=$?
+	# Save exit status
+	status=$?
 
-    # Check for errors
-    if [ $status -eq 0 ]
-    then
-        # Enable exit on error
-        set -e
+	# Check for errors
+	if [ $status -eq 0 ]
+	then
+		# Enable exit on error
+		set -e
 
-        # Log the new data
-        echo "Fetched new data from $(cat sequence-prev.txt) to $(cat sequence.txt) into ${file}"
+		# Log the new data
+		echo "Fetched new data from $(cat sequence-prev.txt) to $(cat sequence.txt) into ${file}"
 
-        # Apply the changes to the database
+		# Apply the changes to the database
 		# (removed --flat-nodes and added --expire-tiles, --expire-output)
-        osm2pgsql --database ${DB} --slim --append --number-processes=1 \
-				  --expire-tiles=5-19 --expire-output=${efile} \
-                  --multi-geometry \
-                  --hstore \
-                  --style=${STYLE_SCRIPT} \
-                  --tag-transform-script=${TRANSFORM_SCRIPT} \
-                  ${file}
+		osm2pgsql --database ${DB} --slim --append --number-processes=1 \
+		          --expire-tiles=5-19 --expire-output=${efile} \
+		          --multi-geometry \
+		          --hstore \
+		          --style=${STYLE_SCRIPT} \
+		          --tag-transform-script=${TRANSFORM_SCRIPT} \
+		          ${file}
 
-        # No need to rollback now
-        rm sequence-prev.txt
+		# No need to rollback now
+		rm sequence-prev.txt
 
-        # Get buffer count
-        buffers=$(osmium fileinfo --extended --get=data.buffers.count ${file})
+		# Get buffer count
+		buffers=$(osmium fileinfo --extended --get=data.buffers.count ${file})
 
-        # If this diff has content mark it as the latest diff
-        if [ $buffers -gt 0 ]
-        then
-            ln -f ${file} changes-latest.osc.gz
+		# If this diff has content mark it as the latest diff
+		if [ $buffers -gt 0 ]
+		then
+			ln -f ${file} changes-latest.osc.gz
 			
 			echo $(date) > ${COPY_SEQUENCE_TO}
 			cat sequence.txt >> ${COPY_SEQUENCE_TO}
-        fi
+		fi
 		
-        # Queue these changes for expiry processing - note this is *not* the osc.gz as done with OSM,
+		# Queue these changes for expiry processing - note this is *not* the osc.gz as done with OSM,
 		# we are still using the expiry list from osm2pgsql
-        ln ${efile} expire-queue/${efile}
+		ln ${efile} expire-queue/${efile}
 
-        # Delete old downloads & expiry lists
-        find . -name 'changes-*.gz' -mmin +300 -exec rm -f {} \;
-        find . -name 'expiry-*.list' -mmin +300 -exec rm -f {} \;
+		# Delete old downloads & expiry lists
+		find . -name 'changes-*.gz' -mmin +300 -exec rm -f {} \;
+		find . -name 'expiry-*.list' -mmin +300 -exec rm -f {} \;
 
-        # Disable exit on error
-        set +e
-    elif [ $status -eq 3 ]
-    then
-        # Log the lack of data
-        echo "No new data available. Sleeping..."
+		# Disable exit on error
+		set +e
+	elif [ $status -eq 3 ]
+	then
+		# Log the lack of data
+		echo "No new data available. Sleeping..."
 
-        # Remove file, it will just be an empty changeset
-        rm ${file}
+		# Remove file, it will just be an empty changeset
+		rm ${file}
 
-        # Sleep for a short while
-        sleep 30
-    else
-        # Log our failure to fetch changes
-        echo "Failed to fetch changes - waiting a few minutes before retry"
+		# Sleep for a short while
+		sleep 30
+	else
+		# Log our failure to fetch changes
+		echo "Failed to fetch changes - waiting a few minutes before retry"
 
-        # Remove any output that was produced
-        rm -f ${file}
-        rm -f ${efile}
+		# Remove any output that was produced
+		rm -f ${file}
+		rm -f ${efile}
 
-        # Wait five minutes and have another go
-        sleep 300
-    fi
+		# Wait five minutes and have another go
+		sleep 300
+	fi
 done

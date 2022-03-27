@@ -27,8 +27,12 @@ COPY_SEQUENCE_TO=$6
 # setup working dir
 DIR=${BASE}/${STYLE}
 LOG=${BASE}/${STYLE}/log
-mkdir -p ${DIR}/expire-queue ${LOG}
+mkdir -p ${LOG}
 cd ${DIR}
+
+# make sure expire-queue dir is 777 so non-root user can unlink files in it
+mkdir expire-queue
+chmod a+rwx expire-queue
 
 # Define exit handler
 function onexit {
@@ -98,12 +102,9 @@ do
 			cat sequence.txt >> ${COPY_SEQUENCE_TO}
         fi
 		
-        # Queue these changes for expiry processing
+        # Queue these changes for expiry processing - note this is *not* the osc.gz as done with OSM,
+		# we are still using the expiry list from osm2pgsql
         ln ${efile} expire-queue/${efile}
-		
-		# Expire tiles
-		#sudo -u luciano cat ${efile} | sudo -u luciano render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5 
-		cat ${efile} | render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5
 
         # Delete old downloads & expiry lists
         find . -name 'changes-*.gz' -mmin +300 -exec rm -f {} \;

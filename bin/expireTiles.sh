@@ -18,11 +18,10 @@ STYLE=$1
 DIR=${BASE}/${STYLE}/expire-queue
 cd ${DIR}
 
-for efile in *.list
+FILES="*.list"
+for efile in $FILES
 do
-	echo expiring from ${efile}
 	wc -l ${efile}
-	ls -lh ${efile}
-	echo cat ${efile} p render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5
+	cat ${efile} | render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5
 	unlink ${efile}
 done

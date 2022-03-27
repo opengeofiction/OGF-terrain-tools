@@ -27,6 +27,7 @@ COPY_SEQUENCE_TO=$6
 # setup working dir
 DIR=${BASE}/${STYLE}
 LOG=${BASE}/${STYLE}/log
+mkdir -p ${BASE}/expire-queue ${LOG}
 cd ${DIR}
 
 # Define exit handler
@@ -96,7 +97,10 @@ do
 			echo $(date) > ${COPY_SEQUENCE_TO}
 			cat sequence.txt >> ${COPY_SEQUENCE_TO}
         fi
-
+		
+        # Queue these changes for expiry processing
+        ln ${file} expire-queue/${file}
+		
 		# Expire tiles
 		#sudo -u luciano cat ${efile} | sudo -u luciano render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5 
 		cat ${efile} | render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5

@@ -4,8 +4,8 @@ Wants=postgresql.service
 After=postgresql.service
 
 [Service]
-User=ogf
-Group=ogf
+#User=ogf
+#Group=ogf
 Type=exec
 ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/tileReplicate.sh \
  ogf-carto \

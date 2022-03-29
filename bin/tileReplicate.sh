@@ -24,6 +24,12 @@ STYLE_SCRIPT=$4
 TRANSFORM_SCRIPT=$5
 COPY_SEQUENCE_TO=$6
 
+# Is there a tag transform script?
+transform_script_opt="--tag-transform-script=${TRANSFORM_SCRIPT}"
+if [ "${TRANSFORM_SCRIPT}" = "none" ]; then
+	transform_script_opt="";
+fi
+
 # setup working dir
 DIR=${BASE}/${STYLE}
 LOG=${BASE}/${STYLE}/log
@@ -84,7 +90,7 @@ do
 		          --multi-geometry \
 		          --hstore \
 		          --style=${STYLE_SCRIPT} \
-		          --tag-transform-script=${TRANSFORM_SCRIPT} \
+		          ${transform_script_opt} \
 		          ${file}
 
 		# No need to rollback now

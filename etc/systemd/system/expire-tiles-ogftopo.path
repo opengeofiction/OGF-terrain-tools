@@ -1,0 +1,9 @@
+[Unit]
+Description=OpenGeofiction tile dirtying service monitor for ogf-topo
+
+[Path]
+DirectoryNotEmpty=/opt/opengeofiction/render/ogf-topo/expire-queue
+Unit=expire-tiles-ogftopo.service
+
+[Install]
+WantedBy=multi-user.target

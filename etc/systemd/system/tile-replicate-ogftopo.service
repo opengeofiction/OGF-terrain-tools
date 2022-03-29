@@ -1,0 +1,20 @@
+[Unit]
+Description=OpenGeofiction API to tile replication for ogf-topo
+Wants=postgresql.service
+After=postgresql.service
+
+[Service]
+User=ogf
+Group=ogf
+Type=exec
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/tileReplicate.sh \
+ ogf-topo \
+ https://ogfdata.rent-a-planet.com/replication/minute \
+ ogftopogis \
+ /opt/geofictician/map-styles/ogf-topo/mapnik/osm2pgsql/opentopomap.style \
+ none \
+ /var/www/html/test.rent-a-planet.com/public_html/ogf-topo-replication-in/state.txt
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

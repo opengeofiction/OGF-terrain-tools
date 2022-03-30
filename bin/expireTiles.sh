@@ -5,14 +5,16 @@
 BASE=/opt/opengeofiction/render
 
 # parse arguments
-if [ $# -ne 1 ]; then
+if [ $# -ne 3 ]; then
 	cat <<USAGE
 Usage:
-	$0 style-name
+	$0 style-name zoom-min zoom-max
 USAGE
 	exit 1
 fi
 STYLE=$1
+ZOOM_MIN=$2
+ZOOM_MAX=$3
 
 # setup working dir
 DIR=${BASE}/${STYLE}/expire-queue
@@ -22,6 +24,6 @@ FILES="*.list"
 for efile in $FILES
 do
 	wc -l ${efile}
-	cat ${efile} | render_expired --map=${STYLE} --min-zoom=5 --max-zoom=19 --touch-from=5
+	cat ${efile} | render_expired --map=${STYLE} --min-zoom=${ZOOM_MIN} --max-zoom=${ZOOM_MAX} --touch-from=${ZOOM_MIN}
 	unlink ${efile}
 done

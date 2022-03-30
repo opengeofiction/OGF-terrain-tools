@@ -10,10 +10,10 @@
 BASE=/opt/opengeofiction/render
 
 # parse arguments
-if [ $# -ne 6 ]; then
+if [ $# -ne 8 ]; then
 	cat <<USAGE
 Usage:
-	$0 style-name server db style-script transform-script copy-sequence-to
+	$0 style-name server db style-script transform-script copy-sequence-to zoom-min zoom-max
 USAGE
 	exit 1
 fi
@@ -23,6 +23,8 @@ DB=$3
 STYLE_SCRIPT=$4
 TRANSFORM_SCRIPT=$5
 COPY_SEQUENCE_TO=$6
+ZOOM_MIN=$7
+ZOOM_MAX=$8
 
 # Is there a tag transform script?
 transform_script_opt="--tag-transform-script=${TRANSFORM_SCRIPT}"
@@ -86,7 +88,7 @@ do
 		# Apply the changes to the database
 		# (removed --flat-nodes and added --expire-tiles, --expire-output)
 		osm2pgsql --database ${DB} --slim --append --number-processes=1 \
-		          --expire-tiles=5-19 --expire-output=${efile} \
+		          --expire-tiles=${ZOOM_MIN}-${ZOOM_MAX} --expire-output=${efile} \
 		          --multi-geometry \
 		          --hstore \
 		          --style=${STYLE_SCRIPT} \

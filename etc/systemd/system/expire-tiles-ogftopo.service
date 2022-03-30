@@ -4,4 +4,4 @@ Description=OpenGeofiction tile dirtying service for ogf-topo
 [Service]
 User=luciano
 Group=luciano
-ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/expireTiles.sh ogf-topo
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/expireTiles.sh ogf-topo 8 17

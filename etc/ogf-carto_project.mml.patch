@@ -1,0 +1,53 @@
+diff --git a/project.mml b/project.mml
+index 7fb3d472..68eac8b5 100644
+--- a/project.mml
++++ b/project.mml
+@@ -26,7 +26,7 @@ _parts:
+     srs: "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0.0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over"
+   osm2pgsql: &osm2pgsql
+     type: "postgis"
+-    dbname: "gis"
++    dbname: "ogfcartogis"
+     key_field: ""
+     geometry_field: "way"
+     extent: "-20037508,-20037508,20037508,20037508"
+@@ -308,19 +308,6 @@ Layer:
+     properties:
+       cache-features: true
+       minzoom: 9
+-  - id: icesheet-outlines
+-    geometry: linestring
+-    <<: *extents
+-    Datasource:
+-      <<: *osm2pgsql
+-      table: |-
+-        (SELECT
+-            way,
+-            ice_edge
+-          FROM icesheet_outlines
+-        ) AS icesheet_outlines
+-    properties:
+-      minzoom: 5
+   - id: marinas-area
+     geometry: polygon
+     <<: *extents
+@@ -1060,19 +1047,6 @@ Layer:
+         ) AS golf_line
+     properties:
+       minzoom: 16
+-  - id: necountries
+-    geometry: linestring
+-    <<: *extents
+-    Datasource:
+-      <<: *osm2pgsql
+-      table: |-
+-        (SELECT
+-            way
+-          FROM ne_110m_admin_0_boundary_lines_land
+-        ) AS necountries
+-    properties:
+-      minzoom: 1
+-      maxzoom: 3
+   - id: admin-low-zoom
+     geometry: linestring
+     <<: *extents

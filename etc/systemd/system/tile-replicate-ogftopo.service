@@ -11,7 +11,7 @@ ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/tileReplicate.sh \
  ogf-topo \
  https://ogfdata.rent-a-planet.com/replication/minute \
  ogftopogis \
- /opt/geofictician/map-styles/ogf-topo/mapnik/osm2pgsql/opentopomap.style \
+ /opt/opengeofiction/map-styles/ogf-topo/mapnik/osm2pgsql/opentopomap.style \
  none \
  /var/www/html/test.rent-a-planet.com/public_html/ogf-topo-replication-in/state.txt \
  8 \

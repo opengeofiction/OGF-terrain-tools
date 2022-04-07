@@ -71,7 +71,7 @@ do
 	cp sequence.txt sequence-prev.txt
 
 	# Fetch the next set of changes
-	pyosmium-get-changes -vv --server=${SERVER} --sequence-file=sequence.txt --outfile=${file}
+	pyosmium-get-changes -vv --server=${SERVER} --sequence-file=sequence.txt --outfile=${file} --size=10
 
 	# Save exit status
 	status=$?

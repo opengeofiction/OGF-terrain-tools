@@ -5,7 +5,7 @@
 # Before running updates, the replication needs to be set up with the sequence
 # pyosmium-get-changes -I can be used to do this
 #
-# tileReplicate.sh ogf-carto https://ogfdata.rent-a-planet.com/replication/minute ogfcartogis /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.style /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.lua /var/www/html/test.rent-a-planet.com/public_html/ogf-carto-replication-in/state.txt
+# tileReplicate.sh ogf-carto https://ogfdata.rent-a-planet.com/replication/minute ogfcartogis /opt/opengeogiction/map-styles/ogf-carto/openstreetmap-carto.style /opt/opengeogiction/map-styles/ogf-carto/openstreetmap-carto.lua /var/www/html/test.rent-a-planet.com/public_html/ogf-carto-replication-in/state.txt
 
 BASE=/opt/opengeofiction/render
 
@@ -34,8 +34,6 @@ fi
 
 # setup working dir
 DIR=${BASE}/${STYLE}
-LOG=${BASE}/${STYLE}/log
-mkdir -p ${LOG}
 cd ${DIR}
 
 # make sure expire-queue dir is 777 so non-root user can unlink files in it
@@ -46,9 +44,6 @@ chmod a+rwx expire-queue
 function onexit {
 	[ -f sequence-prev.txt ] && mv sequence-prev.txt sequence.txt
 }
-
-# Send output to the log
-exec >> ${LOG}/replicate.log 2>&1
 
 # Change to the replication state directory
 cd $DIR

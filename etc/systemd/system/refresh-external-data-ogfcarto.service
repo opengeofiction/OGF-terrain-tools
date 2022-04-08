@@ -4,7 +4,8 @@ Description=Refresh coastline & external data, for ogf-carto
 [Service]
 User=ogf
 Group=ogf
-ExecStart=cd /opt/opengeofiction/map-styles/ogf-carto && scripts/get-external-data.py
+WorkingDirectory=/opt/opengeofiction/map-styles/ogf-carto
+ExecStart=scripts/get-external-data.py
 
 [Install]
 WantedBy=default.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh coastline & external data, for ogf-carto
+RefuseManualStart=no
+
+[Timer]
+# run at 5 and 35 minutes past each hour
+OnCalendar=*-*-* *:5,35:00
+Unit=refresh-external-data-ogfcarto.service
+
+[Install]
+WantedBy=timers.target

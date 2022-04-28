@@ -44,6 +44,11 @@ renice -n 10 $$
 backup_pg=${TIMESTAMP}.dmp
 backup_tmp=${TIMESTAMP}_ogf-planet
 backup_pbf=${TIMESTAMP}_ogf-planet.osm.pbf
+lastthu=$(ncal -h | awk '/Th/ {print $NF}')
+today=$(date +%d)
+if [[ $lastthu -eq $today ]]; then
+	backup_pbf=${TIMESTAMP}_ogf-planet-monthly.osm.pbf
+fi
 latest_pbf=ogf-planet.osm.pbf
 
 # create the postgres backup dump file

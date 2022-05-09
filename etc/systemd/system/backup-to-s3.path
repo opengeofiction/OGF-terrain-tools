@@ -1,0 +1,9 @@
+[Unit]
+Description=OpenGeofiction backup service to AWS S3
+
+[Path]
+DirectoryNotEmpty=/opt/opengeofiction/backup-to-s3-queue
+Unit=backup-to-s3.service
+
+[Install]
+WantedBy=multi-user.target

@@ -16,6 +16,7 @@ PUBLISH=$3       # /var/www/html/ogfdata.rent-a-planet.com/public_html/backups
 MINFREE=12582912 # 12GB
 TIMESTAMP=`date "+%Y%m%d_%H%M%S%Z"`
 PLANET_DUMP_NG=/opt/opengeofiction/planet-dump-ng/bin/planet-dump-ng
+BACKUP_QUEUE=/opt/opengeofiction/backup-to-s3-queue
 
 # ensure the backups directory exists and is writable 
 if [ ! -w "$BASE/" ]; then
@@ -40,14 +41,23 @@ fi;
 # nice ourself
 renice -n 10 $$
 
-# files & dirs used
+# files & dirs used - work out if daily, weekly, monthly or yearly
 backup_pg=${TIMESTAMP}.dmp
 backup_tmp=${TIMESTAMP}_ogf-planet
 backup_pbf=${TIMESTAMP}_ogf-planet.osm.pbf
 lastthu=$(ncal -h | awk '/Th/ {print $NF}')
-today=$(date +%d)
-if [[ $lastthu -eq $today ]]; then
-	backup_pbf=${TIMESTAMP}_ogf-planet-monthly.osm.pbf
+today=$(date +%-d)
+timeframe=daily
+if [[ $(date +%u) -eq 4 ]]; then
+	timeframe=weekly
+	if [[ $lastthu -eq $today ]]; then
+		backup_pbf=${TIMESTAMP}_ogf-planet-monthly.osm.pbf
+		timeframe=monthly
+		if [[ $(date +%-m) -eq 12 ]]; then
+			backup_pbf=${TIMESTAMP}_ogf-planet-yearly.osm.pbf
+			timeframe=yearly
+		fi
+	fi
 fi
 latest_pbf=ogf-planet.osm.pbf
 
@@ -59,6 +69,9 @@ if [ $status -ne 0 ]; then
 	echo "ERROR: backup failed"
 	exit 5
 fi
+
+# queue for backup to S3 (note always weekly here)
+ln ${backup_pg} ${BACKUP_QUEUE}/weekly:pgsql:${backup_pg} 
 
 # create temp dir for the planet-dump-ng files
 if ! mkdir ${backup_tmp}; then
@@ -85,6 +98,9 @@ echo "copying ${backup_pbf} to ${PUBLISH}/${backup_pbf}"
 cp ${backup_pbf} "${PUBLISH}/${backup_pbf}"
 echo "creating ${latest_pbf} link"
 ln "${PUBLISH}/${backup_pbf}" "${PUBLISH}/${latest_pbf}"
+
+# queue for backup to S3
+ln ${backup_pbf} ${BACKUP_QUEUE}/${timeframe}:planet:${backup_pbf}
 
 # delete old backups
 echo "deleting old backups..."

@@ -20,7 +20,11 @@ cd ${DIR}
 FILES="*"
 for file in $FILES
 do
-	echo Backing up ${file} to ${BUCKET}
-	s3cmd put --storage-class=${STORAGE} --no-progress --stats "${file}" ${BUCKET}
+	store=${STORAGE}
+	if [[ ${file:0:5} = "daily" ]]; then
+		store=STANDARD
+	fi
+	echo Backing up ${file} to ${BUCKET} using ${store}
+	s3cmd put --storage-class=${store} --no-progress --stats "${file}" ${BUCKET}
 	unlink ${file}
 done

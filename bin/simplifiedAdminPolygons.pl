@@ -123,8 +123,6 @@ foreach my $way ( values %{$ctx->{_Way}} ){
 	push @{$hSharedBorders->{$key}}, $way->{'id'};
 }
 
-writeRegionInfo( $ctx, $OUTPUT_DIR . '/admin_regions.json' );
-
 
 #foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
 foreach my $avwThreshold ( 100 ){
@@ -276,34 +274,6 @@ sub verifyTerritories {
         print STDERR "\n";
     }
     return \@errors;
-}
-
-sub writeRegionInfo {
-    my( $ctx, $outFile ) = @_;
-#   my %rtags = ('AN' => 'Antarephia', 'TA' => 'Tarephia', 'AR120' => 'South Archanta', 'UL106' => 'East Uletha');
-    my %rtags = ('AN' => 'Antarephia', 'TA' => 'Tarephia');
-    my %regionInfo;
-    foreach my $hRel ( values %{$ctx->{_Relation}} ){
-        my( $ogfId, $region ) = ( $hRel->{'tags'}{'ogf:id'}, $hRel->{'tags'}{'is_in:continent'} );
-        next if( !defined $ogfId );
-		if( ! $region ){
-#           my( $rtag ) = ($ogfId =~ /^([A-Z]{2}(?:106|120)?)/g);
-            my( $rtag ) = ($ogfId =~ /^([A-Z]{2})/g);
-            $region = $rtags{$rtag} if $rtag && $rtags{$rtag};
-            $region = 'South Archanta' if $ogfId =~ /^AR120-3[23][a-z]/;
-            $region = 'North Archanta' if $ogfId =~ /^AR001b-/;
-        }
-#       push @regionInfo, {
-#           'rel'    => $hRel->{'id'},
-#           'ogfId'  => $ogfId,
-#           'region' => $region,
-#       };
-        $regionInfo{$hRel->{'id'}} = $region if $region;
-    }
-
-    my $json = JSON::PP->new->indent(2)->space_after;
-    my $text = $json->encode( \%regionInfo );
-    OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
 }
 
 

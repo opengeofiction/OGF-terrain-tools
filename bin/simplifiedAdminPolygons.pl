@@ -40,7 +40,8 @@ if( ! $opt{'ds'} ){
   (relation["boundary"="administrative"]["admin_level"="2"];
    relation["boundary"="protected_area"]["ogf:id"];
    relation["boundary"="administrative"]["admin_level"="3"]["ogf:id"~"^UL16[a-z]$"];
-   relation["boundary"="administrative"]["admin_level"="4"]["ogf:id"~"^AR(001b|045|060|120)-[0-9]{2}$"];);
+   relation["boundary"="administrative"]["admin_level"="4"]["ogf:id"~"^AR(001b|045|060|120)-[0-9]{2}$"];
+   relation["boundary"="timezone"]["timezone"];);
   >;
 );
 out;
@@ -116,7 +117,7 @@ foreach my $way ( values %{$ctx->{_Way}} ){
 
 
 #                        ( 50, 100, 200, 400, 800, 1600, 3200 ){
-foreach my $avwThreshold ( 100 ){
+foreach my $avwThreshold ( 100, 500 ){
 
     my $ctx3 = OGF::Data::Context->new();
     $ctx3->{_Node} = $ctx->{_Node};

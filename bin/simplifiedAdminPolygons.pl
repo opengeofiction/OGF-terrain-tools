@@ -117,7 +117,7 @@ foreach my $way ( values %{$ctx->{_Way}} ){
 
 
 #                        ( 50, 100, 200, 400, 800, 1600, 3200 ){
-foreach my $avwThreshold ( 100, 500 ){
+foreach my $avwThreshold ( 100 ){
 
     my $ctx3 = OGF::Data::Context->new();
     $ctx3->{_Node} = $ctx->{_Node};

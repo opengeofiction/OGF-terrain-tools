@@ -94,17 +94,8 @@ $ctx->loadFromFile( $osmFile );
 $ctx->setReverseInfo();
 
 our %VERIFY_IGNORE = (
-# all know errors cleared, these were historic ones:
-#   481   => 'UL130',   # Alora, Takora region (indyroads); no problem
-#   10386 => 'TA333',   # Egani, southern islands; deleted by isleño
-#   24874 => 'PE070',   # ???; deleted by Luciano
-#   21935 => 'TA113d',  # Ajanjo, part of San Marcos (sude)
-#   43801 => 'UL111',   # deleted by Stjur
-#   43803 => 'UL115',   # deleted by Stjur
-#   61490 => 'TA114a',  # Kesland Islands, Antigo nuclear base; no problem
-#   91121 => 'AR120-00',# AR120 capital region, missing ogf:id; no problem
-#   179507 => 'AN134c', # problematic relation, "polygon not closed" but is?
-#   179506 => 'AN134d', # problematic relation, "polygon not closed" but is?
+# all know errors cleared, add issues using format:
+#   481   => 'UL130',   # 
 );
 
 my $hSharedBorders = {};
@@ -124,7 +115,7 @@ foreach my $way ( values %{$ctx->{_Way}} ){
 }
 
 
-#foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
+#                        ( 50, 100, 200, 400, 800, 1600, 3200 ){
 foreach my $avwThreshold ( 100 ){
 
     my $ctx3 = OGF::Data::Context->new();
@@ -238,14 +229,7 @@ foreach my $avwThreshold ( 100 ){
 	}
 }
 
-
-
-
-
 #-------------------------------------------------------------------------------
-
-
-
 
 sub verifyTerritories {
     my( $hPolygons, $aTerritories ) = @_;
@@ -295,9 +279,6 @@ sub verifyPolygon {
     return $errText;
 }
 
-
-
-
 sub addWayToRelation {
 	my( $ctx3, $relId, $way ) = @_;
 	if( ! $ctx3->{_Relation}{$relId} ){
@@ -306,23 +287,10 @@ sub addWayToRelation {
 	$ctx3->{_Relation}{$relId}->add_member( 'outer', $way );
 }
 
-
-# relation["boundary"="administrative"]["admin_level"="2"]["ogf:id"="UL202"];
-
 sub fileExport_Overpass {
 	require OGF::Util::Overpass;
 	my( $outFile ) = @_;
-#   relation["boundary"="administrative"]["admin_level"="2"];
 
-#    my $data = OGF::Util::Overpass::runQuery_remote( undef, << '    ---EOF---' );
-#       [timeout:1800][maxsize:4294967296];
-#       (
-#         (relation["boundary"="administrative"]["admin_level"="2"];
-#          relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|AR120-[0-9]{2})$"];);
-#         >;
-#       );
-#       out;
-#    ---EOF---
     my $data = OGF::Util::Overpass::runQuery_remote( undef, $ADMIN_RELATION_QUERY );
 	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
 }

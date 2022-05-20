@@ -47,7 +47,8 @@ if( ! $opt{'ds'} )
 [timeout:1800][maxsize:4294967296];
 (relation["boundary"="administrative"]["admin_level"="2"];
  relation["boundary"="protected_area"]["ogf:id"];
- relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|(AR060|AR120|UL106|AR001b)-[0-9]{2}|AR045-[0-9]{2}|AR045-(01|03|10)[a-z]|UL[0-9]{2}[a-z]+)$"];);
+ relation["boundary"="administrative"]["admin_level"="3"]["ogf:id"~"^UL16[a-z]$"];
+ relation["boundary"="administrative"]["admin_level"="4"]["ogf:id"~"^AR(001b|045|060|120)-[0-9]{2}$"];);
 out;
 ---EOF---
 

@@ -13,12 +13,12 @@ use OGF::Data::Context;
 use OGF::View::TileLayer;
 use OGF::Util::Usage qw( usageInit usageError );
 
-sub parseContinent($$);
-sub parseRegion($);
 sub parseDrivingSide($);
 sub parseRailGauge($);
 sub parseGovernance($);
 sub parseGovernanceStructure($);
+sub parseContinent($$);
+sub parseRegion($);
 
 my %opt;
 usageInit( \%opt, qq/ h ogf ds=s od=s copyto=s /, << "*" );
@@ -85,12 +85,13 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'rel'}                  = $rel->{'id'};
 	$ter{'ogf:id'}               = $rel->{'tags'}{'ogf:id'};
 	$ter{'name'}                 = $rel->{'tags'}{'name'}            || $rel->{'tags'}{'ogf:id'};
-	$ter{'is_in:continent'}      = parseContinent $rel->{'tags'}{'is_in:continent'}, $rel->{'tags'}{'ogf:id'};
-	$ter{'is_in:region'}         = parseRegion $rel->{'tags'}{'is_in:region'};
+	
 	$ter{'driving_side'}         = parseDrivingSide $rel->{'tags'}{'driving_side'};
 	$ter{'gauge'}                = parseRailGauge $rel->{'tags'}{'gauge'};
 	$ter{'governance'}           = parseGovernance $rel->{'tags'}{'governance'};
 	$ter{'governance:structure'} = parseGovernanceStructure $rel->{'tags'}{'governance:structure'};
+	$ter{'is_in:continent'}      = parseContinent $rel->{'tags'}{'is_in:continent'}, $rel->{'tags'}{'ogf:id'};
+	$ter{'is_in:region'}         = parseRegion $rel->{'tags'}{'is_in:region'};
 	
 	push @ters, \%ter;
 }
@@ -101,6 +102,42 @@ my $text = $json->encode( \@ters );
 OGF::Util::File::writeToFile($publishFile, $text, '>:encoding(UTF-8)' );
 
 #-------------------------------------------------------------------------------
+
+sub parseDrivingSide($)
+{
+	my($var) = @_;
+	
+	return 'assumed_right' if( !defined $var );
+	return 'left'          if( lc $var eq 'left' );
+	return 'right'         if( lc $var eq 'right' );
+	return 'mixed'         if( lc $var eq 'mixed' );
+	return 'unknown'; 
+}
+
+sub parseRailGauge($)
+{
+	my($var) = @_;
+	
+	return '0' if( !defined $var );
+	return $var + 0 if( $var =~ /^[\d]{1,4}$/ );
+	return 'error';
+}
+
+sub parseGovernance($)
+{
+	my($var) = @_;
+	
+	return $var + 0 if( defined $var and $var =~ /^\d\d$/ );
+	return '90';
+}
+
+sub parseGovernanceStructure($)
+{
+	my($var) = @_;
+	
+	return lc $var if( defined $var and $var =~ /^(decentralized|federation|unitary)$/i );
+	return 'unknown';
+}
 
 sub parseContinent($$)
 {
@@ -129,43 +166,7 @@ sub parseRegion($)
 	return 'Unknown';
 }
 
-sub parseDrivingSide($)
-{
-	my($var) = @_;
-	
-	return 'assumed_right' if( !defined $var );
-	return 'left'          if( lc $var eq 'left' );
-	return 'right'         if( lc $var eq 'right' );
-	return 'mixed'         if( lc $var eq 'mixed' );
-	return 'unknown'; 
-}
-
-sub parseRailGauge($)
-{
-	my($var) = @_;
-	
-	return '0' if( !defined $var );
-	return $var + 0 if( $var =~ /^[\d]{1,4}$/ );
-	return 'error';
-}
-
-
-sub parseGovernance($)
-{
-	my($var) = @_;
-	
-	return $var + 0 if( defined $var and $var =~ /^\d\d$/ );
-	return '90';
-}
-
-sub parseGovernanceStructure($)
-{
-	my($var) = @_;
-	
-	return lc $var if( defined $var and $var =~ /^(decentralized|federation|unitary)$/i );
-	return 'unknown';
-}
-
+#-------------------------------------------------------------------------------
 
 sub fileExport_Overpass {
 	require OGF::Util::Overpass;

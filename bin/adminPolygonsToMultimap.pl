@@ -14,6 +14,10 @@ use OGF::View::TileLayer;
 use OGF::Util::Usage qw( usageInit usageError );
 
 sub parseDrivingSide($);
+sub parseEconomy($);
+sub parseEconomyHdi($);
+sub parseEconomyHdiRange($);
+sub parseEconomyNote($);
 sub parseRailGauge($);
 sub parseGovernance($);
 sub parseGovernanceStructure($);
@@ -53,7 +57,7 @@ elsif( $opt{'ds'} eq 'test' )
 	$OUTFILE_NAME = 'test_admin_properties';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
 [timeout:1800][maxsize:4294967296];
-(relation["boundary"="administrative"]["ogf:id"~"^AR120-0[1-9]$"];);
+(relation["boundary"="administrative"]["ogf:id"="UL05a"];);
 out;
 ---EOF---
 }
@@ -87,6 +91,10 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'name'}                 = $rel->{'tags'}{'name'}            || $rel->{'tags'}{'ogf:id'};
 	
 	$ter{'driving_side'}         = parseDrivingSide $rel->{'tags'}{'driving_side'};
+	$ter{'economy'}              = parseEconomy $rel->{'tags'}{'economy'};
+	$ter{'economy:hdi'}          = parseEconomyHdi $rel->{'tags'}{'economy:hdi'};
+	$ter{'economy:hdi:range'}    = parseEconomyHdiRange $ter{'economy:hdi'};
+	$ter{'economy:note'}         = parseEconomyNote $rel->{'tags'}{'economy:note'};
 	$ter{'gauge'}                = parseRailGauge $rel->{'tags'}{'gauge'};
 	$ter{'governance'}           = parseGovernance $rel->{'tags'}{'governance'};
 	$ter{'governance:structure'} = parseGovernanceStructure $rel->{'tags'}{'governance:structure'};
@@ -97,7 +105,7 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 }
 
 my $publishFile = $PUBLISH_DIR . '/' . $OUTFILE_NAME . '.json';
-my $json = JSON::PP->new->indent(2)->space_after;
+my $json = JSON::PP->new->canonical->indent(2)->space_after;
 my $text = $json->encode( \@ters );
 OGF::Util::File::writeToFile($publishFile, $text, '>:encoding(UTF-8)' );
 
@@ -112,6 +120,44 @@ sub parseDrivingSide($)
 	return 'right'         if( lc $var eq 'right' );
 	return 'mixed'         if( lc $var eq 'mixed' );
 	return 'unknown'; 
+}
+
+sub parseEconomy($)
+{
+	my($var) = @_;
+	
+	return $var + 0 if( defined $var and $var =~ /^\d\d$/ );
+	return '90';
+}
+
+sub parseEconomyHdi($)
+{
+	my($var) = @_;
+	
+	return $var + 0.0 if( defined $var and $var =~ /^[\d\.]+$/ and $var >= 0.0 and $var <= 1.0 );
+	return '';
+}
+
+sub parseEconomyHdiRange($)
+{
+	my($var) = @_;
+	
+	return 'unknown' if( !defined $var or $var eq '' );
+	
+	return 'low'      if( $var >= 0.00 and $var <  0.55 );
+	return 'medium'   if( $var >= 0.55 and $var <  0.70 );
+	return 'high'     if( $var >= 0.70 and $var <  0.80 );
+	return 'veryhigh' if( $var >= 0.80 and $var <= 1.00 );
+	
+	return 'unknown';
+}
+
+sub parseEconomyNote($)
+{
+	my($var) = @_;
+	
+	return substr $var, 0, 100 if( defined $var );
+	return '';
 }
 
 sub parseRailGauge($)

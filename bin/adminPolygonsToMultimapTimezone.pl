@@ -140,7 +140,7 @@ sub parseTimezoneStyle($)
 	my @styles = ('A', 'B', 'C'); # 3 style bands
 	my $style = $styles[$hr % @styles];
 	my $mins  = $1 if( $tz =~ /^[+\-]\d{2}:(00|30)$/ );
-	my $mod   = $mins == 30 ? '+' : '';
+	my $mod   = $mins == 30 ? 'x' : '';
 	return 'TZ_' . $style . $mod;
 }
 

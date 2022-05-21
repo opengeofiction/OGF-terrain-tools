@@ -17,6 +17,7 @@ sub parseTimezone($);
 sub parseTimezoneName($$);
 sub parseTimezoneDst($);
 sub parseTimezoneNote($);
+sub parseTimezoneStyle($);
 
 my %opt;
 usageInit( \%opt, qq/ h ogf ds=s od=s copyto=s /, << "*" );
@@ -77,14 +78,15 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	my %ter = ();
 	next if( !defined $rel->{'id'} );
 	
-	$ter{'rel'}           = $rel->{'id'};
-	$ter{'ogf:id'}        = $rel->{'tags'}{'ogf:id'} || '';
-	$ter{'timezone'}      = parseTimezone $rel->{'tags'}{'timezone'};
+	$ter{'rel'}            = $rel->{'id'};
+	$ter{'ogf:id'}         = $rel->{'tags'}{'ogf:id'} || '';
+	$ter{'timezone'}       = parseTimezone $rel->{'tags'}{'timezone'};
 	next if( !defined $ter{'timezone'} );
 	
-	$ter{'timezone:name'} = parseTimezoneName $rel->{'tags'}{'timezone:name'}, $rel->{'tags'}{'name'};
-	$ter{'timezone:dst'}  = parseTimezoneDst  $rel->{'tags'}{'timezone:dst'};
-	$ter{'timezone:note'} = parseTimezoneNote $rel->{'tags'}{'timezone:note'};
+	$ter{'timezone:name'}  = parseTimezoneName  $rel->{'tags'}{'timezone:name'}, $rel->{'tags'}{'name'};
+	$ter{'timezone:dst'}   = parseTimezoneDst   $rel->{'tags'}{'timezone:dst'};
+	$ter{'timezone:note'}  = parseTimezoneNote  $rel->{'tags'}{'timezone:note'};
+	$ter{'timezone:style'} = parseTimezoneStyle $ter{'timezone'};
 	
 	push @ters, \%ter;
 }
@@ -95,7 +97,6 @@ my $text = $json->encode( \@ters );
 OGF::Util::File::writeToFile($publishFile, $text, '>:encoding(UTF-8)' );
 
 #-------------------------------------------------------------------------------
-
 
 sub parseTimezone($)
 {
@@ -131,6 +132,18 @@ sub parseTimezoneNote($)
 	return substr $var, 0, 100 if( defined $var );
 	return '';
 }
+
+sub parseTimezoneStyle($)
+{
+	my($tz) = @_; 
+	my $hr = $1 if( $tz =~ /^([+\-]\d{2})/ );
+	my @styles = ('A', 'B', 'C'); # 3 style bands
+	my $style = $styles[$hr % @styles];
+	my $mins  = $1 if( $tz =~ /^[+\-]\d{2}:(00|30)$/ );
+	my $mod   = $mins == 30 ? '+' : '';
+	return 'TZ_' . $style . $mod;
+}
+
 
 #-------------------------------------------------------------------------------
 

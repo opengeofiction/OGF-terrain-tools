@@ -46,9 +46,7 @@ if( ! $opt{'ds'} )
 	$ADMIN_RELATION_QUERY = << '---EOF---';
 [timeout:1800][maxsize:4294967296];
 (relation["boundary"="administrative"]["admin_level"="2"];
- relation["boundary"="protected_area"]["ogf:id"];
- relation["boundary"="administrative"]["admin_level"="3"]["ogf:id"~"^UL16[a-z]$"];
- relation["boundary"="administrative"]["admin_level"="4"]["ogf:id"~"^AR(001b|045|060|120)-[0-9]{2}$"];);
+ relation["boundary"="protected_area"]["ogf:id"];);
 out;
 ---EOF---
 

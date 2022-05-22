@@ -89,7 +89,8 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	
 	$ter{'rel'}                  = $rel->{'id'};
 	$ter{'ogf:id'}               = $rel->{'tags'}{'ogf:id'};
-	$ter{'name'}                 = $rel->{'tags'}{'name'}            || $rel->{'tags'}{'ogf:id'};
+	$ter{'name'}                 = $rel->{'tags'}{'int_name'} || $rel->{'tags'}{'name'} || $rel->{'tags'}{'ogf:id'};
+	$ter{'ogf:wiki'}             = $rel->{'tags'}{'ogf:wiki'} || $ter{'name'};
 	
 	$ter{'driving_side'}         = parseDrivingSide $rel->{'tags'}{'driving_side'};
 	$ter{'economy'}              = parseEconomy $rel->{'tags'}{'economy'};

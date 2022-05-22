@@ -3,15 +3,17 @@
 use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
-use JSON::PP;
-use URI::Escape;
+use feature 'unicode_strings' ;
 use Date::Format;
+use Encode;
+use JSON::PP;
+use OGF::Data::Context;
 use OGF::Geo::Topology;
 use OGF::Util::File;
 use OGF::Util::Line;
-use OGF::Data::Context;
-use OGF::View::TileLayer;
 use OGF::Util::Usage qw( usageInit usageError );
+use OGF::View::TileLayer;
+use URI::Escape;
 
 sub parseDrivingSide($);
 sub parseEconomy($);
@@ -217,6 +219,6 @@ sub fileExport_Overpass {
 	require OGF::Util::Overpass;
 	my( $outFile ) = @_;
 
-	my $data = OGF::Util::Overpass::runQuery_remote( undef, $ADMIN_RELATION_QUERY );
+	my $data = decode('utf-8', OGF::Util::Overpass::runQuery_remote(undef, $ADMIN_RELATION_QUERY));
 	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
 }

@@ -23,8 +23,14 @@ sub parseEconomyNote($);
 sub parseRailGauge($);
 sub parseGovernance($);
 sub parseGovernanceStructure($);
+sub parseHistoryEstablished($);
+sub parseHistoryEstablishedRange($);
+sub parseHistoryIndependenceFrom($);
+sub parseHistoryRevolution($);
 sub parseContinent($$);
 sub parseRegion($);
+sub parseOrganization($$$);
+sub parsePowerSupply($);
 
 my %opt;
 usageInit( \%opt, qq/ h ogf ds=s od=s copyto=s /, << "*" );
@@ -93,15 +99,31 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'ogf:wiki'}             = $rel->{'tags'}{'ogf:wiki'} || $rel->{'tags'}{'ogfwiki'} || $ter{'name'};
 	
 	$ter{'driving_side'}         = parseDrivingSide $rel->{'tags'}{'driving_side'};
+	
 	$ter{'economy'}              = parseEconomy $rel->{'tags'}{'economy'};
 	$ter{'economy:hdi'}          = parseEconomyHdi $rel->{'tags'}{'economy:hdi'};
 	$ter{'economy:hdi:range'}    = parseEconomyHdiRange $ter{'economy:hdi'};
 	$ter{'economy:note'}         = parseEconomyNote $rel->{'tags'}{'economy:note'};
+	
 	$ter{'gauge'}                = parseRailGauge $rel->{'tags'}{'gauge'};
+	
 	$ter{'governance'}           = parseGovernance $rel->{'tags'}{'governance'};
 	$ter{'governance:structure'} = parseGovernanceStructure $rel->{'tags'}{'governance:structure'};
+	
+	$ter{'history:established'}       = parseHistoryEstablished $rel->{'tags'}{'history:established'};
+	$ter{'history:established:range'} = parseHistoryEstablishedRange $ter{'history:established'};
+	$ter{'history:independence_from'} = parseHistoryIndependenceFrom $rel->{'tags'}{'history:independence_from'};
+	$ter{'history:revolution'}        = parseHistoryRevolution $rel->{'tags'}{'history:revolution'};
+	
 	$ter{'is_in:continent'}      = parseContinent $rel->{'tags'}{'is_in:continent'}, $rel->{'tags'}{'ogf:id'};
 	$ter{'is_in:region'}         = parseRegion $rel->{'tags'}{'is_in:region'};
+	
+	$ter{'organization:AN'}      = parseOrganization $rel->{'tags'}{'organization:AN'},     'no', ['member', 'no'];
+	$ter{'organization:AC'}      = parseOrganization $rel->{'tags'}{'organization:AC'},     '',   ['member', 'observer'];
+	$ter{'organization:ASUN'}    = parseOrganization $rel->{'tags'}{'organization:ASUN'},   '',   ['member', 'observer', 'partner'];
+	$ter{'organization:Egalia'}  = parseOrganization $rel->{'tags'}{'organization:Egalia'}, '',   ['member', 'observer'];
+	$ter{'organization:IC'}      = parseOrganization $rel->{'tags'}{'organization:IC'},     '',   ['member', 'observer'];
+	$ter{'organization:TCC'}     = parseOrganization $rel->{'tags'}{'organization:TCC'},    '',   ['member', 'observer'];
 	
 	push @ters, \%ter;
 }
@@ -187,6 +209,45 @@ sub parseGovernanceStructure($)
 	return 'unknown';
 }
 
+sub parseHistoryEstablished($)
+{
+	my($var) = @_;
+	
+	return $var + 0 if( defined $var and $var =~ /^\d{4}$/ );
+}
+
+sub parseHistoryEstablishedRange($)
+{
+	my($var) = @_;
+	
+	return 'unknown' if( !defined $var or $var eq '' );
+	
+	return 'pre-1000'  if( $var < 1000 );
+	return '1000-1499' if( $var < 1500 );
+	return '1500-1699' if( $var < 1700 );
+	return '1700-1799' if( $var < 1800 );
+	return '1800-1899' if( $var < 1900 );
+	return '1900-1949' if( $var < 1950 );
+	return '1950-1999' if( $var < 2000 );
+	return 'post-2000' if( $var >= 2000 );
+	
+	return 'unknown';
+}
+
+sub parseHistoryIndependenceFrom($)
+{
+	my($var) = @_;
+	
+	return substr $var, 0, 100 if( defined $var );
+}
+
+sub parseHistoryRevolution($)
+{
+	my($var) = @_;
+	
+	return $var + 0 if( defined $var and $var =~ /^\d{4}$/ );
+}
+
 sub parseContinent($$)
 {
 	my($cont, $ogfId) = @_;
@@ -213,6 +274,27 @@ sub parseRegion($)
 	return $var if( defined $var and $var =~ /^[a-zA-Z ]+/ );
 	return 'Unknown';
 }
+
+sub parseOrganization($$$)
+{
+	my($var, $default, $values) = @_;
+	
+	return $default if( !defined $var );
+	foreach my $valid ( @$values )
+	{
+		return $valid if( lc $var eq $valid );
+	}
+	return $default;
+}
+
+sub parsePowerSupply($)
+{
+	my($var) = @_;
+	
+	return lc $var if( defined $var and $var =~ /^(europlug|as_3112|bs_1363|bs_546|nema_5_15|sev_1011|cei_23_16)$/i );
+	return 'unknown';
+}
+
 
 #-------------------------------------------------------------------------------
 

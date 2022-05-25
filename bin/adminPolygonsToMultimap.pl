@@ -31,6 +31,9 @@ sub parseContinent($$);
 sub parseRegion($);
 sub parseOrganization($$$);
 sub parsePowerSupply($);
+sub parsePowerSupplyVoltage($);
+sub parsePowerSupplyFrequency($);
+sub parsePowerSupplyRange($$);
 
 my %opt;
 usageInit( \%opt, qq/ h ogf ds=s od=s copyto=s /, << "*" );
@@ -125,6 +128,11 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'organization:IC'}      = parseOrganization $rel->{'tags'}{'organization:IC'},     '',   ['member', 'observer'];
 	$ter{'organization:TCC'}     = parseOrganization $rel->{'tags'}{'organization:TCC'},    '',   ['member', 'observer'];
 	
+	$ter{'power_supply'}           = parsePowerSupply $rel->{'tags'}{'power_supply'};
+	$ter{'power_supply:voltage'}   = parsePowerSupplyVoltage $rel->{'tags'}{'power_supply:voltage'};
+	$ter{'power_supply:frequency'} = parsePowerSupplyFrequency $rel->{'tags'}{'power_supply:frequency'};
+	$ter{'power_supply:range'}     = parsePowerSupplyRange $ter{'power_supply:voltage'}, $ter{'power_supply:frequency'};
+	
 	push @ters, \%ter;
 }
 
@@ -151,7 +159,7 @@ sub parseEconomy($)
 	my($var) = @_;
 	
 	return $var + 0 if( defined $var and $var =~ /^\d\d$/ );
-	return '90';
+	return 90;
 }
 
 sub parseEconomyHdi($)
@@ -198,7 +206,7 @@ sub parseGovernance($)
 	my($var) = @_;
 	
 	return $var + 0 if( defined $var and $var =~ /^\d\d$/ );
-	return '90';
+	return 90;
 }
 
 sub parseGovernanceStructure($)
@@ -292,9 +300,44 @@ sub parsePowerSupply($)
 	my($var) = @_;
 	
 	return lc $var if( defined $var and $var =~ /^(europlug|as_3112|bs_1363|bs_546|nema_5_15|sev_1011|cei_23_16)$/i );
-	return 'unknown';
+	return 'other';
 }
 
+sub parsePowerSupplyVoltage($)
+{
+	my($var) = @_;
+	
+	return $var + 0 if( defined $var and $var =~ /^\d{3}$/ );
+	return 220;
+}
+
+sub parsePowerSupplyFrequency($)
+{
+	my($var) = @_;
+	
+	return $var + 0 if( defined $var and $var =~ /^\d{2}$/ );
+	return 50;
+}
+
+sub parsePowerSupplyRange($$)
+{
+	my($v, $f) = @_;
+	
+	my $v_range = undef;
+	$v_range = 100 if( $v >=  90 and $v <  105 );
+	$v_range = 110 if( $v >= 105 and $v <  115 );
+	$v_range = 120 if( $v >= 115 and $v <= 130 );
+	$v_range = 220 if( $v >= 210 and $v <  225 );
+	$v_range = 230 if( $v >= 225 and $v <  235 );
+	$v_range = 240 if( $v >= 235 and $v <= 245 );
+	
+	my $f_range = undef;
+	$f_range = 50 if( $f >= 45 and $f < 55 );
+	$f_range = 60 if( $f >= 55 and $f < 65 );
+	
+	return 'other' if( !defined $v_range or !defined $f_range );
+	return "$v_range-$f_range";
+}
 
 #-------------------------------------------------------------------------------
 

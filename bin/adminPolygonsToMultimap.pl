@@ -99,6 +99,14 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'rel'}                  = $rel->{'id'};
 	$ter{'ogf:id'}               = $rel->{'tags'}{'ogf:id'};
 	$ter{'name'}                 = $rel->{'tags'}{'int_name'} || $rel->{'tags'}{'name'} || $rel->{'tags'}{'ogf:id'};
+	$ter{'is_in:continent'}      = parseContinent $rel->{'tags'}{'is_in:continent'}, $rel->{'tags'}{'ogf:id'};
+	
+	if( $ter{'ogf:id'} =~ /^BG/ )
+	{
+		push @ters, \%ter;
+		next;
+	}
+	
 	$ter{'ogf:wiki'}             = $rel->{'tags'}{'ogf:wiki'} || $rel->{'tags'}{'ogfwiki'} || $ter{'name'};
 	
 	$ter{'driving_side'}         = parseDrivingSide $rel->{'tags'}{'driving_side'};
@@ -118,7 +126,6 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'history:independence_from'} = parseHistoryIndependenceFrom $rel->{'tags'}{'history:independence_from'};
 	$ter{'history:revolution'}        = parseHistoryRevolution $rel->{'tags'}{'history:revolution'};
 	
-	$ter{'is_in:continent'}      = parseContinent $rel->{'tags'}{'is_in:continent'}, $rel->{'tags'}{'ogf:id'};
 	$ter{'is_in:region'}         = parseRegion $rel->{'tags'}{'is_in:region'};
 	
 	$ter{'organization:AN'}      = parseOrganization $rel->{'tags'}{'organization:AN'},     'no', ['member', 'no'];

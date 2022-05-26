@@ -82,6 +82,8 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	
 	$ter{'rel'}            = $rel->{'id'};
 	$ter{'ogf:id'}         = $rel->{'tags'}{'ogf:id'} || '';
+	next if( $ter{'ogf:id'} =~ /^BG/ );
+	
 	$ter{'timezone'}       = parseTimezone $rel->{'tags'}{'timezone'};
 	next if( !defined $ter{'timezone'} );
 	

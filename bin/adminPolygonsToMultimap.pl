@@ -163,10 +163,10 @@ sub parseDrivingSide($)
 {
 	my($var) = @_;
 	
-	return 'assumed_right' if( !defined $var );
-	return 'left'          if( lc $var eq 'left' );
-	return 'right'         if( lc $var eq 'right' );
-	return 'mixed'         if( lc $var eq 'mixed' );
+	return 'right' if( !defined $var );
+	return 'left'  if( lc $var eq 'left' );
+	return 'right' if( lc $var eq 'right' );
+	return 'mixed' if( lc $var eq 'mixed' );
 	return 'unknown'; 
 }
 

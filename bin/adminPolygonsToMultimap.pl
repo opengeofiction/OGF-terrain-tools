@@ -324,7 +324,6 @@ sub parsePowerSupplyVoltage($)
 	my($var) = @_;
 	
 	return $var + 0 if( defined $var and $var =~ /^\d{3}$/ );
-	return 220;
 }
 
 sub parsePowerSupplyFrequency($)
@@ -332,12 +331,13 @@ sub parsePowerSupplyFrequency($)
 	my($var) = @_;
 	
 	return $var + 0 if( defined $var and $var =~ /^\d{2}$/ );
-	return 50;
 }
 
 sub parsePowerSupplyRange($$)
 {
 	my($v, $f) = @_;
+	
+	return 'other' if( !defined $v or !defined $f );
 	
 	my $v_range = undef;
 	$v_range = 100 if( $v >=  90 and $v <  105 );

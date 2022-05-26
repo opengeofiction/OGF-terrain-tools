@@ -99,9 +99,10 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'rel'}                  = $rel->{'id'};
 	$ter{'ogf:id'}               = $rel->{'tags'}{'ogf:id'};
 	$ter{'name'}                 = $rel->{'tags'}{'int_name'} || $rel->{'tags'}{'name'} || $rel->{'tags'}{'ogf:id'};
+	$ter{'name'}                 = $ter{'ogf:id'} if( $ter{'name'} =~ /UNDER CONSTRUCTION/ );
 	$ter{'is_in:continent'}      = parseContinent $rel->{'tags'}{'is_in:continent'}, $rel->{'tags'}{'ogf:id'};
 	
-	if( $ter{'ogf:id'} =~ /^BG/ )
+	if( $ter{'ogf:id'} =~ /^(BG|ER|KA|OR|PE)/ and $ter{'ogf:id'} !~ /^KA(073|076|077|078)/ )
 	{
 		push @ters, \%ter;
 		next;

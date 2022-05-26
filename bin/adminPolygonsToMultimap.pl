@@ -128,12 +128,20 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	
 	$ter{'is_in:region'}         = parseRegion $rel->{'tags'}{'is_in:region'};
 	
-	$ter{'organization:AN'}      = parseOrganization $rel->{'tags'}{'organization:AN'},     'no', ['member', 'no'];
-	$ter{'organization:AC'}      = parseOrganization $rel->{'tags'}{'organization:AC'},     '',   ['member', 'observer'];
-	$ter{'organization:ASUN'}    = parseOrganization $rel->{'tags'}{'organization:ASUN'},   '',   ['member', 'observer', 'partner'];
-	$ter{'organization:Egalia'}  = parseOrganization $rel->{'tags'}{'organization:Egalia'}, '',   ['member', 'observer'];
-	$ter{'organization:IC'}      = parseOrganization $rel->{'tags'}{'organization:IC'},     '',   ['member', 'observer'];
-	$ter{'organization:TCC'}     = parseOrganization $rel->{'tags'}{'organization:TCC'},    '',   ['member', 'observer'];
+	my @orgs;
+	$ter{'organization:AN'}      = parseOrganization $rel->{'tags'}{'organization:AN'},     'member', ['member', 'no'];
+	push @orgs, 'AN' if( $ter{'organization:AN'} ne '' );
+	$ter{'organization:AC'}      = parseOrganization $rel->{'tags'}{'organization:AC'},     '',       ['member', 'observer'];
+	push @orgs, 'AC' if( $ter{'organization:AC'} ne '' );
+	$ter{'organization:ASUN'}    = parseOrganization $rel->{'tags'}{'organization:ASUN'},   '',       ['member', 'observer', 'partner'];
+	push @orgs, 'ASUN' if( $ter{'organization:ASUN'} ne '' );
+	$ter{'organization:Egalia'}  = parseOrganization $rel->{'tags'}{'organization:Egalia'}, '',       ['member', 'observer'];
+	push @orgs, 'Egalia' if( $ter{'organization:Egalia'} ne '' );
+	$ter{'organization:IC'}      = parseOrganization $rel->{'tags'}{'organization:IC'},     '',       ['member', 'observer'];
+	push @orgs, 'IC' if( $ter{'organization:IC'} ne '' );
+	$ter{'organization:TCC'}     = parseOrganization $rel->{'tags'}{'organization:TCC'},    '',       ['member', 'observer'];
+	push @orgs, 'TCC' if( $ter{'organization:TCC'} ne '' );
+	$ter{'organizations'} = \@orgs;
 	
 	$ter{'power_supply'}           = parsePowerSupply $rel->{'tags'}{'power_supply'};
 	$ter{'power_supply:voltage'}   = parsePowerSupplyVoltage $rel->{'tags'}{'power_supply:voltage'};

@@ -3,7 +3,9 @@ Description=Backup ogfdevapi database to .osm.pbf file
 
 [Timer]
 # run at 1 minute past midnight UTC on Thursdays
-OnCalendar=Thu, 00:01:00
+#OnCalendar=Thu, 00:01:00
+# run at 1 minute past midnight UTC
+#OnCalendar=00:01:00
 Unit=planet-backup.service
 
 [Install]

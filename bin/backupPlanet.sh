@@ -70,8 +70,10 @@ if [ $status -ne 0 ]; then
 	exit 5
 fi
 
-# queue for backup to S3 (note always weekly here)
-ln ${backup_pg} ${BACKUP_QUEUE}/weekly:pgsql:${backup_pg} 
+if [ ${timeframe} -ne "daily" ] then
+	# queue for backup to S3 (note always weekly here)
+	ln ${backup_pg} ${BACKUP_QUEUE}/weekly:pgsql:${backup_pg} 
+fi
 
 # create temp dir for the planet-dump-ng files
 if ! mkdir ${backup_tmp}; then
@@ -104,7 +106,7 @@ ln ${backup_pbf} ${BACKUP_QUEUE}/${timeframe}:planet:${backup_pbf}
 
 # delete old backups
 echo "deleting old backups..."
-find "${BASE}" -mtime +15 -ls -delete
+find "${BASE}" -mtime +2 -ls -delete
 
 exit 0
 

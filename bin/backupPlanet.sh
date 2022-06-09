@@ -24,6 +24,10 @@ if [ ! -w "$BASE/" ]; then
   exit 2
 fi
 
+# delete old backups
+echo "deleting old backups..."
+find "${BASE}" -mtime +2 -ls -delete
+
 # ensure the publish directory exists and is writable 
 if [ ! -w "$PUBLISH/" ]; then
 	echo "ERROR: $PUBLISH does not exist or not writable"
@@ -103,10 +107,6 @@ ln "${PUBLISH}/${backup_pbf}" "${PUBLISH}/${latest_pbf}"
 
 # queue for backup to S3
 ln ${backup_pbf} ${BACKUP_QUEUE}/${timeframe}:planet:${backup_pbf}
-
-# delete old backups
-echo "deleting old backups..."
-find "${BASE}" -mtime +2 -ls -delete
 
 exit 0
 

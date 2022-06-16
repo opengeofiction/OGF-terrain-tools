@@ -1,0 +1,10 @@
+[Unit]
+Description=Check coastline valid and process for shapefiles 
+
+[Service]
+User=ogf
+Group=ogf
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/coastlineProcess.pl -od /opt/opengeofiction/coastline -copyto /var/www/html/data.opengeofiction.net/public_html/extracts
+
+[Install]
+WantedBy=default.target

@@ -9,7 +9,7 @@ sources:
     # The type of file this source is
     type: shp
     # Where to get it
-    url: https://shapefiles.rent-a-planet.com/ogf-data/simplified-water-polygons-split-3857.zip
+    url: https://data.opengeofiction.net/extracts/simplified-water-polygons-split-3857.zip
     # The location within the archive
     file: simplified-water-polygons-split-3857/simplified_water_polygons.shp
     archive:
@@ -22,7 +22,7 @@ sources:
         - simplified-water-polygons-split-3857/simplified_water_polygons.shx
   water_polygons:
     type: shp
-    url: https://shapefiles.rent-a-planet.com/ogf-data/water-polygons-split-3857.zip
+    url: https://data.opengeofiction.net/extracts/water-polygons-split-3857.zip
     file: water-polygons-split-3857/water_polygons.shp
     archive:
       format: zip
@@ -33,7 +33,7 @@ sources:
         - water-polygons-split-3857/water_polygons.shx
   icesheet_polygons:
     type: shp
-    url: https://shapefiles.rent-a-planet.com/ogf-data/antarctica-icesheet-polygons-3857.zip
+    url: https://data.opengeofiction.net/extracts/antarctica-icesheet-polygons-3857.zip
     file: antarctica-icesheet-polygons-3857/icesheet_polygons.shp
     archive:
       format: zip
@@ -44,7 +44,7 @@ sources:
         - antarctica-icesheet-polygons-3857/icesheet_polygons.shx
   icesheet_outlines:
     type: shp
-    url: https://shapefiles.rent-a-planet.com/ogf-data/antarctica-icesheet-outlines-3857.zip
+    url: https://data.opengeofiction.net/extracts/antarctica-icesheet-outlines-3857.zip
     file: antarctica-icesheet-outlines-3857/icesheet_outlines.shp
     ogropts:
       - "-explodecollections"
@@ -57,7 +57,7 @@ sources:
         - antarctica-icesheet-outlines-3857/icesheet_outlines.shx
 #  ne_110m_admin_0_boundary_lines_land:
 #    type: shp
-#    url: https://ogfdata.rent-a-planet.com/extracts/ne_110m_admin_0_boundary_lines_land.zip
+#    url: https://data.opengeofiction.net/extracts/ne_110m_admin_0_boundary_lines_land.zip
 #    file: ne_110m_admin_0_boundary_lines_land.shp
 #    ogropts: 
 #      - "-explodecollections"

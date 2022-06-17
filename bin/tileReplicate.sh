@@ -5,7 +5,7 @@
 # Before running updates, the replication needs to be set up with the sequence
 # pyosmium-get-changes -I can be used to do this
 #
-# tileReplicate.sh ogf-carto https://ogfdata.rent-a-planet.com/replication/minute ogfcartogis /opt/opengeogiction/map-styles/ogf-carto/openstreetmap-carto.style /opt/opengeogiction/map-styles/ogf-carto/openstreetmap-carto.lua /var/www/html/test.rent-a-planet.com/public_html/ogf-carto-replication-in/state.txt
+# /opt/opengeofiction/OGF-terrain-tools/bin/tileReplicate.sh ogf-carto https://data.opengeofiction.net/replication/minute ogfcartogis /opt/opengeofiction/map-styles/ogf-carto/openstreetmap-carto.style /opt/opengeofiction/map-styles/ogf-carto/openstreetmap-carto.lua /var/www/html/tile/public_html/ogf-carto-replication-in-state.txt 5 19
 
 BASE=/opt/opengeofiction/render
 

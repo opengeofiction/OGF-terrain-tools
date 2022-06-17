@@ -186,6 +186,8 @@ if( -f $osmFile )
 		createShapefilePublish $dbFile, 'water-polygons-split-3857', 'water_polygons.shp', 'water_polygons', 0;
 		createShapefilePublish $dbFile, 'simplified-land-polygons-complete-3857', 'simplified_land_polygons.shp', 'land_polygons', 0;
 		createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857', 'simplified_water_polygons.shp', 'water_polygons', 0;
+		createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857-10', 'simplified_water_polygons.shp', 'water_polygons', 10;
+		createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857-100', 'simplified_water_polygons.shp', 'water_polygons', 100;
 
 		print "complete\n";
 		exit 0;

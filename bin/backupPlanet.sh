@@ -24,9 +24,9 @@ if [ ! -w "$BASE/" ]; then
   exit 2
 fi
 
-# delete old backups
+# delete old backups - older than 30 hours
 echo "deleting old backups..."
-find "${BASE}" -mtime +2 -ls -delete
+find "${BASE}" -mmin +$((60*30)) -ls -delete
 
 # ensure the publish directory exists and is writable 
 if [ ! -w "$PUBLISH/" ]; then

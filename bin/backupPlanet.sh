@@ -74,7 +74,7 @@ if [ $status -ne 0 ]; then
 	exit 5
 fi
 
-if [ ${timeframe} -ne "daily" ]; then
+if [ ${timeframe} != "daily" ]; then
 	# queue for backup to S3 (note always weekly here)
 	ln ${backup_pg} ${BACKUP_QUEUE}/weekly:pgsql:${backup_pg} 
 fi

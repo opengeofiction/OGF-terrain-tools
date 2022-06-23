@@ -51,7 +51,7 @@ my $startedat = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime $now;
 housekeeping $OUTPUT_DIR, $now;
 
 # system load - do not continue coastline process if a backup is running
-my $LOCKFILE="BASE/backup/backup.lock";
+my $LOCKFILE="$BASE/backup/backup.lock";
 if( -d $LOCKFILE )
 {
 	print "skipping, backup is running...\n";

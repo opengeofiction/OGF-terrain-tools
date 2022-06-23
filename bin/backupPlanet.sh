@@ -17,6 +17,7 @@ MINFREE=12582912 # 12GB
 TIMESTAMP=`date "+%Y%m%d_%H%M%S%Z"`
 PLANET_DUMP_NG=/opt/opengeofiction/planet-dump-ng/bin/planet-dump-ng
 BACKUP_QUEUE=/opt/opengeofiction/backup-to-s3-queue
+LOCKFILE=${BASE}/backup.lock
 
 # ensure the backups directory exists and is writable 
 if [ ! -w "$BASE/" ]; then
@@ -44,6 +45,16 @@ fi;
 
 # nice ourself
 renice -n 10 $$
+
+# ensure we're not already running
+if ! mkdir ${LOCKFILE} 2>/dev/null; then
+	echo "$0 is already running" >&2
+	exit 1
+else
+	# release lock on clean exit, and if ...
+	trap "rm -rf ${LOCKFILE}; exit" INT TERM EXIT
+	echo "$0 got lock"
+fi
 
 # files & dirs used - work out if daily, weekly, monthly or yearly
 backup_pg=${TIMESTAMP}.dmp

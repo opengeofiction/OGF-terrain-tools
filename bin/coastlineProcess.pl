@@ -24,6 +24,7 @@ sub publishFile($$);
 sub createShapefilePublish($$$$$);
 
 STDOUT->autoflush(1);
+setpriority 0, 0, getpriority(0, 0) + 4; # nice ourselves
 
 # parse options
 my %opt;
@@ -35,11 +36,12 @@ usageInit( \%opt, qq/ h od=s copyto=s /, << "*" );
 *
 usageError() if $opt{'h'};
 
+my $BASE = '/opt/opengeofiction';
 my $OUTPUT_DIR  = ($opt{'od'} and -d $opt{'od'}) ? $opt{'od'} : '/tmp';
 my $PUBLISH_DIR = ($opt{'copyto'} and -d $opt{'copyto'}) ? $opt{'copyto'} : undef;
 my $MISSING_NODE_LON = -180.0; my $MISSING_NODE_INCR = 3.0;
 
-my $OSMCOASTLINE = '/opt/opengeofiction/osmcoastline/bin/osmcoastline';
+my $OSMCOASTLINE = "$BASE/osmcoastline/bin/osmcoastline";
 $OSMCOASTLINE = 'osmcoastline' if( ! -x $OSMCOASTLINE );
 
 chdir $OUTPUT_DIR or die "Cannot cd to $OUTPUT_DIR\n";
@@ -47,6 +49,14 @@ my $now       = time;
 my $started   = strftime '%Y%m%d%H%M%S', gmtime $now;
 my $startedat = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime $now;
 housekeeping $OUTPUT_DIR, $now;
+
+# system load - do not continue coastline process if a backup is running
+my $LOCKFILE="BASE/backup/backup.lock";
+if( -d $LOCKFILE )
+{
+	print "skipping, backup is running...\n";
+	exit 0;
+}
 
 # build up Overpass query to get the top level admin_level=0 continent relations
 my $ADMIN_CONTINENT_QUERY = '[timeout:1800][maxsize:4294967296];((relation["type"="boundary"]["boundary"="administrative"]["admin_level"="0"]["ogf:id"~"^[A-Z]{2}$"];);>;);out;';

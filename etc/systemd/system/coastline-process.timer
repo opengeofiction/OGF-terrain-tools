@@ -2,8 +2,8 @@
 Description=Check coastline valid and process for shapefiles  
 
 [Timer]
-# run every 20 minutes: 3, 23, 43 - will not run if already running
-OnCalendar=*:03/20
+# run every 30 minutes: 3, 23, 43 - will not run if already running
+OnCalendar=*:03/30
 Unit=coastline-process.service
 
 [Install]

@@ -16,6 +16,7 @@ PUBLISH=$3       # /var/www/html/ogfdata.rent-a-planet.com/public_html/backups
 MINFREE=12582912 # 12GB
 TIMESTAMP=`date "+%Y%m%d_%H%M%S%Z"`
 PLANET_DUMP_NG=/opt/opengeofiction/planet-dump-ng/bin/planet-dump-ng
+PLANET_DUMP_NG_THREADS=2
 BACKUP_QUEUE=/opt/opengeofiction/backup-to-s3-queue
 LOCKFILE=${BASE}/backup.lock
 
@@ -98,7 +99,7 @@ fi
 cd ${backup_tmp}
 
 # run planet-dump-ng
-${PLANET_DUMP_NG} --pbf=../${backup_pbf} --dump-file=../${backup_pg} --max-concurrency=4
+${PLANET_DUMP_NG} --pbf=../${backup_pbf} --dump-file=../${backup_pg} --max-concurrency=${PLANET_DUMP_NG_THREADS}
 status=$?
 if [ $status -ne 0 ]; then
 	echo "ERROR: planet-dump-ng failed"

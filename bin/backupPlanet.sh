@@ -28,13 +28,22 @@ fi
 
 # delete old backups - older than 30 hours
 echo "deleting old backups..."
-find "${BASE}" -mmin +$((60*30)) -ls -delete
+find "${BASE}" -maxdepth 1 -mmin +$((60*30)) -ls -delete
 
 # ensure the publish directory exists and is writable 
 if [ ! -w "$PUBLISH/" ]; then
 	echo "ERROR: $PUBLISH does not exist or not writable"
   exit 3
 fi
+
+# delete old published backups:
+#  > monthly backups older than a year
+#  > weekly backups older than a month
+#  > daily backups older than a week
+echo "deleting old published backups..."
+find "${PUBLISH}" -maxdepth 1 -name '*_ogf-planet-monthly.osm.pbf' -mmin +$((60*24*365)) -ls -delete
+find "${PUBLISH}" -maxdepth 1 -name '*_ogf-planet-weekly.osm.pbf' -mmin +$((60*24*30)) -ls -delete
+find "${PUBLISH}" -maxdepth 1 -name '*_ogf-planet.osm.pbf' -mmin +$((60*24*7)) -ls -delete
 
 # make sure there is enough free space
 cd "${BASE}"
@@ -65,6 +74,7 @@ lastthu=$(ncal -h | awk '/Th/ {print $NF}')
 today=$(date +%-d)
 timeframe=daily
 if [[ $(date +%u) -eq 4 ]]; then
+	backup_pbf=${TIMESTAMP}_ogf-planet-weekly.osm.pbf
 	timeframe=weekly
 	if [[ $lastthu -eq $today ]]; then
 		backup_pbf=${TIMESTAMP}_ogf-planet-monthly.osm.pbf

@@ -41,9 +41,9 @@ fi
 #  > weekly backups older than a month
 #  > daily backups older than a week
 echo "deleting old published backups..."
-find "${PUBLISH}" -maxdepth 1 -name '*_ogf-planet-monthly.osm.pbf' -mmin +$((60*24*365)) -ls -delete
-find "${PUBLISH}" -maxdepth 1 -name '*_ogf-planet-weekly.osm.pbf' -mmin +$((60*24*30)) -ls -delete
-find "${PUBLISH}" -maxdepth 1 -name '*_ogf-planet.osm.pbf' -mmin +$((60*24*7)) -ls -delete
+find "${PUBLISH}/" -maxdepth 1 -name '*_ogf-planet-monthly.osm.pbf' -mmin +$((60*24*365)) -ls -delete
+find "${PUBLISH}/" -maxdepth 1 -name '*_ogf-planet-weekly.osm.pbf' -mmin +$((60*24*30)) -ls -delete
+find "${PUBLISH}/" -maxdepth 1 -name '*_ogf-planet.osm.pbf' -mmin +$((60*24*7)) -ls -delete
 
 # make sure there is enough free space
 cd "${BASE}"

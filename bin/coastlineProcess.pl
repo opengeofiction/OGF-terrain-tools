@@ -17,7 +17,7 @@ sub housekeeping($$);
 sub exportOverpassConvert($$$);
 sub buildOverpassQuery($$);
 sub fileExport_Overpass($$$);
-sub validateCoastline($$$$);
+sub validateCoastline($$$$$);
 sub validateCoastlineDb($$);
 sub saveToJSON($$);
 sub publishFile($$);
@@ -93,7 +93,7 @@ if( -f $osmFile )
 		
 		# run osmcoastline to validate
 		my $dbFile   = "$OUTPUT_DIR/coastline-$continent-$started.db";
-		$issues{$continent} = validateCoastline \@errs, $pbfFile, $dbFile, 'quick';
+		$issues{$continent} = validateCoastline $continent, \@errs, $pbfFile, $dbFile, 'quick';
 		unless( $issues{$continent}  == 0 )
 		{
 			print "issues with $continent coastline, will use last good\n";
@@ -164,7 +164,7 @@ if( -f $osmFile )
 	
 	# validate merged world coastline
 	my @worlderrs;
-	my $worldIssues = validateCoastline \@worlderrs, $pbfFile, $dbFile, 'full';
+	my $worldIssues = validateCoastline undef, \@worlderrs, $pbfFile, $dbFile, 'full';
 	print "issues with world coastline\n" unless( $worldIssues == 0 );
 	my %sum = ();
 	$sum{'continent'} = 'world';
@@ -195,7 +195,7 @@ if( -f $osmFile )
 		createShapefilePublish $dbFile, 'land-polygons-split-3857', 'land_polygons.shp', 'land_polygons', 0;
 		createShapefilePublish $dbFile, 'water-polygons-split-3857', 'water_polygons.shp', 'water_polygons', 0;
 		my $simplify = createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857', 'simplified_water_polygons.shp', 'water_polygons', 30;
-		createShapefilePublish $dbFile, 'simplified-land-polygons-complete-3857', 'simplified_land_polygons.shp', 'land_polygons', $simplfy;
+		createShapefilePublish $dbFile, 'simplified-land-polygons-complete-3857', 'simplified_land_polygons.shp', 'land_polygons', $simplify;
 
 		print "complete\n";
 		exit 0;
@@ -315,9 +315,9 @@ sub fileExport_Overpass($$$)
 	}
 }
 
-sub validateCoastline($$$$)
+sub validateCoastline($$$$$)
 {
-	my($errs, $pbfFile, $dbFile, $mode) = @_;
+	my($continent, $errs, $pbfFile, $dbFile, $mode) = @_;
 	my $exotics = 0; my $warnings = 0; my $errors = 0;
 	
 	my $cmd = "$OSMCOASTLINE --verbose --srs=3857 --output-lines --output-polygons=both --output-rings --max-points=2000 --output-database=$dbFile $pbfFile 2>&1";
@@ -356,6 +356,9 @@ sub validateCoastline($$$$)
 	print "$issues issues (warnings: $warnings; errors: $errors; exotics: $exotics)\n";
 	
 	validateCoastlineDb $errs, $dbFile;
+	
+	# and copy for web
+	publishFile $dbFile, "coastline-$continent.db" if( defined $continent );
 	
 	return $issues;
 }
@@ -530,7 +533,7 @@ sub createShapefilePublish($$$$$)
 	if( -f "$dir/$shapefile" )
 	{
 		# if simplified, check it didn't create multipolygons
-		if( $simplfy > 0 )
+		if( $simplify > 0 )
 		{
 			if( `ogrinfo -al $dir/$shapefile | grep MULTIPOLYGON | wc -l` > 0 )
 			{

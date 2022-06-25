@@ -194,8 +194,8 @@ if( -f $osmFile )
 		
 		createShapefilePublish $dbFile, 'land-polygons-split-3857', 'land_polygons.shp', 'land_polygons', 0;
 		createShapefilePublish $dbFile, 'water-polygons-split-3857', 'water_polygons.shp', 'water_polygons', 0;
-		createShapefilePublish $dbFile, 'simplified-land-polygons-complete-3857', 'simplified_land_polygons.shp', 'land_polygons', 10;
-		createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857', 'simplified_water_polygons.shp', 'water_polygons', 10;
+		my $simplify = createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857', 'simplified_water_polygons.shp', 'water_polygons', 30;
+		createShapefilePublish $dbFile, 'simplified-land-polygons-complete-3857', 'simplified_land_polygons.shp', 'land_polygons', $simplfy;
 
 		print "complete\n";
 		exit 0;
@@ -529,7 +529,17 @@ sub createShapefilePublish($$$$$)
 	system $cmd ;
 	if( -f "$dir/$shapefile" )
 	{
+		# if simplified, check it didn't create multipolygons
+		if( $simplfy > 0 )
+		{
+			if( `ogrinfo -al $dir/$shapefile | grep MULTIPOLYGON | wc -l` > 0 )
+			{
+				print "multipolygons in simplified shapefile, reducing simplification\n";
+				return createShapefilePublish $dbFile, $dir, $shapefile, $layer, $simplify - 5;
+			}
+		}
 		system "zip -r $zipFile $dir";
 		publishFile $zipFile, $zipFile;
 	}
+	return $simplify;
 }

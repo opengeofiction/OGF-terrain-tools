@@ -160,17 +160,21 @@ if( -f $osmFile )
 	publishFile $pbfFile, 'coastline.osm.pbf';
 	
 	# save summary to JSON
+	my %sum = ();
+	$sum{'continent'} = 'world';
+	$sum{'errors'} = 0;
+	$sum{'status'} = 'in progress';
+	$sum{'mtime'} = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime time;
+	push @summary, \%sum;
 	saveToJSON 'coastline_summary.json', \@summary;
+	pop @summary;
 	
 	# validate merged world coastline
 	my @worlderrs;
 	my $worldIssues = validateCoastline undef, \@worlderrs, $pbfFile, $dbFile, 'full';
 	print "issues with world coastline\n" unless( $worldIssues == 0 );
-	my %sum = ();
-	$sum{'continent'} = 'world';
 	$sum{'errors'} = $worldIssues;
-	$sum{'status'} = 'valid' if( $worldIssues == 0 );
-	$sum{'status'} = 'ERROR' if( $worldIssues != 0 );
+	$sum{'status'} = ($worldIssues == 0) ? 'valid' : 'ERROR';
 	$sum{'mtime'} = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime time;
 	push @summary, \%sum;
 	

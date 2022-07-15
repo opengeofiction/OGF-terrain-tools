@@ -4,7 +4,7 @@ Description=Backup ogfdevapi database to .osm.pbf file
 [Service]
 User=ogf
 Group=ogf
-ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/backupPlanet.sh /opt/opengeofiction/backup ogfdevapi /var/www/html/ogfdata.rent-a-planet.com/public_html/backups
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/backupPlanet.sh /opt/opengeofiction/backup ogfdevapi /var/www/html/data.opengeofiction.net/public_html/backups
 
 [Install]
 WantedBy=default.target

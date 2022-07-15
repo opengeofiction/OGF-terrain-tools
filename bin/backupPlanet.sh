@@ -12,7 +12,7 @@ USAGE
 fi
 BASE=$1          # /opt/opengeofiction/backup
 DB=$2            # ogfdevapi
-PUBLISH=$3       # /var/www/html/ogfdata.rent-a-planet.com/public_html/backups
+PUBLISH=$3       # /var/www/html/data.opengeofiction.net/public_html/backups
 MINFREE=12582912 # 12GB
 TIMESTAMP=`date "+%Y%m%d_%H%M%S%Z"`
 PLANET_DUMP_NG=/opt/opengeofiction/planet-dump-ng/bin/planet-dump-ng

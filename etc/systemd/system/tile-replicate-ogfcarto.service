@@ -9,7 +9,7 @@ Group=ogf
 Type=exec
 ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/tileReplicate.sh \
  ogf-carto \
- https://ogfdata.rent-a-planet.com/replication/minute \
+ https://data.opengeofiction.net/replication/minute \
  ogfcartogis \
  /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.style \
  /opt/geofictician/map-styles/ogf-carto/openstreetmap-carto.lua \

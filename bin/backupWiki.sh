@@ -52,6 +52,7 @@ if [ ${timeframe} != "daily" ]; then
 	# collate and queue for S3 backup
 	echo "Collate MediaWiki dir, MediaWiki images dir and MediaWiki MySQL db backup"
 	tar zcf $DESTDIR/backup-$DATESTR-ancillary.tar.gz $DESTDIR/backup-$DATESTR-mediawiki.tar.gz $DESTDIR/backup-$DATESTR-images.tar.gz $DESTDIR/backup-$DATESTR-db.sql.gz
+	rm $DESTDIR/backup-$DATESTR-mediawiki.tar.gz $DESTDIR/backup-$DATESTR-images.tar.gz $DESTDIR/backup-$DATESTR-db.sql.gz
 	ln $DESTDIR/backup-$DATESTR-ancillary.tar.gz ${BACKUP_QUEUE}/${timeframe}:wiki:backup-$DATESTR-ancillary.tar.gz
 fi
 

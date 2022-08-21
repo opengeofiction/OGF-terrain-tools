@@ -13,6 +13,7 @@ use OGF::Data::Context;
 use OGF::View::TileLayer;
 use OGF::Util::Usage qw( usageInit usageError );
 
+sub fileExport_Overpass($$$);
 sub housekeeping($$);
 
 my %opt;
@@ -85,7 +86,7 @@ out;
 # an .osm file can be specified as the last commandline argument, otherwise get from Overpass
 if( ! $osmFile ){
 	$osmFile = $OUTPUT_DIR . '/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
-	fileExport_Overpass( $osmFile ) if ! -f $osmFile;
+	fileExport_Overpass( $osmFile, $ADMIN_RELATION_QUERY, 10000000 ) if ! -f $osmFile;
 }
 
 
@@ -290,12 +291,32 @@ sub addWayToRelation {
 	$ctx3->{_Relation}{$relId}->add_member( 'outer', $way );
 }
 
-sub fileExport_Overpass {
+sub fileExport_Overpass($$$)
+{
 	require OGF::Util::Overpass;
-	my( $outFile ) = @_;
-
-    my $data = OGF::Util::Overpass::runQuery_remote( undef, $ADMIN_RELATION_QUERY );
-	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
+	my($outFile, $query, $minSize) = @_;
+	
+	my $retries = 0;
+	while( ++$retries <= 10 )
+	{
+		sleep 3 * $retries if( $retries > 1 );
+		my $data = OGF::Util::Overpass::runQuery_remote( undef, $query );
+		if( !defined $data or $data !~ /^<\?xml/ )
+		{
+			print "Failure running Overpass query [$retries]: $query\n";
+			next;
+		}
+		elsif( length $data < $minSize )
+		{
+			my $first800 = substr $data, 0, 800;
+			my $len = length $data;
+			print "Failure running Overpass query, return too small $len [$retries]: $first800\n";
+			next;
+		}
+		
+		OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
+		return;
+	}
 }
 
 sub getTerritories {

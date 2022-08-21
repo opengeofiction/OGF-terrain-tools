@@ -13,6 +13,8 @@ use OGF::Data::Context;
 use OGF::View::TileLayer;
 use OGF::Util::Usage qw( usageInit usageError );
 
+sub housekeeping($$);
+
 my %opt;
 usageInit( \%opt, qq/ h ogf ds=s od=s copyto=s /, << "*" );
 [-ogf] [-ds <dataset>] [-od <output_directory>] [-copyto <publish_directory>]
@@ -27,6 +29,7 @@ my( $osmFile ) = @ARGV;
 usageError() if $opt{'h'};
 
 my $OUTPUT_DIR = $opt{'od'} || '/tmp';
+housekeeping $OUTPUT_DIR, time;
 my( $aTerr, $COMPUTATION_ZOOM, $OUTFILE_NAME, $ADMIN_RELATION_QUERY );
 our $URL_TERRITORIES = 'https://wiki.opengeofiction.net/index.php/OpenGeofiction:Territory_administration?action=raw';
 
@@ -81,9 +84,8 @@ out;
 
 # an .osm file can be specified as the last commandline argument, otherwise get from Overpass
 if( ! $osmFile ){
-	$osmFile = 'C:/usr/MapView/tmp/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
 	$osmFile = $OUTPUT_DIR . '/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
-    fileExport_Overpass( $osmFile ) if ! -f $osmFile;
+	fileExport_Overpass( $osmFile ) if ! -f $osmFile;
 }
 
 
@@ -347,5 +349,23 @@ sub lastLoop {
 }
 
 
+sub housekeeping($$)
+{
+	my($dir, $now) = @_;
+	my $KEEP_FOR = 60 * 60 * 24 ; # 1 day
+	my $dh;
+	
+	opendir $dh, $dir;
+	while( my $file = readdir $dh )
+	{
+		next unless( $file =~ /^admin_polygons_\d{6}_\d{6}\.osm/ );
+		if( $now - (stat "$dir/$file")[9] > $KEEP_FOR )
+		{
+			print "deleting: $dir/$file\n";
+			unlink "$dir/$file";
+		}
+	}
+	closedir $dh;
+}
 
 

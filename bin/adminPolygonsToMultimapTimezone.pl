@@ -20,6 +20,7 @@ sub parseTimezoneName($$);
 sub parseTimezoneDst($);
 sub parseTimezoneNote($);
 sub parseTimezoneStyle($);
+sub housekeeping($$);
 
 my %opt;
 usageInit( \%opt, qq/ h ogf ds=s od=s copyto=s /, << "*" );
@@ -36,6 +37,8 @@ usageError() if $opt{'h'};
 my $OUTPUT_DIR  = $opt{'od'}     || '/tmp';
 my $PUBLISH_DIR = $opt{'copyto'} || '/tmp';
 my($OUTFILE_NAME, $ADMIN_RELATION_QUERY);
+
+housekeeping $OUTPUT_DIR, time;
 
 if( ! $opt{'ds'} )
 {
@@ -157,4 +160,23 @@ sub fileExport_Overpass {
 
 	my $data = decode('utf-8', OGF::Util::Overpass::runQuery_remote(undef, $ADMIN_RELATION_QUERY));
 	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
+}
+
+sub housekeeping($$)
+{
+	my($dir, $now) = @_;
+	my $KEEP_FOR = 60 * 60 * 6 ; # 6 hours
+	my $dh;
+	
+	opendir $dh, $dir;
+	while( my $file = readdir $dh )
+	{
+		next unless( $file =~ /^admin_properties_timezone_\d{14}\.osm/ );
+		if( $now - (stat "$dir/$file")[9] > $KEEP_FOR )
+		{
+			print "deleting: $dir/$file\n";
+			unlink "$dir/$file";
+		}
+	}
+	closedir $dh;
 }

@@ -17,6 +17,7 @@ sub key_to_latlon($);
 sub key_to_name($);
 sub classify($);
 sub midpoint($$$$);
+sub housekeeping($$);
 
 my ($MAX_LAT, $MIN_LON, $MIN_LAT, $MAX_LON) = (90, -180, -90, 180);
 my $FN_ACTIVITY = 'activity';
@@ -39,11 +40,14 @@ my $OUTPUT_DIR  = $opt{'od'}       || '/tmp';
 my $PUBLISH_DIR = $opt{'copyto'}   || undef;
 my $OVERPASS    = $opt{'overpass'} || 'local';
 
+
 # validate arguments
 usageError() if( ($DEGINCR < 1) or ($DEGINCR > 180) or (180 % $DEGINCR != 0) or ($DEGINCR % 1 != 0) );
 usageError() if( !-d $OUTPUT_DIR );
 usageError() if( (defined $PUBLISH_DIR) and (!-d $PUBLISH_DIR) );
 usageError() if( ($OVERPASS ne 'local') and ($OVERPASS ne 'remote') and ($OVERPASS ne 'nop') );
+
+housekeeping $OUTPUT_DIR, time;
 
 # calculate time base
 my $startedat = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime;
@@ -321,4 +325,24 @@ sub midpoint($$$$)
 	my $midLat = ($latN + $latS) / 2;
 	my $midLon = ($lonW + $lonE) / 2;
 	"$midLat/$midLon";
+}
+
+##################################################
+sub housekeeping($$)
+{
+	my($dir, $now) = @_;
+	my $KEEP_FOR = 60 * 60 * 24 * 4 ; # 4 days
+	my $dh;
+	
+	opendir $dh, $dir;
+	while( my $file = readdir $dh )
+	{
+		next unless( $file =~ /^(activity|activity-polygons)-\d{8}/ ); # activity-20220503-1°-i3.csv activity-polygons-20220227.json
+		if( $now - (stat "$dir/$file")[9] > $KEEP_FOR )
+		{
+			print "deleting: $dir/$file\n";
+			unlink "$dir/$file";
+		}
+	}
+	closedir $dh;
 }

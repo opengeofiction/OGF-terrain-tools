@@ -59,7 +59,7 @@ if( -d $LOCKFILE )
 }
 
 # build up Overpass query to get the top level admin_level=0 continent relations
-my $ADMIN_CONTINENT_QUERY = '[timeout:1800][maxsize:4294967296];((relation["type"="boundary"]["boundary"="administrative"]["admin_level"="0"]["ogf:id"~"^[A-Z]{2}$"];);>;);out;';
+my $ADMIN_CONTINENT_QUERY = '[timeout:90][maxsize:1000000];((relation["type"="boundary"]["boundary"="administrative"]["admin_level"="0"]["ogf:id"~"^[A-Z]{2}$"];);>;);out;';
 
 my $osmFile = $OUTPUT_DIR . '/continent_polygons.osm';
 print "QUERY: $ADMIN_CONTINENT_QUERY\n";
@@ -267,7 +267,7 @@ sub exportOverpassConvert($$$)
 sub buildOverpassQuery($$)
 {
 	my($ctxref, $relref) = @_;
-	my $overpass = qq|[out:xml][timeout:1800][maxsize:4294967296];(|;
+	my $overpass = qq|[out:xml][timeout:180][maxsize:80000000];(|;
 	
 	# query all coastlines within the continent using the extracted latlons
 	# to limit - normally you'd use the built in overpass support for area

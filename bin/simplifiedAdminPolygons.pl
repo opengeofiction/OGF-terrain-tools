@@ -39,7 +39,7 @@ if( ! $opt{'ds'} ){
     $COMPUTATION_ZOOM = 6;
     $OUTFILE_NAME = 'ogf_polygons';
     $ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:90][maxsize:80000000];
 (
   (relation["boundary"="administrative"]["admin_level"="2"];
    relation["boundary"="protected_area"]["ogf:id"];
@@ -57,7 +57,7 @@ out;
     $COMPUTATION_ZOOM = 6;
     $OUTFILE_NAME = 'test_polygons';
     $ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:90][maxsize:80000000];
 (
   (relation["boundary"="administrative"]["ogf:id"~"^AR120-0[1-9]$"];);
   >;
@@ -70,7 +70,7 @@ out;
     $COMPUTATION_ZOOM = 12;
     $OUTFILE_NAME = 'polygons';
     $ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:90][maxsize:80000000];
 (
   (relation["land_area"="administrative"]["ogf:area"~"^RO\\."];
    relation["boundary"="administrative"]["ogf:area"~"^RO\\."];);

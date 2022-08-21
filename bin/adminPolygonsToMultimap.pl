@@ -58,7 +58,7 @@ if( ! $opt{'ds'} )
 {
 	$OUTFILE_NAME = 'admin_properties';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:90][maxsize:5000000];
 (relation["boundary"="administrative"]["admin_level"="2"];
  relation["boundary"="protected_area"]["ogf:id"];);
 out;
@@ -69,7 +69,7 @@ elsif( $opt{'ds'} eq 'test' )
 {
 	$OUTFILE_NAME = 'test_admin_properties';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:90][maxsize:5000000];
 (relation["boundary"="administrative"]["ogf:id"="UL05a"];);
 out;
 ---EOF---

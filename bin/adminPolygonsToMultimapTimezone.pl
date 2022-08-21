@@ -44,7 +44,7 @@ if( ! $opt{'ds'} )
 {
 	$OUTFILE_NAME = 'admin_properties_timezone';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:90][maxsize:5000000];
 (relation["boundary"="administrative"]["ogf:id"]["timezone"];
  relation["boundary"="timezone"]["timezone"];);
 out;
@@ -54,7 +54,7 @@ elsif( $opt{'ds'} eq 'test' )
 {
 	$OUTFILE_NAME = 'test_admin_properties_timezone';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:90][maxsize:5000000];
 (relation["boundary"="administrative"]["ogf:id"]["timezone"];
  relation["boundary"="timezone"]["timezone"];);
 out;

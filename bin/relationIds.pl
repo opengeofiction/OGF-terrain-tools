@@ -6,7 +6,7 @@ use URI::Escape;
 use Encode;
 use utf8;
 
-$OVERPASS = 'https://osm3s.opengeofiction.net/api/interpreter?data=';
+$OVERPASS = 'https://overpass.ogf.rent-a-planet.com/api/interpreter?data=';
 $QUERY = qq(rel["type"="boundary"]["admin_level"]["ogf:id"~"^Guai"];out;);
 $URL = $OVERPASS . uri_escape($QUERY);
 

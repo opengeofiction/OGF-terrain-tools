@@ -12,7 +12,7 @@ use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use OGF::Util::File;
 use OGF::Util::Usage qw( usageInit usageError );
 
-$OVERPASS = 'https://osm3s.opengeofiction.net/api/interpreter?data=';
+$OVERPASS = 'https://overpass.ogf.rent-a-planet.com/api/interpreter?data=';
 $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
 $BASE = 'https://opengeofiction.net';
 $CHANGESETS = "$BASE/api/0.6/changesets?display_name=";

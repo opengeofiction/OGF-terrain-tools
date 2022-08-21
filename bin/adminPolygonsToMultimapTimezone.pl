@@ -43,8 +43,9 @@ housekeeping $OUTPUT_DIR, time;
 if( ! $opt{'ds'} )
 {
 	$OUTFILE_NAME = 'admin_properties_timezone';
+	# query takes ~ 10s, returning ~ 0.8 MB; allow up to 60s, 5 MB
 	$ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:90][maxsize:5000000];
+[timeout:60][maxsize:5000000];
 (relation["boundary"="administrative"]["ogf:id"]["timezone"];
  relation["boundary"="timezone"]["timezone"];);
 out;
@@ -54,7 +55,7 @@ elsif( $opt{'ds'} eq 'test' )
 {
 	$OUTFILE_NAME = 'test_admin_properties_timezone';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:90][maxsize:5000000];
+[timeout:60][maxsize:5000000];
 (relation["boundary"="administrative"]["ogf:id"]["timezone"];
  relation["boundary"="timezone"]["timezone"];);
 out;

@@ -57,8 +57,9 @@ housekeeping $OUTPUT_DIR, time;
 if( ! $opt{'ds'} )
 {
 	$OUTFILE_NAME = 'admin_properties';
+	# query takes ~ 10s, returning ~ 1.6 MB; allow up to 60s, 5 MB
 	$ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:90][maxsize:5000000];
+[timeout:60][maxsize:5000000];
 (relation["boundary"="administrative"]["admin_level"="2"];
  relation["boundary"="protected_area"]["ogf:id"];);
 out;
@@ -69,7 +70,7 @@ elsif( $opt{'ds'} eq 'test' )
 {
 	$OUTFILE_NAME = 'test_admin_properties';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:90][maxsize:5000000];
+[timeout:60][maxsize:5000000];
 (relation["boundary"="administrative"]["ogf:id"="UL05a"];);
 out;
 ---EOF---

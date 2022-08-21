@@ -152,8 +152,11 @@ foreach $hTerr ( @$aTerr )
 			profile      => "$BASE/user/" . uri_escape_utf8($hTerr->{owner}),
 			status       => $hTerr->{status},
 			constraints  => $hTerr->{constraints},
+			is_in        => '',
 			validity     => 'in JSON only',
 			valid_flag   => 'invalid',
+			edits        => '',
+			last_edit    => '',
 			deadline     => $hTerr->{deadline},
 			comment      => $hTerr->{comment}
 		};
@@ -178,9 +181,15 @@ foreach $rel ( sort values %map_territory )
 		ogf_id_issue => 'F',
 		owner        => 'admin',
 		profile      => "$BASE/user/admin",
+		status       => '',
+		constraints  => '',
 		is_in        => $map{$rel}{is_in},
 		validity     => $validity,
-		valid_flag   => $valid_flag
+		valid_flag   => $valid_flag,
+		edits        => '',
+		last_edit    => '',
+		deadline     => '',
+		comment      => ''
 	};
 	push @territory_details, $details;
 	
@@ -190,7 +199,7 @@ foreach $rel ( sort values %map_territory )
 # output JSON file
 if( $JSON_FILE )
 {
-	my $json = JSON::PP->new->indent(2)->space_after;
+	my $json = JSON::PP->new->canonical->indent(2)->space_after;
 	my $text = $json->encode( \@territory_details );
 	OGF::Util::File::writeToFile( $JSON_FILE, $text, '>:encoding(UTF-8)' );
 }

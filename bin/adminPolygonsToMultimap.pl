@@ -85,6 +85,7 @@ if( ! $osmFile )
 	$osmFile = $OUTPUT_DIR . '/' . $OUTFILE_NAME . '_'. time2str('%Y%m%d%H%M%S', time) .'.osm';
 	fileExport_Overpass( $osmFile ) if ! -f $osmFile;
 }
+exit if( ! -f $osmFile );
 
 my $ctx = OGF::Data::Context->new();
 $ctx->loadFromFile( $osmFile );

@@ -88,7 +88,7 @@ if( ! $osmFile ){
 	$osmFile = $OUTPUT_DIR . '/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
 	fileExport_Overpass( $osmFile, $ADMIN_RELATION_QUERY, 10000000 ) if ! -f $osmFile;
 }
-
+exit if( ! -f $osmFile );
 
 my $tl = OGF::View::TileLayer->new( "image:OGF:$COMPUTATION_ZOOM:all" );
 my( $proj ) = $tl->{_proj};

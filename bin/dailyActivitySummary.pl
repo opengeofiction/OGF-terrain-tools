@@ -10,7 +10,7 @@ use OGF::Util::Overpass;
 use OGF::Util::Usage qw( usageInit usageError );
 use POSIX;
 
-sub fileExport_Overpass($$);
+sub fileExport_Overpass($$$);
 sub build_filename($$$$$$);
 sub latlon_to_key($$$$);
 sub key_to_latlon($);
@@ -27,25 +27,25 @@ my $FN_TEMPLATE = 'activity-template';
 # parse arguments
 my %opt;
 usageInit( \%opt, qq/ h degincr=s od=s copyto=s overpass=s /, << "*" );
-[-degincr <degrees>] [-od <output_directory>] [-copyto <publish_directory>] [-overpass <local|remote>]
+[-degincr <degrees>] [-od <output_directory>] [-copyto <publish_directory>] [-overpass <nop|remote>]
 
 -degincr  Summarise per x degree squares, default 15
 -od       Location to output CSV files
 -copyto   Location to publish JSON files for wiki use
--overpass local or remote overpass instance, default local
+-overpass nop or remote overpass instance, default remote
 *
 usageError() if $opt{'h'};
 my $DEGINCR     = $opt{'degincr'}  || 15;
 my $OUTPUT_DIR  = $opt{'od'}       || '/tmp';
 my $PUBLISH_DIR = $opt{'copyto'}   || undef;
-my $OVERPASS    = $opt{'overpass'} || 'local';
-
+my $OVERPASS    = $opt{'overpass'} || 'remote';
 
 # validate arguments
 usageError() if( ($DEGINCR < 1) or ($DEGINCR > 180) or (180 % $DEGINCR != 0) or ($DEGINCR % 1 != 0) );
 usageError() if( !-d $OUTPUT_DIR );
 usageError() if( (defined $PUBLISH_DIR) and (!-d $PUBLISH_DIR) );
 usageError() if( ($OVERPASS ne 'local') and ($OVERPASS ne 'remote') and ($OVERPASS ne 'nop') );
+$OVERPASS = 'remote' if( $OVERPASS eq 'local' );
 
 housekeeping $OUTPUT_DIR, time;
 
@@ -99,7 +99,7 @@ foreach my $querystr( @query )
 	else
 	{
 		print "export to: $fn\n";
-		fileExport_Overpass $fn, $querystr;
+		fileExport_Overpass $fn, $querystr, 10;
 	}
 }
 
@@ -223,24 +223,41 @@ print "Finished: $finishedat\n";
 exit;
 
 ##################################################
-sub fileExport_Overpass($$)
+sub fileExport_Overpass($$$)
 {
-	my($outFile, $query) = @_;
+	my($outFile, $query, $minSize) = @_;
 	
-	if( $OVERPASS eq 'local' )
-	{
-		my $data = OGF::Util::Overpass::runQuery_local( $outFile, $query );
-	}
-	elsif( $OVERPASS eq 'remote' )
-	{
-		my $data = OGF::Util::Overpass::runQuery_remote( undef, $query );
-		OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
-	}
-	elsif( $OVERPASS eq 'nop' )
+	if( $OVERPASS eq 'nop' )
 	{
 		print "query nop: $query\n";
+		return;
+	}
+	
+	my $retries = 0;
+	while( ++$retries <= 10 )
+	{
+		sleep 3 * $retries if( $retries > 1 );
+		my $data = OGF::Util::Overpass::runQuery_remote( undef, $query );
+		if( !defined $data or $data =~ /^<\?xml/ )
+		{
+			my $first800 = substr $data, 0, 800;
+			my $len = length $data;
+			print "Failure running Overpass query, len $len [$retries]: $query\n$first800\n";
+			next;
+		}
+		elsif( length $data < $minSize )
+		{
+			my $first800 = substr $data, 0, 800;
+			my $len = length $data;
+			print "Failure running Overpass query, return too small $len [$retries]: $first800\n";
+			next;
+		}
+		
+		OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
+		return;
 	}
 }
+
 
 ##################################################
 sub build_filename($$$$$$)

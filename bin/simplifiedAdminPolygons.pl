@@ -295,28 +295,8 @@ sub fileExport_Overpass($$$)
 {
 	require OGF::Util::Overpass;
 	my($outFile, $query, $minSize) = @_;
-	
-	my $retries = 0;
-	while( ++$retries <= 10 )
-	{
-		sleep 3 * $retries if( $retries > 1 );
-		my $data = OGF::Util::Overpass::runQuery_remote( undef, $query );
-		if( !defined $data or $data !~ /^<\?xml/ )
-		{
-			print "Failure running Overpass query [$retries]: $query\n";
-			next;
-		}
-		elsif( length $data < $minSize )
-		{
-			my $first800 = substr $data, 0, 800;
-			my $len = length $data;
-			print "Failure running Overpass query, return too small $len [$retries]: $first800\n";
-			next;
-		}
-		
-		OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
-		return;
-	}
+	my $data = OGF::Util::Overpass::runQuery_remoteRetry(undef, $query, $minSize);
+	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' ) if( defined $data );
 }
 
 sub getTerritories {

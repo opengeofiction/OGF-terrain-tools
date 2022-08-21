@@ -82,9 +82,45 @@ sub runQuery_remote {
 	}
 }
 
+sub runQuery_remoteRetryOptions
+{
+	my($outFile, $query, $minSize, $format, $MAX_RETRIES, $TIMEOUT_INCR) = @_;
+	
+	my $retries = 0;
+	while( ++$retries <= $MAX_RETRIES )
+	{
+		sleep $TIMEOUT_INCR * $retries if( $retries > 1 );
+		my $data = runQuery_remote(undef, $query);
+		if( (!defined $data) or ($data !~ /^<\?xml/ and $format eq 'xml') or ($data =~ /^<\?xml/ and $format eq 'csv') )
+		{
+			print "Failure running Overpass query [$retries]: $query\n";
+			next;
+		}
+		elsif( length $data < $minSize )
+		{
+			my $first800 = substr $data, 0, 800;
+			my $len = length $data;
+			print "Failure running Overpass query, return too small $len [$retries]: $first800\n";
+			next;
+		}
+		return $data;
+	}
+	return undef;
+}
 
+sub runQuery_remoteRetry
+{
+	my($outFile, $query, $minSize) = @_;
 
+	return runQuery_remoteRetryOptions($outFile, $query, $minSize, 'xml', 10, 3);
+}
 
+sub runQuery_remoteRetryCsv
+{
+	my($outFile, $query, $minSize) = @_;
+
+	return runQuery_remoteRetryOptions($outFile, $query, $minSize, 'csv', 10, 3);
+}
 
 1;
 

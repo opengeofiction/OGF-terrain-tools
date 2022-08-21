@@ -158,8 +158,8 @@ sub fileExport_Overpass {
 	require OGF::Util::Overpass;
 	my( $outFile ) = @_;
 
-	my $data = decode('utf-8', OGF::Util::Overpass::runQuery_remote(undef, $ADMIN_RELATION_QUERY));
-	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
+	my $data = decode('utf-8', OGF::Util::Overpass::runQuery_remoteRetry(undef, $ADMIN_RELATION_QUERY, 10000));
+	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' ) if( defined $data );
 }
 
 sub housekeeping($$)

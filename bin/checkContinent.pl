@@ -12,7 +12,8 @@ use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use OGF::Util::File;
 use OGF::Util::Usage qw( usageInit usageError );
 
-$OVERPASS = 'https://overpass.ogf.rent-a-planet.com/api/interpreter?data=';
+sub fileExport_Overpass($$$);
+
 $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
 $BASE = 'https://opengeofiction.net';
 $CHANGESETS = "$BASE/api/0.6/changesets?display_name=";
@@ -35,13 +36,11 @@ $CONTINENT = $opt{'cont'};
 $JSON_FILE = $opt{'json'};
 
 $QUERY = qq(rel["type"="boundary"]["admin_level"]["ogf:id"~"^$CONTINENT"];out;);
-$URL = $OVERPASS . uri_escape($QUERY);
 
 # load map relations
-$userAgent = LWP::UserAgent->new(keep_alive => 20);
-$resp = $userAgent->get($URL);
-print STDERR "URL: $URL\n";
-foreach ( split "\n", decode('utf-8', $resp->content) )
+$resp = fileExport_Overpass( undef, $QUERY, 1000 );
+print STDERR "Query: $QUERY\n";
+foreach ( split "\n", decode('utf-8', $resp) )
 {
 	if( /<relation id=\"(\d+)\"/ )
 	{
@@ -57,6 +56,7 @@ foreach ( split "\n", decode('utf-8', $resp->content) )
 }
 
 # load JSON territories
+$userAgent = LWP::UserAgent->new(keep_alive => 20);
 $resp = $userAgent->get($URL_TERRITORIES);
 $resp = decode('utf-8', $resp->content());
 $json = JSON::PP->new();
@@ -199,4 +199,14 @@ if( $JSON_FILE )
 if( 0 )
 {
 	print "\n$relations\n";
+}
+
+
+sub fileExport_Overpass($$$)
+{
+	require OGF::Util::Overpass;
+	my($outFile, $query, $minSize) = @_;
+	my $data = OGF::Util::Overpass::runQuery_remoteRetry(undef, $query, $minSize);
+	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' ) if( defined $outFile and defined $data );
+	$data;
 }

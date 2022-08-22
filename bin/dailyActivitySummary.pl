@@ -59,7 +59,7 @@ print "Changes in $DEGINCR degree squares since $yesterday_fmt\n";
 print "Started: $startedat\n";
 
 # build up overpass query strings, working around 1MB max - break into chunks
-my $QUERY_START = "[out:csv(name, total; true; \",\")][timeout:120][maxsize:100000];\n";
+my $QUERY_START = "[out:csv(name, total; true; \",\")][timeout:120][maxsize:10000000];\n";
 my $MAXITEMS = 8200;
 my @query;
 for( my $items = 0, my $q = 0, my $lat = $MAX_LAT; $lat > $MIN_LAT; $lat -= $DEGINCR )

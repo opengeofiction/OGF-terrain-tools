@@ -27,12 +27,12 @@ my $FN_TEMPLATE = 'activity-template';
 # parse arguments
 my %opt;
 usageInit( \%opt, qq/ h degincr=s od=s copyto=s overpass=s /, << "*" );
-[-degincr <degrees>] [-od <output_directory>] [-copyto <publish_directory>] [-overpass <nop|remote>]
+[-degincr <degrees>] [-od <output_directory>] [-copyto <publish_directory>] [-overpass <nop|local|remote>]
 
 -degincr  Summarise per x degree squares, default 15
 -od       Location to output CSV files
 -copyto   Location to publish JSON files for wiki use
--overpass nop or remote overpass instance, default remote
+-overpass nop, local or remote overpass instance, default local
 *
 usageError() if $opt{'h'};
 my $DEGINCR     = $opt{'degincr'}  || 15;
@@ -45,7 +45,6 @@ usageError() if( ($DEGINCR < 1) or ($DEGINCR > 180) or (180 % $DEGINCR != 0) or 
 usageError() if( !-d $OUTPUT_DIR );
 usageError() if( (defined $PUBLISH_DIR) and (!-d $PUBLISH_DIR) );
 usageError() if( ($OVERPASS ne 'local') and ($OVERPASS ne 'remote') and ($OVERPASS ne 'nop') );
-$OVERPASS = 'remote' if( $OVERPASS eq 'local' );
 
 housekeeping $OUTPUT_DIR, time;
 
@@ -228,8 +227,20 @@ sub fileExport_Overpass($$$)
 {
 	require OGF::Util::Overpass;
 	my($outFile, $query, $minSize) = @_;
-	my $data = OGF::Util::Overpass::runQuery_remoteRetryCsv(undef, $query, $minSize);
-	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' ) if( defined $data );
+	
+	if( $OVERPASS eq 'local' )
+	{
+		my $data = OGF::Util::Overpass::runQuery_local( $outFile, $query );
+	}
+	elsif( $OVERPASS eq 'remote' )
+	{
+		my $data = OGF::Util::Overpass::runQuery_remoteRetryCsv(undef, $query, $minSize);
+		OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' ) if( defined $data );
+	}
+	elsif( $OVERPASS eq 'nop' )
+	{
+		print "query nop: $query\n";
+	}
 }
 
 ##################################################

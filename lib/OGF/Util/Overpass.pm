@@ -9,7 +9,7 @@ our @EXPORT_OK = qw(
 );
 
 
-my $CMD_OSM3S_QUERY = '/opt/osm/osm3s/bin/osm3s_query';
+my $CMD_OSM3S_QUERY = '/opt/geofictician/overpass/bin/osm3s_query';
 my $CMD_OSMCONVERT  = 'osmconvert64';
 my $URL_OVERPASS    = 'https://overpass.ogf.rent-a-planet.com/api/interpreter';
 

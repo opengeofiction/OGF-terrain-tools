@@ -1,6 +1,6 @@
 #! /usr/bin/perl -w
 
-use lib '/opt/osm/perl5';
+use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
 use JSON::PP;
@@ -13,35 +13,54 @@ use OGF::Data::Context;
 use OGF::View::TileLayer;
 use OGF::Util::Usage qw( usageInit usageError );
 
-
-# perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl
-# perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl -od /home/lkind/ogf
-# perl C:/usr/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl -ds Roantra
+sub fileExport_Overpass($$$);
+sub housekeeping($$);
 
 my %opt;
-usageInit( \%opt, qq/ h ogf ds=s od=s /, << "*" );
-[-ogf] [-ds <dataset>] [-od <output_directory>]
+usageInit( \%opt, qq/ h ogf ds=s od=s copyto=s /, << "*" );
+[-ogf] [-ds <dataset>] [-od <output_directory>] [-copyto <publish_directory>]
 
 -ogf    use ogfId as key
--ds     "Roantra" or empty
+-ds     "Roantra", "test" or empty
+-od     Location to output JSON files
+-copyto Location to publish JSON files for wiki use
 *
 
 my( $osmFile ) = @ARGV;
 usageError() if $opt{'h'};
 
-
-my $OUTPUT_DIR = $opt{'od'} || 'C:/usr/MapView/tmp';
+my $OUTPUT_DIR = $opt{'od'} || '/tmp';
+housekeeping $OUTPUT_DIR, time;
 my( $aTerr, $COMPUTATION_ZOOM, $OUTFILE_NAME, $ADMIN_RELATION_QUERY );
+our $URL_TERRITORIES = 'https://wiki.opengeofiction.net/index.php/OpenGeofiction:Territory_administration?action=raw';
 
 if( ! $opt{'ds'} ){
     $aTerr = getTerritories();
     $COMPUTATION_ZOOM = 6;
     $OUTFILE_NAME = 'ogf_polygons';
+	# query takes ~ 10s, returning ~ 50 MB; allow up to 60s, 80 MB
     $ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:60][maxsize:80000000];
 (
   (relation["boundary"="administrative"]["admin_level"="2"];
-   relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|(AR120|UL106|AR001b)-[0-9]{2}|AR120-3[23][a-z])|AR045-(02|04|06|08|09|11|12)|AR045-(01|03|05|07|10)[a-z]$"];);
+   relation["boundary"="protected_area"]["ogf:id"];
+   relation["boundary"="administrative"]["admin_level"="3"]["ogf:id"~"^UL16[a-z]$"];
+   relation["boundary"="administrative"]["admin_level"="4"]["ogf:id"~"^AR(001b|045|060|120)-[0-9]{2}$"];
+   relation["boundary"="timezone"]["timezone"];);
+  >;
+);
+out;
+---EOF---
+
+}elsif( $opt{'ds'} eq 'test' ){
+	$URL_TERRITORIES = 'https://wiki.opengeofiction.net/index.php/OpenGeofiction:Territory_administration/test?action=raw';
+    $aTerr = getTerritories();
+    $COMPUTATION_ZOOM = 6;
+    $OUTFILE_NAME = 'test_polygons';
+    $ADMIN_RELATION_QUERY = << '---EOF---';
+[timeout:90][maxsize:80000000];
+(
+  (relation["boundary"="administrative"]["ogf:id"~"^AR120-0[1-9]$"];);
   >;
 );
 out;
@@ -52,7 +71,7 @@ out;
     $COMPUTATION_ZOOM = 12;
     $OUTFILE_NAME = 'polygons';
     $ADMIN_RELATION_QUERY = << '---EOF---';
-[timeout:1800][maxsize:4294967296];
+[timeout:90][maxsize:80000000];
 (
   (relation["land_area"="administrative"]["ogf:area"~"^RO\\."];
    relation["boundary"="administrative"]["ogf:area"~"^RO\\."];);
@@ -65,13 +84,12 @@ out;
     die qq/Unknown dataset: "$opt{ds}"/;
 }
 
-
+# an .osm file can be specified as the last commandline argument, otherwise get from Overpass
 if( ! $osmFile ){
-	$osmFile = 'C:/usr/MapView/tmp/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
 	$osmFile = $OUTPUT_DIR . '/admin_polygons_'. time2str('%y%m%d_%H%M%S',time) .'.osm';
-    fileExport_Overpass( $osmFile ) if ! -f $osmFile;
+	fileExport_Overpass( $osmFile, $ADMIN_RELATION_QUERY, 10000000 ) if ! -f $osmFile;
 }
-
+exit if( ! -f $osmFile );
 
 my $tl = OGF::View::TileLayer->new( "image:OGF:$COMPUTATION_ZOOM:all" );
 my( $proj ) = $tl->{_proj};
@@ -80,30 +98,20 @@ my $ctx = OGF::Data::Context->new();
 $ctx->loadFromFile( $osmFile );
 $ctx->setReverseInfo();
 
-#my $relKey = $opt{'ogf'} ? $rel->{'tags'}{'ogf:id'} : $rel->{'id'};
-#die qq/Relation $rel->{id} doesn't have an ogf:id\n/ if ! $relKey;
-
 our %VERIFY_IGNORE = (
-    481   => 'UL130',  # Alora, Takora region (indyroads)
-    10386 => 'TA333',  # Egani, southern islands   
-    24874 => 'PE070',  # ???
-    21935 => 'TA113d', # Ajanjo, part of San Marcos (sude)
-#   43801 => 'UL111',  # deleted by Stjur
-#   43803 => 'UL115',  # deleted by Stjur
-    61490 => 'TA114a',    # Kesland Islands, Antigo nuclear base 
-    91121 => 'AR120-00',  # AR120 capital region, missing ogf:id
+# all know errors cleared, add issues using format:
+#   481   => 'UL130',   # 
 );
-
 
 my $hSharedBorders = {};
 
 foreach my $way ( values %{$ctx->{_Way}} ){
 	my @rel = sort keys %{$ctx->{_rev_info}{$way->uid}};
 	my $key = join( ':', @rel );
-	print STDERR "\$key <", $key, ">\n";  # _DEBUG_
-
+	
 	my $num = scalar( @rel );
 	if( !($num == 1 || $num == 2) ){
+		print STDERR "\$key <", $key, ">\n";  # _DEBUG_
 		warn qq/Error: way $way->{id} is element of $num relations\n/;
 	}
 
@@ -111,10 +119,9 @@ foreach my $way ( values %{$ctx->{_Way}} ){
 	push @{$hSharedBorders->{$key}}, $way->{'id'};
 }
 
-writeRegionInfo( $ctx, "C:/usr/MapView/tmp/admin_regions.json" );
 
-
-foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
+#                        ( 50, 100, 200, 400, 800, 1600, 3200 ){
+foreach my $avwThreshold ( 100 ){
 
     my $ctx3 = OGF::Data::Context->new();
     $ctx3->{_Node} = $ctx->{_Node};
@@ -193,26 +200,41 @@ foreach my $avwThreshold ( 50, 100, 200, 400, 800, 1600, 3200 ){
     };
 
     if( $avwThreshold == 100 ){
+		my $outFile = "$OUTPUT_DIR/${OUTFILE_NAME}_errors.json";
+		my $exit = 0;
         my $aErrors = verifyTerritories( $hPolygons, $aTerr );
         if( @$aErrors ){
             use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aErrors], ['aErrors'] ), "\n";  # _DEBUG_
-            exit;
+			
+			my $json = JSON::PP->new->indent(2)->space_after;
+			my $text = $json->encode( \@$aErrors );
+			OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
+            $exit = 1;
         }
+		else
+		{
+			my $text = '[]';
+			OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
+		}
+		
+		if( $opt{'copyto'} and -d $opt{'copyto'} ) {
+			my $publishFile = $opt{'copyto'} . "/territory_errors.json";
+			system "cp \"$outFile\" \"$publishFile\"";
+		}
+		
+		exit if( $exit == 1 );
     }
 
     my $json = JSON::PP->new->indent(2)->space_after;
-#   writePolygonJson( "C:/usr/MapView/tmp/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
-    writePolygonJson( "$OUTPUT_DIR/${OUTFILE_NAME}_${avwThreshold}.json", $hPolygons );
+	my $outFile = "$OUTPUT_DIR/${OUTFILE_NAME}_${avwThreshold}.json";
+    writePolygonJson( $outFile, $hPolygons );
+	if( $opt{'copyto'} and -d $opt{'copyto'} ) {
+		my $publishFile = $opt{'copyto'} . "/territory.json";
+		system "cp \"$outFile\" \"$publishFile\"";
+	}
 }
 
-
-
-
-
 #-------------------------------------------------------------------------------
-
-
-
 
 sub verifyTerritories {
     my( $hPolygons, $aTerritories ) = @_;
@@ -223,50 +245,24 @@ sub verifyTerritories {
         if( $hPolygons->{$relId} ){
             $errText = verifyPolygon( $hPolygons->{$relId} );
         }else{
-            unless( $VERIFY_IGNORE{$relId} || $ogfId eq 'AN399' ){  # AN399 = antarctic islands
-	            $errText = 'Missing polygon';
-	        }
+	        $errText = 'Missing polygon';
 		}
         print STDERR $ogfId;
         if( $errText ){
             print STDERR " ", $errText;
-            my $err = {
-                _ogfId => $ogfId,
-                _rel   => $relId,
-                _text  => $errText,
-            };
-            push @errors, $err;
+			
+            unless( $VERIFY_IGNORE{$relId} ) {
+				my $err = {
+					_ogfId => $ogfId,
+					_rel   => $relId,
+					_text  => $errText,
+				};
+				push @errors, $err;
+			}
         }
         print STDERR "\n";
     }
     return \@errors;
-}
-
-sub writeRegionInfo {
-    my( $ctx, $outFile ) = @_;
-#   my %rtags = ('AN' => 'Antarephia', 'TA' => 'Tarephia', 'AR120' => 'South Archanta', 'UL106' => 'East Uletha');
-    my %rtags = ('AN' => 'Antarephia', 'TA' => 'Tarephia');
-    my %regionInfo;
-    foreach my $hRel ( values %{$ctx->{_Relation}} ){
-        my( $ogfId, $region ) = ( $hRel->{'tags'}{'ogf:id'}, $hRel->{'tags'}{'is_in:continent'} );
-        if( ! $region ){
-#           my( $rtag ) = ($ogfId =~ /^([A-Z]{2}(?:106|120)?)/g);
-            my( $rtag ) = ($ogfId =~ /^([A-Z]{2})/g);
-            $region = $rtags{$rtag} if $rtag && $rtags{$rtag};
-            $region = 'South Archanta' if $ogfId =~ /^AR120-3[23][a-z]/;
-            $region = 'North Archanta' if $ogfId =~ /^AR001b-/;
-        }
-#       push @regionInfo, {
-#           'rel'    => $hRel->{'id'},
-#           'ogfId'  => $ogfId,
-#           'region' => $region,
-#       };
-        $regionInfo{$hRel->{'id'}} = $region if $region;
-    }
-
-    my $json = JSON::PP->new->indent(2)->space_after;
-    my $text = $json->encode( \%regionInfo );
-    OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
 }
 
 
@@ -282,13 +278,11 @@ sub verifyPolygon {
         }
     }else{
         my( $x0, $y0, $x1, $y1 ) = ( $aPol->[0][0], $aPol->[0][1], $aPol->[-1][0], $aPol->[-1][1] );
-        $errText = ($x0 == $x1 && $y0 == $y1)? '' : 'Polygon not closed';
+        #$errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between $x0,$y0 and $x1,$y1)";
+        $errText = ($x0 == $x1 && $y0 == $y1)? '' : "Polygon not closed (gap between [https://opengeofiction.net/#map=16/$x0/$y0 A] and [https://opengeofiction.net/#map=16/$x1/$y1 B])";
     }
     return $errText;
 }
-
-
-
 
 sub addWayToRelation {
 	my( $ctx3, $relId, $way ) = @_;
@@ -298,31 +292,16 @@ sub addWayToRelation {
 	$ctx3->{_Relation}{$relId}->add_member( 'outer', $way );
 }
 
-
-# relation["boundary"="administrative"]["admin_level"="2"]["ogf:id"="UL202"];
-
-sub fileExport_Overpass {
+sub fileExport_Overpass($$$)
+{
 	require OGF::Util::Overpass;
-	my( $outFile ) = @_;
-#   relation["boundary"="administrative"]["admin_level"="2"];
-
-#    my $data = OGF::Util::Overpass::runQuery_remote( undef, << '    ---EOF---' );
-#       [timeout:1800][maxsize:4294967296];
-#       (
-#         (relation["boundary"="administrative"]["admin_level"="2"];
-#          relation["boundary"="administrative"]["ogf:id"~"^((UL|TA|AN|AR|ER|KA|OR|PE)[0-9]{3}[a-z]?|AR120-[0-9]{2})$"];);
-#         >;
-#       );
-#       out;
-#    ---EOF---
-    my $data = OGF::Util::Overpass::runQuery_remote( undef, $ADMIN_RELATION_QUERY );
-	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
+	my($outFile, $query, $minSize) = @_;
+	my $data = OGF::Util::Overpass::runQuery_remoteRetry(undef, $query, $minSize);
+	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' ) if( defined $data );
 }
 
 sub getTerritories {
     require LWP;
-#   my $URL_TERRITORIES = 'https://tile.opengeofiction.net/data/ogf_territories.json';
-    my $URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
 
     my $json = JSON::PP->new();
 	my $userAgent = LWP::UserAgent->new(
@@ -330,6 +309,7 @@ sub getTerritories {
 	);
 
 	my $resp = $userAgent->get( $URL_TERRITORIES );
+	my $x = $resp->content();
     my $aTerr = $json->decode( $resp->content() );
 #	use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aTerr], ['aTerr'] ), "\n";  # _DEBUG_
 
@@ -371,5 +351,23 @@ sub lastLoop {
 }
 
 
+sub housekeeping($$)
+{
+	my($dir, $now) = @_;
+	my $KEEP_FOR = 60 * 60 * 24 ; # 1 day
+	my $dh;
+	
+	opendir $dh, $dir;
+	while( my $file = readdir $dh )
+	{
+		next unless( $file =~ /^admin_polygons_\d{6}_\d{6}\.osm/ );
+		if( $now - (stat "$dir/$file")[9] > $KEEP_FOR )
+		{
+			print "deleting: $dir/$file\n";
+			unlink "$dir/$file";
+		}
+	}
+	closedir $dh;
+}
 
 

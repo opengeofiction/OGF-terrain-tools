@@ -1,0 +1,9 @@
+[Unit]
+Description=OpenGeofiction tile dirtying service monitor for ogf-carto
+
+[Path]
+DirectoryNotEmpty=/opt/opengeofiction/render/ogf-carto/expire-queue
+Unit=expire-tiles-ogfcarto.service
+
+[Install]
+WantedBy=multi-user.target

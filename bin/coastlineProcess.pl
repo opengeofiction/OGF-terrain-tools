@@ -219,7 +219,7 @@ else
 sub housekeeping($$)
 {
 	my($dir, $now) = @_;
-	my $KEEP_FOR = 60 * 30; # 30 mins
+	my $KEEP_FOR = 60 * 10; # 10 mins
 	my $dh;
 	
 	opendir $dh, $dir;

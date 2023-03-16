@@ -28,7 +28,7 @@ fi
 
 # delete old backups - older than 2 hours
 echo "deleting old backups..."
-find "${BASE}" -maxdepth 1 -mmin +$((60*2)) -ls -delete
+find "${BASE}" -mindepth 1 -maxdepth 1 -type f -mmin +$((60*2)) -ls -delete
 
 # ensure the publish directory exists and is writable 
 if [ ! -w "$PUBLISH/" ]; then

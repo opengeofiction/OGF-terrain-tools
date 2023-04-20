@@ -305,8 +305,9 @@ sub validateCoastline($$$$$)
 	my($continent, $errs, $pbfFile, $dbFile, $mode) = @_;
 	my $exotics = 0; my $warnings = 0; my $errors = 0;
 	
-	my $cmd = "$OSMCOASTLINE --verbose --srs=3857 --output-lines --output-polygons=both --output-rings --max-points=2000 --output-database=$dbFile $pbfFile 2>&1";
-	$cmd = "$OSMCOASTLINE --verbose --srs=3857 --max-points=0 --output-database=$dbFile $pbfFile 2>&1" if( $mode eq 'quick' );
+	# note the --verbose argument causes useful extra info, this is then used in our tracking of "exotic" errors
+	my $cmd = "$OSMCOASTLINE --debug --verbose --srs=3857 --output-lines --output-polygons=both --output-rings --max-points=2000 --output-database=$dbFile $pbfFile 2>&1";
+	$cmd = "$OSMCOASTLINE --debug --verbose --srs=3857 --max-points=0 --output-database=$dbFile $pbfFile 2>&1" if( $mode eq 'quick' );
 	open(my $pipe, '-|', $cmd) or return -1;
 	while( my $line = <$pipe> )
 	{

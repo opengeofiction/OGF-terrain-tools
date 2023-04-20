@@ -13,6 +13,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 use POSIX;
 use File::Path;
 
+sub exitScript($$);
 sub housekeeping($$);
 sub exportOverpassConvert($$$);
 sub buildOverpassQuery($$);
@@ -54,8 +55,7 @@ housekeeping $OUTPUT_DIR, $now;
 my $LOCKFILE="$BASE/backup/backup.lock";
 if( -d $LOCKFILE )
 {
-	print "skipping, backup is running...\n";
-	exit 0;
+	exitScript 0, "skipping, backup is running...\n";
 }
 
 # build up Overpass query to get the top level admin_level=0 continent relations
@@ -154,8 +154,7 @@ if( -f $osmFile )
 	system "osmium merge --no-progress --verbose --output=$pbfFile $filesToMerge";
 	if( ! -f $pbfFile )
 	{
-		print "issues merging world coastline\n";
-		exit 1;
+		exitScript 1, "issues merging world coastline\n";
 	}
 	publishFile $pbfFile, 'coastline.osm.pbf';
 	
@@ -201,19 +200,25 @@ if( -f $osmFile )
 		my $simplify = createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857', 'simplified_water_polygons.shp', 'water_polygons', 25;
 		createShapefilePublish $dbFile, 'simplified-land-polygons-complete-3857', 'simplified_land_polygons.shp', 'land_polygons', $simplify;
 
-		print "complete\n";
-		exit 0;
+		exitScript 0, "complete\n";
 	}
 	else
 	{
-		print "issues with world coastline\n";
-		exit 1;
+		exitScript 1, "issues with world coastline\n";
 	}
 }
 else
 {
-	print "Error querying overpass\n";
-	exit 1;
+	exitScript 1, "Error querying overpass\n";
+}
+
+sub exitScript($$)
+{
+	my($rc, $msg) = @_;
+	
+	print $msg;
+	system "sudo journalctl -u coastline-process --since '$startedat' > '$PUBLISH_DIR/coastline-process-debug.txt'";
+	exit $rc;
 }
 
 sub housekeeping($$)

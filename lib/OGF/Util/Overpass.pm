@@ -91,7 +91,9 @@ sub runQuery_remoteRetryOptions
 	{
 		sleep $TIMEOUT_INCR * $retries if( $retries > 1 );
 		my $data = runQuery_remote(undef, $query);
-		if( (!defined $data) or ($data !~ /^<\?xml/ and $format eq 'xml') or ($data =~ /^<\?xml/ and $format eq 'csv') )
+		if( (!defined $data) or ($data !~ /^<\?xml/ and $format eq 'xml') or
+		                        ($data =~ /^<\?xml/ and $format eq 'csv') or
+		                        ($data !~ /^{/ and $format eq 'json') )
 		{
 			print "Failure running Overpass query [$retries]: $query\n";
 			next;

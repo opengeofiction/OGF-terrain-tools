@@ -12,6 +12,7 @@ use OGF::Util::Overpass;
 use OGF::Util::Usage qw( usageInit usageError );
 
 sub parseLatLon($$);
+sub parsePermission($);
 sub fileExport_Overpass($);
 sub housekeeping($$);
 
@@ -97,8 +98,10 @@ for my $record ( @$records )
 	$entry{'economy:note'} = substr $entry{'economy:note'}, 0, 100;
 	$entry{'economy:sector'} = $record->{tags}->{'economy:sector'} || '';
 	$entry{'economy:type'} = $record->{tags}->{'economy:type'} || '';
+	$entry{'economy:scope'} = $record->{tags}->{'economy:scope'} || '';
 	$entry{'headquarters'} = $record->{tags}->{'headquarters'} || '';
 	$entry{'ogf:logo'} = $record->{tags}->{'ogf:logo'} || 'Question mark in square brackets.svg';
+	$entry{'ogf:permission'} = parsePermission $record->{tags}->{'ogf:permission'};
 	
 	# list of brands
 	my @brands = split /,\s*/, $record->{tags}->{'economy:brands'};
@@ -125,6 +128,16 @@ sub parseLatLon($$)
 {
 	my($var1, $var2) = @_;
 	return $var1 || $var2 || 0.0;
+}
+
+#-------------------------------------------------------------------------------
+sub parsePermission($)
+{
+	my($var1) = @_;
+	return 'yes' if( $var1 and $var1 eq 'yes' );
+	return 'no'  if( $var1 and $var1 eq 'no' );
+	return 'ask' if( $var1 and $var1 eq 'ask' );
+	return 'yes';
 }
 
 #-------------------------------------------------------------------------------

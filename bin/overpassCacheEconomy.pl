@@ -12,6 +12,8 @@ use OGF::Util::Overpass;
 use OGF::Util::Usage qw( usageInit usageError );
 
 sub parseLatLon($$);
+sub parseSector($);
+sub parseScope($);
 sub parsePermission($);
 sub fileExport_Overpass($);
 sub housekeeping($$);
@@ -40,7 +42,7 @@ if( ! $opt{'ds'} )
 	# query takes ~ 2s, returning ~ 0.1 MB; allow up to 20s, 2 MB
 	$QUERY = << '---EOF---';
 [timeout:20][maxsize:2000000][out:json];
-nwr["headquarters"]["economy:sector"]["economy:iclass"];
+nwr["headquarters"="main"]["economy:sector"]["economy:iclass"];
 out center;
 ---EOF---
 }
@@ -95,10 +97,11 @@ for my $record ( @$records )
 	# the main tags
 	$entry{'economy:iclass'} = $record->{tags}->{'economy:iclass'} || '';
 	$entry{'economy:note'} = $record->{tags}->{'economy:note'} || $record->{tags}->{note} || '';
-	$entry{'economy:note'} = substr $entry{'economy:note'}, 0, 100;
-	$entry{'economy:sector'} = $record->{tags}->{'economy:sector'} || '';
+	$entry{'economy:note'} = substr $entry{'economy:note'}, 0, 100; # force < 100 chars
+	$entry{'economy:sector'} = parseSector $record->{tags}->{'economy:sector'};
 	$entry{'economy:type'} = $record->{tags}->{'economy:type'} || '';
-	$entry{'economy:scope'} = $record->{tags}->{'economy:scope'} || '';
+	$entry{'economy:scope'} = parseScope $record->{tags}->{'economy:scope'};
+	$entry{'economy:parent'} = $record->{tags}->{'economy:parent'} || '';
 	$entry{'headquarters'} = $record->{tags}->{'headquarters'} || '';
 	$entry{'ogf:logo'} = $record->{tags}->{'ogf:logo'} || 'Question mark in square brackets.svg';
 	$entry{'ogf:permission'} = parsePermission $record->{tags}->{'ogf:permission'};
@@ -131,12 +134,28 @@ sub parseLatLon($$)
 }
 
 #-------------------------------------------------------------------------------
+sub parseSector($)
+{
+	my($var1) = @_;
+	return $var1 if( $var1 eq 'primary' or $var1 eq 'secondary' or
+	                 $var1 eq 'tertiary' or $var1 eq 'quaternary' );
+	return '';
+}
+
+#-------------------------------------------------------------------------------
+sub parseScope($)
+{
+	my($var1) = @_;
+	return $var1 if( $var1 eq 'national' or $var1 eq 'international' or
+	                 $var1 eq 'multinational' or $var1 eq 'global' );
+	return 'national';
+}
+
+#-------------------------------------------------------------------------------
 sub parsePermission($)
 {
 	my($var1) = @_;
-	return 'yes' if( $var1 and $var1 eq 'yes' );
-	return 'no'  if( $var1 and $var1 eq 'no' );
-	return 'ask' if( $var1 and $var1 eq 'ask' );
+	return $var1 if( $var1 eq 'yes' or $var1 eq 'no' or $var1 eq 'ask' );
 	return 'yes';
 }
 

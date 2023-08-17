@@ -118,7 +118,7 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'driving_side'}         = parseDrivingSide $rel->{'tags'}{'driving_side'};
 	
 	$ter{'economy'}              = parseEconomy $rel->{'tags'}{'economy'};
-	$ter{'economy:hdi'}          = parseEconomyHdi $rel->{'tags'}{'economy:hdi'};
+	$ter{'economy:hdi'}          = parseEconomyHdi $rel->{'tags'}{'economy:hdi'} || $rel->{'tags'}{'hdi'};
 	$ter{'economy:hdi:range'}    = parseEconomyHdiRange $ter{'economy:hdi'};
 	$ter{'economy:note'}         = parseEconomyNote $rel->{'tags'}{'economy:note'};
 	
@@ -200,7 +200,8 @@ sub parseEconomyHdiRange($)
 	return 'low'      if( $var >= 0.00 and $var <  0.55 );
 	return 'medium'   if( $var >= 0.55 and $var <  0.70 );
 	return 'high'     if( $var >= 0.70 and $var <  0.80 );
-	return 'veryhigh' if( $var >= 0.80 and $var <= 1.00 );
+	return 'veryhigh' if( $var >= 0.80 and $var <  0.90 );
+	return 'exhigh'   if( $var >= 0.90 and $var <= 1.00 );
 	
 	return 'unknown';
 }

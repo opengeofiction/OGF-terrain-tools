@@ -107,7 +107,7 @@ for my $record ( @$records )
 	$entry{'ogf:permission'} = parsePermission $record->{tags}->{'ogf:permission'};
 	
 	# list of brands
-	my @brands = split /,\s*/, $record->{tags}->{'economy:brands'};
+	my @brands = split /,\s*/, $record->{tags}->{'economy:brands'} || '';
 	$entry{'economy:brands'} = \@brands;
 	
 	# use is_in tags to enable later filtering of the list into smaller subsets (on wiki)
@@ -146,8 +146,8 @@ sub parseSector($)
 sub parseScope($)
 {
 	my($var1) = @_;
-	return $var1 if( $var1 eq 'national' or $var1 eq 'international' or
-	                 $var1 eq 'multinational' or $var1 eq 'global' );
+	return $var1 if( $var1 and ($var1 eq 'national' or $var1 eq 'international' or
+	                            $var1 eq 'multinational' or $var1 eq 'global') );
 	return 'national';
 }
 
@@ -155,7 +155,7 @@ sub parseScope($)
 sub parsePermission($)
 {
 	my($var1) = @_;
-	return $var1 if( $var1 eq 'yes' or $var1 eq 'no' or $var1 eq 'ask' );
+	return $var1 if( $var1 and ($var1 eq 'yes' or $var1 eq 'no' or $var1 eq 'ask') );
 	return 'yes';
 }
 

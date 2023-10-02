@@ -19,6 +19,7 @@ sub parseDrivingSide($);
 sub parseEconomy($);
 sub parseEconomyHdi($);
 sub parseEconomyHdiRange($);
+sub parseEconomyGdp($);
 sub parseEconomyNote($);
 sub parseRailGauge($);
 sub parseGovernance($);
@@ -71,7 +72,7 @@ elsif( $opt{'ds'} eq 'test' )
 	$OUTFILE_NAME = 'test_admin_properties';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
 [timeout:60][maxsize:5000000];
-(relation["boundary"="administrative"]["ogf:id"="UL05a"];);
+(relation["boundary"="administrative"]["ogf:id"~"UL"];);
 out;
 ---EOF---
 }
@@ -120,6 +121,7 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'economy'}              = parseEconomy $rel->{'tags'}{'economy'};
 	$ter{'economy:hdi'}          = parseEconomyHdi $rel->{'tags'}{'economy:hdi'} || $rel->{'tags'}{'hdi'};
 	$ter{'economy:hdi:range'}    = parseEconomyHdiRange $ter{'economy:hdi'};
+	$ter{'economy:gdp'}          = parseEconomyGdp $rel->{'tags'}{'economy:gdp'};
 	$ter{'economy:note'}         = parseEconomyNote $rel->{'tags'}{'economy:note'};
 	
 	$ter{'gauge'}                = parseRailGauge $rel->{'tags'}{'gauge'};
@@ -153,6 +155,27 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'power_supply:voltage'}   = parsePowerSupplyVoltage $rel->{'tags'}{'power_supply:voltage'};
 	$ter{'power_supply:frequency'} = parsePowerSupplyFrequency $rel->{'tags'}{'power_supply:frequency'};
 	$ter{'power_supply:range'}     = parsePowerSupplyRange $ter{'power_supply:voltage'}, $ter{'power_supply:frequency'};
+	
+	my %langnames;
+	$langnames{'castellanese'} = $rel->{'tags'}{'name:es'} if exists( $rel->{'tags'}{'name:es'} );
+	$langnames{'florescentan'} = $rel->{'tags'}{'name:pt'} if exists( $rel->{'tags'}{'name:pt'} );
+	$langnames{'franquese'}    = $rel->{'tags'}{'name:fr'} if exists( $rel->{'tags'}{'name:fr'} );
+	$langnames{'ingerlish'}    = $rel->{'tags'}{'name:en'} if exists( $rel->{'tags'}{'name:en'} );
+	$langnames{'kalmish'}      = $rel->{'tags'}{'name:de'} if exists( $rel->{'tags'}{'name:de'} );
+	$langnames{'lechian'}      = $rel->{'tags'}{'name:pl'} if exists( $rel->{'tags'}{'name:pl'} );
+	$langnames{'lentian'}      = $rel->{'tags'}{'name:nl'} if exists( $rel->{'tags'}{'name:nl'} );
+	$langnames{'surian'}       = $rel->{'tags'}{'name:ru'} if exists( $rel->{'tags'}{'name:ru'} );
+	foreach my $tag ( keys %{$rel->{'tags'}} )
+	{
+		next unless( $tag =~ /^name:([a-z]{4,20})/ );
+		my $lang = $1;
+		my $name = $rel->{'tags'}{$tag};
+		next if( $lang eq 'official' );
+		next if( $lang eq 'officialen' );
+		next if( $lang eq 'pronunciation' );
+		$langnames{$lang} = $name;
+	}
+	$ter{'names'} = \%langnames;
 	
 	push @ters, \%ter;
 }
@@ -188,6 +211,14 @@ sub parseEconomyHdi($)
 	my($var) = @_;
 	
 	return $var + 0.0 if( defined $var and $var =~ /^[\d\.]+$/ and $var >= 0.0 and $var <= 1.0 );
+	return '';
+}
+
+sub parseEconomyGdp($)
+{
+	my($var) = @_;
+	
+	return $var + 0.0 if( defined $var and $var =~ /^[\d\.]+$/ and $var >= 0.0 and $var <= 100000.0 );
 	return '';
 }
 

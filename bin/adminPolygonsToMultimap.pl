@@ -164,6 +164,7 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$langnames{'kalmish'}      = $rel->{'tags'}{'name:de'} if exists( $rel->{'tags'}{'name:de'} );
 	$langnames{'lechian'}      = $rel->{'tags'}{'name:pl'} if exists( $rel->{'tags'}{'name:pl'} );
 	$langnames{'lentian'}      = $rel->{'tags'}{'name:nl'} if exists( $rel->{'tags'}{'name:nl'} );
+	$langnames{'renminyu'}     = $rel->{'tags'}{'name:zh'} if exists( $rel->{'tags'}{'name:zh'} );
 	$langnames{'surian'}       = $rel->{'tags'}{'name:ru'} if exists( $rel->{'tags'}{'name:ru'} );
 	foreach my $tag ( keys %{$rel->{'tags'}} )
 	{

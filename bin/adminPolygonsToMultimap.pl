@@ -219,7 +219,7 @@ sub parseEconomyGdp($)
 {
 	my($var) = @_;
 	
-	return $var + 0.0 if( defined $var and $var =~ /^[\d\.]+$/ and $var >= 0.0 and $var <= 100000.0 );
+	return $var + 0.0 if( defined $var and $var =~ /^[\d\.]+$/ and $var >= 0 and $var <= 150000 );
 	return '';
 }
 

@@ -101,14 +101,10 @@ for my $record ( @$records )
 	$entry{'economy:sector'} = parseSector $record->{tags}->{'economy:sector'};
 	$entry{'economy:type'} = $record->{tags}->{'economy:type'} || '';
 	$entry{'economy:scope'} = parseScope $record->{tags}->{'economy:scope'};
-	$entry{'economy:parent'} = $record->{tags}->{'economy:parent'} || '';
 	$entry{'headquarters'} = $record->{tags}->{'headquarters'} || '';
 	$entry{'ogf:logo'} = $record->{tags}->{'ogf:logo'} || 'Question mark in square brackets.svg';
 	$entry{'ogf:permission'} = parsePermission $record->{tags}->{'ogf:permission'};
-	
-	# list of brands
-	my @brands = split /,\s*/, $record->{tags}->{'economy:brands'} || '';
-	$entry{'economy:brands'} = \@brands;
+	$entry{'brand'} = $record->{tags}->{'brand'} || $entry{'name'};
 	
 	# use is_in tags to enable later filtering of the list into smaller subsets (on wiki)
 	$entry{'is_in:continent'} = $record->{tags}->{'is_in:continent'} || '';

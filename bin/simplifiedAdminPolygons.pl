@@ -236,32 +236,37 @@ foreach my $avwThreshold ( 100 ){
 #-------------------------------------------------------------------------------
 
 sub verifyTerritories {
-    my( $hPolygons, $aTerritories ) = @_;
-    my @errors;
-    foreach my $hTerr ( @$aTerritories ){
-        my( $ogfId, $relId ) = ( $hTerr->{'ogfId'}, $hTerr->{'rel'} );
-        my $errText;
-        if( $hPolygons->{$relId} ){
-            $errText = verifyPolygon( $hPolygons->{$relId} );
-        }else{
-	        $errText = 'Missing polygon';
+	my( $hPolygons, $aTerritories ) = @_;
+	my @errors;
+	foreach my $hTerr ( @$aTerritories )
+	{
+		my($ogfId, $relId) = ($hTerr->{'ogfId'}, $hTerr->{'rel'});
+		my $errText = 'Missing polygon';
+
+		unless( exists $hTerr->{'ogfId'}   and exists $hTerr->{'name'}  and exists $hTerr->{'rel'}
+		    and exists $hTerr->{'status'}  and exists $hTerr->{'owner'} and exists $hTerr->{'deadline'}
+		    and exists $hTerr->{'comment'} and exists $hTerr->{'constraints'} )
+		{
+			$errText = 'Territory JSON missing ogfId, name, rel, status, owner, deadline, comment, or constraints';
 		}
-        print STDERR $ogfId;
-        if( $errText ){
-            print STDERR " ", $errText;
-			
-            unless( $VERIFY_IGNORE{$relId} ) {
-				my $err = {
-					_ogfId => $ogfId,
-					_rel   => $relId,
-					_text  => $errText,
-				};
+		elsif( $hPolygons->{$relId} )
+		{
+			$errText = verifyPolygon( $hPolygons->{$relId} );
+		}
+
+		print STDERR $ogfId;
+		if( $errText )
+		{
+			print STDERR " ", $errText;
+			unless( $VERIFY_IGNORE{$relId} )
+			{
+				my $err = {_ogfId => $ogfId, _rel => $relId, _text => $errText};
 				push @errors, $err;
 			}
-        }
-        print STDERR "\n";
-    }
-    return \@errors;
+		}
+		print STDERR "\n";
+	}
+	return \@errors;
 }
 
 

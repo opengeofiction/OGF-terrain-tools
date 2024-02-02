@@ -16,7 +16,7 @@ use File::Path;
 sub exitScript($$);
 sub housekeeping($$);
 sub exportOverpassConvert($$$);
-sub buildOverpassQuery($$);
+sub buildOverpassQuery($$$);
 sub fileExport_Overpass($$$);
 sub validateCoastline($$$$$);
 sub validateCoastlineDb($$);
@@ -243,11 +243,12 @@ sub housekeeping($$)
 sub exportOverpassConvert($$$)
 {
 	my($ctxref, $relref, $started) = @_;
-	my $continent = $$relref->{'tags'}{'ogf:id'};
-	my $osmFile   = "$OUTPUT_DIR/coastline-$continent-$started.osm";
-	my $pbfFile   = "$OUTPUT_DIR/coastline-$continent-$started.osm.pbf";
+	my $continent  = $$relref->{'tags'}{'ogf:id'};
+	my $complexity = $$relref->{'tags'}{'ogf:coastline:complexity'};
+	my $osmFile    = "$OUTPUT_DIR/coastline-$continent-$started.osm";
+	my $pbfFile    = "$OUTPUT_DIR/coastline-$continent-$started.osm.pbf";
 	
-	my $overpass = buildOverpassQuery $ctxref, $relref;
+	my $overpass = buildOverpassQuery $ctxref, $relref, $complexity;
 	print "query: $overpass\n";
 	print "query Overpass and save to: $osmFile\n";
 	fileExport_Overpass $osmFile, $overpass, 90000;
@@ -269,10 +270,15 @@ sub exportOverpassConvert($$$)
 	return 'fail';
 }
 
-sub buildOverpassQuery($$)
+sub buildOverpassQuery($$$)
 {
-	my($ctxref, $relref) = @_;
-	my $overpass = qq|[out:xml][timeout:180][maxsize:80000000];(|;
+	my($ctxref, $relref, $complexity) = @_;
+	my $maxsize = 70 * 1024 * 1024;
+	$maxsize =  10 * 1024 * 1024 if( $complexity eq 'tiny' );   #  10 MB
+	$maxsize =  40 * 1024 * 1024 if( $complexity eq 'small' );  #  40 MB
+	$maxsize =  70 * 1024 * 1024 if( $complexity eq 'medium' ); #  70 MB
+	$maxsize = 150 * 1024 * 1024 if( $complexity eq 'large' );  # 150 MB
+	my $overpass = qq|[out:xml][timeout:180][maxsize:$maxsize];(|;
 	
 	# query all coastlines within the continent using the extracted latlons
 	# to limit - normally you'd use the built in overpass support for area

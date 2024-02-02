@@ -278,7 +278,7 @@ sub buildOverpassQuery($$$)
 	$maxsize =  40 if( $complexity eq 'small' );
 	$maxsize =  70 if( $complexity eq 'medium' );
 	$maxsize = 150 if( $complexity eq 'large' );
-	$mazsize *= 1024 * 1024; # bytes to MB
+	$maxsize *= 1024 * 1024; # bytes to MB
 	my $overpass = qq|[out:xml][timeout:180][maxsize:$maxsize];(|;
 	
 	# query all coastlines within the continent using the extracted latlons

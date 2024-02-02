@@ -273,11 +273,12 @@ sub exportOverpassConvert($$$)
 sub buildOverpassQuery($$$)
 {
 	my($ctxref, $relref, $complexity) = @_;
-	my $maxsize = 70 * 1024 * 1024;
-	$maxsize =  10 * 1024 * 1024 if( $complexity eq 'tiny' );   #  10 MB
-	$maxsize =  40 * 1024 * 1024 if( $complexity eq 'small' );  #  40 MB
-	$maxsize =  70 * 1024 * 1024 if( $complexity eq 'medium' ); #  70 MB
-	$maxsize = 150 * 1024 * 1024 if( $complexity eq 'large' );  # 150 MB
+	my $maxsize = 70;
+	$maxsize =  10 if( $complexity eq 'tiny' );
+	$maxsize =  40 if( $complexity eq 'small' );
+	$maxsize =  70 if( $complexity eq 'medium' );
+	$maxsize = 150 if( $complexity eq 'large' );
+	$mazsize *= 1024 * 1024; # bytes to MB
 	my $overpass = qq|[out:xml][timeout:180][maxsize:$maxsize];(|;
 	
 	# query all coastlines within the continent using the extracted latlons

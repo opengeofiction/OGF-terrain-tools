@@ -156,7 +156,7 @@ if( -f $osmFile )
 	{
 		exitScript 1, "issues merging world coastline\n";
 	}
-	publishFile $pbfFile, 'coastline.osm.pbf';
+	publishFile $pbfFile, 'coastline-world.osm.pbf';
 	
 	# save summary to JSON
 	my %sum = ();
@@ -176,6 +176,8 @@ if( -f $osmFile )
 	$sum{'status'} = ($worldIssues == 0) ? 'valid' : 'ERROR';
 	$sum{'mtime'} = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime time;
 	push @summary, \%sum;
+	
+	publishFile $dbFile, 'coastline-world.db';
 	
 	# save summary to JSON (again, now with the overall world coastline)
 	saveToJSON 'coastline_summary.json', \@summary;

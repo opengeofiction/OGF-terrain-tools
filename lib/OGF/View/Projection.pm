@@ -1,7 +1,7 @@
 package OGF::View::Projection;
 use strict;
 use warnings;
-use Geo::Proj4;
+use Geo::LibProj::FFI qw(:all);
 use OGF::Const;
 
 
@@ -27,8 +27,7 @@ sub initConversion {
 
 	my $proj;
 	if( $dsc ){
-		require Geo::Proj4;
-		$proj = Geo::Proj4->new( $dsc );
+		$proj = proj_create_crs_to_crs(undef, "EPSG:4326", $dsc, undef) or die "Cannot create proj";
 	}
 
 	my( $cX, $cY, $tX, $tY );
@@ -49,15 +48,18 @@ sub initConversion {
 	if( $proj ){
 		$self->{_geo2cnv} = sub{
 			my( $lon, $lat ) = @_;
-			my( $x, $y ) = $proj->forward( $lat, $lon );
+			my $coord = proj_coord($lat, $lon, 0, 'Inf');
+			my $res = proj_trans($proj, PJ_FWD, $coord);
+			my($x, $y) = ($res->v(0), $res->v(1));
 			( $x, $y ) = ( $x * $cX + $tX, $y * $cY + $tY );
 			return ( $x, $y );
 		};
 		$self->{_cnv2geo} = sub{
 			my( $x, $y ) = @_;
 			( $x, $y ) = ( ($x-$tX) / $cX, ($y-$tY) / $cY );
-			my( $lat, $lon ) = $proj->inverse( $x, $y );
-			return ( $lon, $lat );
+			my $coord = proj_coord($x, $y, 0, 'Inf');
+			my $res = proj_trans($proj, PJ_INV, $coord);
+			return ( $res->v(0), $res->v(1) );
 		};
 	}else{
 		$self->{_geo2cnv} = sub{

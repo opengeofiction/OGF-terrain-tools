@@ -1,0 +1,17 @@
+[Unit]
+Description=Check territory JSON vs relations
+RequiresMountsFor=/opt/opengeofiction
+
+[Service]
+Type=oneshot
+User=ogf
+Group=ogf
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/checkContinent.pl -cont AR -json /opt/opengeofiction/sync-to-ogf/utility/continent_check_AR.json
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/checkContinent.pl -cont UL -json ExecStart=/opt/opengeofiction/sync-to-ogf/utility/continent_check_UL.json 
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/checkContinent.pl -cont AN -json /opt/opengeofiction/sync-to-ogf/utility/continent_check_AN.json
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/checkContinent.pl -cont TA -json /opt/opengeofiction/sync-to-ogf/utility/continent_check_TA.json
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/checkContinent.pl -cont BG -json /opt/opengeofiction/sync-to-ogf/utility/continent_check_BG.json
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/checkContinent.pl -cont 'ER|KA|OR|PE' -json ExecStart=/opt/opengeofiction/sync-to-ogf/utility/continent_check_XX.json
+
+[Install]
+WantedBy=default.target

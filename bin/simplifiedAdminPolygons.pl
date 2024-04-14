@@ -3,7 +3,7 @@
 use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
-use JSON::PP;
+use JSON::XS;
 use URI::Escape;
 use Date::Format;
 use OGF::Geo::Topology;
@@ -205,7 +205,7 @@ foreach my $avwThreshold ( 100 ){
         if( @$aErrors ){
             use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aErrors], ['aErrors'] ), "\n";  # _DEBUG_
 			
-			my $json = JSON::PP->new->indent(2)->space_after;
+			my $json = JSON::XS->new->indent(2)->space_after;
 			my $text = $json->encode( \@$aErrors );
 			OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
             $exit = 1;
@@ -224,7 +224,7 @@ foreach my $avwThreshold ( 100 ){
 		exit if( $exit == 1 );
     }
 
-    my $json = JSON::PP->new->indent(2)->space_after;
+    my $json = JSON::XS->new->indent(2)->space_after;
 	my $outFile = "$OUTPUT_DIR/${OUTFILE_NAME}_${avwThreshold}.json";
     writePolygonJson( $outFile, $hPolygons );
 	if( $opt{'copyto'} and -d $opt{'copyto'} ) {
@@ -307,7 +307,7 @@ sub fileExport_Overpass($$$)
 sub getTerritories {
     require LWP;
 
-    my $json = JSON::PP->new();
+    my $json = JSON::XS->new();
 	my $userAgent = LWP::UserAgent->new(
 		keep_alive => 20,
 	);
@@ -325,7 +325,7 @@ sub writePolygonJson {
 	my( $filePoly, $hPolygons ) = @_;
     local *OUTFILE;
     open( OUTFILE, '>:encoding(UTF-8)', $filePoly ) or die qq/Cannot open "$filePoly" for writing: $!\n/;
-    my $jsonP = JSON::PP->new;
+    my $jsonP = JSON::XS->new;
     print OUTFILE "{\n";
     my @keyList = sort keys %$hPolygons;
     my $ccP = lastLoop( \@keyList, ',', '' );

@@ -6,7 +6,7 @@ use warnings;
 use feature 'unicode_strings' ;
 use Date::Format;
 use Encode;
-use JSON::PP;
+use JSON::XS;
 use OGF::Util::File;
 use OGF::Util::Overpass;
 use OGF::Util::Usage qw( usageInit usageError );
@@ -67,7 +67,7 @@ exit if( ! -f $jsonFile );
 my $results = undef;
 if( open( my $fh, '<', $jsonFile ) )
 {
-	my $json = JSON::PP->new->utf8();
+	my $json = JSON::XS->new->utf8();
 	my $file_content = do { local $/; <$fh> };
 	eval { $results = $json->decode($file_content); 1; }
 }
@@ -118,7 +118,7 @@ for my $record ( @$records )
 
 # create output file
 my $publishFile = $PUBLISH_DIR . '/' . $OUTFILE_NAME . '.json';
-my $json = JSON::PP->new->canonical->indent(2)->space_after;
+my $json = JSON::XS->new->canonical->indent(2)->space_after;
 my $text = $json->encode( \@out );
 OGF::Util::File::writeToFile($publishFile, $text, '>:encoding(UTF-8)' );
 

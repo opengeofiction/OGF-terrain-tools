@@ -3,7 +3,7 @@
 
 use LWP;
 use URI::Escape;
-use JSON::PP;
+use JSON::XS;
 use LWP::Simple;
 use Encode;
 use feature 'unicode_strings' ;
@@ -59,7 +59,7 @@ foreach ( split "\n", decode('utf-8', $resp) )
 $userAgent = LWP::UserAgent->new(keep_alive => 20);
 $resp = $userAgent->get($URL_TERRITORIES);
 $resp = decode('utf-8', $resp->content());
-$json = JSON::PP->new();
+$json = JSON::XS->new();
 $aTerr = $json->decode($resp);
 
 # print JSON territories, matched against map ones
@@ -199,7 +199,7 @@ foreach $rel ( sort values %map_territory )
 # output JSON file
 if( $JSON_FILE )
 {
-	my $json = JSON::PP->new->canonical->indent(2)->space_after;
+	my $json = JSON::XS->new->canonical->indent(2)->space_after;
 	my $text = $json->encode( \@territory_details );
 	OGF::Util::File::writeToFile( $JSON_FILE, $text, '>:encoding(UTF-8)' );
 }

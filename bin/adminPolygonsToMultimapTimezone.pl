@@ -6,7 +6,7 @@ use warnings;
 use feature 'unicode_strings' ;
 use Date::Format;
 use Encode;
-use JSON::PP;
+use JSON::XS;
 use OGF::Data::Context;
 use OGF::Geo::Topology;
 use OGF::Util::File;
@@ -101,7 +101,7 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 }
 
 my $publishFile = $PUBLISH_DIR . '/' . $OUTFILE_NAME . '.json';
-my $json = JSON::PP->new->canonical->indent(2)->space_after;
+my $json = JSON::XS->new->canonical->indent(2)->space_after;
 my $text = $json->encode( \@ters );
 OGF::Util::File::writeToFile($publishFile, $text, '>:encoding(UTF-8)' );
 

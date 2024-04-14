@@ -1,5 +1,4 @@
 #!/usr/bin/bash
-# this is an archive copy of  /opt/opengeofiction/bin/backup-wiki.sh on the wiki server
 
 echo "Started: $(date '+%Y%m%d%H%M%S')"
 renice -10 $$
@@ -7,6 +6,7 @@ renice -10 $$
 SRCDIR=/var/www/html/wiki.opengeofiction.net/public_html
 DESTDIR=/opt/opengeofiction/backup-database
 BACKUP_QUEUE=/opt/opengeofiction/backup-to-s3-queue
+DB=ogf_wikiwiki
 DATEPRE=$(date '+%Y%m%d')
 DATESTR=$(date '+%Y%m%d%H%M')
 
@@ -35,7 +35,7 @@ cd $SRCDIR
 
 # and do the XML backup, queue for S3 backup
 echo "MediaWiki XML db backup"
-php maintenance/dumpBackup.php --full --quiet | gzip > $DESTDIR/backup-$DATESTR-db.xml.gz
+php maintenance/dumpBackup.php --current --quiet | gzip > $DESTDIR/backup-$DATESTR-db.xml.gz
 ln $DESTDIR/backup-$DATESTR-db.xml.gz ${BACKUP_QUEUE}/${timeframe}:wiki:backup-$DATESTR-db.xml.gz
 
 # and do the ancillary backups
@@ -47,7 +47,7 @@ if [ ${timeframe} != "daily" ]; then
 	php maintenance/dumpUploads.php | tar zcfT $DESTDIR/backup-$DATESTR-images.tar.gz -
 
 	echo "MediaWiki MySQL db backup"
-	mysqldump -u ogfwikiguy --password='XXXXXXXXXXXXXXXXXXX' ogf_wikiwiki -c | gzip > $DESTDIR/backup-$DATESTR-db.sql.gz
+	mysqldump $DB -c | gzip > $DESTDIR/backup-$DATESTR-db.sql.gz
 	
 	# collate and queue for S3 backup
 	echo "Collate MediaWiki dir, MediaWiki images dir and MediaWiki MySQL db backup"

@@ -14,7 +14,7 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 sub fileExport_Overpass($$$);
 
-$URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OpenGeofiction:Territory_administration?action=raw';
+$URL_TERRITORIES = 'https://wiki.opengeofiction.net/index.php/OpenGeofiction:Territory_administration?action=raw';
 $BASE = 'https://opengeofiction.net';
 $CHANGESETS = "$BASE/api/0.6/changesets?display_name=";
 $APIUSER = "$BASE/api/0.6/user/";

@@ -196,11 +196,14 @@ if( -f $osmFile )
 	{
 		# at this point we now have an obsolutely clean coastline db file
 		# which we can use to create land and coast shapefiles
-		
 		createShapefilePublish $dbFile, 'land-polygons-split-3857', 'land_polygons.shp', 'land_polygons', 0;
 		createShapefilePublish $dbFile, 'water-polygons-split-3857', 'water_polygons.shp', 'water_polygons', 0;
 		my $simplify = createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857', 'simplified_water_polygons.shp', 'water_polygons', 25;
 		createShapefilePublish $dbFile, 'simplified-land-polygons-complete-3857', 'simplified_land_polygons.shp', 'land_polygons', $simplify;
+		
+		# these ones are not for the renderers, but for other user use
+		createShapefilePublish $dbFile, 'complete-coastline-3857', 'complete-coastline.shp', 'rings', 0;
+		createShapefilePublish $dbFile, 'complete-coastline-simplified-3857', 'complete-coastline-simplified.shp', 'rings', 1000;
 
 		exitScript 0, "complete\n";
 	}

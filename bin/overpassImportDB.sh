@@ -1,9 +1,21 @@
 #!/bin/bash -e
 
-FNAME=$1
+BASEDIR=/opt/opengeofiction/overpass
+DBDIR=$BASEDIR/db
+RULES=$DBDIR/rules
+COMPRESSION=lz4
+REPLICATION_URL=https://data.opengeofiction.net/replication/minute
 
+OVERPASS_INSTALL=/opt/overpass
+OVERPASS_RULES=$OVERPASS_INSTALL/rules
+UPDATE_DATABASE=$OVERPASS_INSTALL/bin/update_database
+UPDATE_FROM_DIR=$OVERPASS_INSTALL/bin/update_from_dir
+OSM3S_QUERY=$OVERPASS_INSTALL/bin/osm3s_query
+
+
+FNAME=$1
 if [[ "x$FNAME" == "x" ]]; then
-  echo "Usage: overpass-import-db <OSM file>"
+  echo "Usage: overpass-import-db.sh <OSM file>"
   exit 1
 fi
 
@@ -13,13 +25,9 @@ case "$FNAME" in
   *) UNPACKER='osmium cat -o - -f xml' ;;
 esac
 
-<% if node[:overpass][:meta_mode] == "meta" -%>
-META=--meta
-<% elsif node[:overpass][:meta_mode] == "attic" -%>
+#META=--meta
 META=--keep-attic
-<% else -%>
-META=
-<% end -%>
+#META=
 
 sudo systemctl stop overpass-area-processor || true
 sudo systemctl stop overpass-update || true
@@ -29,44 +37,43 @@ sudo systemctl stop overpass-dispatcher || true
 sleep 2
 
 # Remove old database
-sudo -u <%= @username %> rm -rf <%= @basedir %>/db/*
+rm -rf $DBDIR
+mkdir $DBDIR
 
-$UNPACKER $FNAME | sudo -u <%= @username %> <%= @basedir %>/bin/update_database --db-dir='<%= @basedir %>/db' --compression-method=<%= node[:overpass][:compression_mode] %> --map-compression-method=<%= node[:overpass][:compression_mode] %> $META
+$UNPACKER $FNAME | $UPDATE_DATABASE --db-dir=$DBDIR --compression-method=$COMPRESSION --map-compression-method=$COMPRESSION $META
 
-sudo -u <%= @username %> ln -s <%= @srcdir %>/rules <%= @basedir %>/db/rules
+ln -s $OVERPASS_RULES $RULES
 
 echo "Import finished. Catching up with new changes."
 
 sudo systemctl start overpass-dispatcher
 sudo systemctl start overpass-area-dispatcher
 
-PYOSMIUM="sudo -u <%= @username %> pyosmium-get-changes --server <%= node[:overpass][:replication_url] %> --diff-type osc.gz -f <%= @basedir %>/db/replicate-id"
-<% if node[:overpass][:meta_mode] == "attic" -%>
+PYOSMIUM="pyosmium-get-changes --server $REPLICATION_URL --diff-type osc.gz -f $DBDIR/replicate-id"
 PYOSMIUM="$PYOSMIUM --no-deduplicate"
-<% end -%>
 
 # Get the replication id
 $PYOSMIUM -v -O $FNAME --ignore-osmosis-headers
 
-sudo -u <%= @username %> rm -f <%= @basedir %>/diffs/*
+rm -f $BASEDIR/diffs/*
 
-while $PYOSMIUM -v -s 1000 -o <%= @basedir %>/diffs/latest.osc; do
-  if [ ! -f <%= @basedir %>/db/replicate-id ]; then
+while $PYOSMIUM -v -s 1000 -o $BASEDIR/diffs/latest.osc; do
+  if [ ! -f $DBDIR/replicate-id ]; then
     echo "Replication ID not written."
     exit 1
   fi
-  DATA_VERSION=`osmium fileinfo -e -g data.timestamp.last <%= @basedir %>/diffs/latest.osc`
+  DATA_VERSION=`osmium fileinfo -e -g data.timestamp.last $BASEDIR/diffs/latest.osc`
   echo "Downloaded up to timestamp $DATA_VERSION"
-  while ! sudo -u <%= @username %> <%= @basedir %>/bin/update_from_dir --osc-dir=<%= @basedir %>/diffs --version=$DATA_VERSION $META --flush-size=0; do
+  while ! $UPDATE_FROM_DIR --osc-dir=$BASEDIR/diffs --version=$DATA_VERSION $META --flush-size=0; do
     echo "Error while updating. Retry in 1 min."
     sleep 60
   done
-  sudo -u <%= @username %> rm <%= @basedir %>/diffs/latest.osc
+  rm $BASEDIR/diffs/latest.osc
   echo "Finished up to $DATA_VERSION."
 done
 
 echo "DB up-to-date. Processing areas."
 
-sudo -u <%= @username %> <%= @basedir %>/bin/osm3s_query --progress --rules <<%= @srcdir %>/rules/areas.osm3s
+$OSM3S_QUERY --progress --rules <$RULES/areas.osm3s
 
 echo "All updates done."

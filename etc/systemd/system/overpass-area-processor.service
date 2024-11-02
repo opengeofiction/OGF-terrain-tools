@@ -8,7 +8,7 @@ User=ogf
 Group=ogf
 WorkingDirectory=/opt/opengeofiction/overpass
 ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/overpassUpdateAreas.sh
-Restart=on-success
+Restart=no
 Nice=19
 
 [Install]

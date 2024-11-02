@@ -1,0 +1,16 @@
+[Unit]
+Description=Overpass area processor
+After=overpass-area-dispatcher.service overpass-update.service
+RequiresMountsFor=/opt/opengeofiction
+
+[Service]
+User=ogf
+Group=ogf
+WorkingDirectory=/opt/opengeofiction/overpass
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/overpassUpdateAreas.sh
+StandardOutput=append:/opt/opengeofiction/overpass/log/area-processor.log
+Restart=on-success
+Nice=19
+
+[Install]
+WantedBy=multi-user.target

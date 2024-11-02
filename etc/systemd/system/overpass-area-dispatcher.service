@@ -7,9 +7,8 @@ RequiresMountsFor=/opt/opengeofiction
 User=ogf
 Group=ogf
 WorkingDirectory=/opt/opengeofiction/overpass
-ExecStart=/opt/overpass/bin/dispatcher --areas --attic --db-dir=/opt/opengeofiction/overpass/db
+ExecStart=/opt/overpass/bin/dispatcher --areas --db-dir=/opt/opengeofiction/overpass/db
 ExecStop=/opt/overpass/bin/dispatcher --areas --terminate
-StandardOutput=append:/opt/opengeofiction/overpass/log/areas.log
 
 [Install]
 WantedBy=multi-user.target

@@ -7,7 +7,7 @@ REPLICATION_URL=https://data.opengeofiction.net/replication/minute
 OVERPASS_INSTALL=/opt/overpass
 UPDATE_FROM_DIR=$OVERPASS_INSTALL/bin/update_from_dir
 
-PYOSMIUM="pyosmium-get-changes --server $REPLICATION_URL --diff-type osc.gz -f $DBDIR/replicate-id"
+PYOSMIUM="pyosmium-get-changes --server $REPLICATION_URL -f $DBDIR/replicate-id"
 PYOSMIUM="$PYOSMIUM --no-deduplicate"
 
 #META=--meta

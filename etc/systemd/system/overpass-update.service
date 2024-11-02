@@ -9,7 +9,6 @@ User=ogf
 Group=ogf
 WorkingDirectory=/opt/opengeofiction/overpass
 ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/overpassUpdateDB.sh
-StandardOutput=append:/opt/opengeofiction/overpass/log/update.log
 Restart=on-success
 
 [Install]

@@ -10,7 +10,6 @@ Group=ogf
 WorkingDirectory=/opt/opengeofiction/overpass
 ExecStart=/opt/overpass/bin/dispatcher --osm-base --attic --db-dir=/opt/opengeofiction/overpass/db --rate-limit=2 --space=10737418240
 ExecStop=/opt/overpass/bin/dispatcher --osm-base --terminate
-StandardOutput=append:/opt/opengeofiction/overpass/log/osm_base.log
 
 [Install]
 WantedBy=multi-user.target

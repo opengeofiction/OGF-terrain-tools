@@ -49,7 +49,7 @@ echo "Import finished. Catching up with new changes."
 sudo systemctl start overpass-dispatcher
 sudo systemctl start overpass-area-dispatcher
 
-PYOSMIUM="pyosmium-get-changes --server $REPLICATION_URL --diff-type osc.gz -f $DBDIR/replicate-id"
+PYOSMIUM="pyosmium-get-changes --server $REPLICATION_URL -f $DBDIR/replicate-id"
 PYOSMIUM="$PYOSMIUM --no-deduplicate"
 
 # Get the replication id

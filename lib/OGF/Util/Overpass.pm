@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Exporter;
 use LWP;
+use OGF::Const;
 use OGF::Util;
 our @ISA = qw( Exporter );
 our @EXPORT_OK = qw(
@@ -11,8 +12,6 @@ our @EXPORT_OK = qw(
 
 my $CMD_OSM3S_QUERY = '/opt/geofictician/overpass/bin/osm3s_query';
 my $CMD_OSMCONVERT  = 'osmconvert64';
-my $URL_OVERPASS    = 'https://overpass.ogf.rent-a-planet.com/api/interpreter';
-
 
 
 sub runQuery_local {
@@ -66,7 +65,7 @@ sub runQuery_remote {
             $osmFile = $outFile;
         }
 
-        my $resp = $userAgent->post( $URL_OVERPASS, 'Content' => $queryText, ':content_file' => $osmFile );
+        my $resp = $userAgent->post( $OGF::OVERPASS_URL, 'Content' => $queryText, ':content_file' => $osmFile );
         print STDERR 'Overpass export [1]: ', time() - $startTimeE, " seconds\n";
         
         if( $ogfFile ){
@@ -75,7 +74,7 @@ sub runQuery_remote {
             $ctx->writeToXml( $ogfFile );
         }
 	}else{
-        my $resp = $userAgent->post( $URL_OVERPASS, 'Content' => $queryText );
+        my $resp = $userAgent->post( $OGF::OVERPASS_URL, 'Content' => $queryText );
         my $data = $resp->content();
         print STDERR 'Overpass export [1]: ', time() - $startTimeE, " seconds\n";
         return $data;

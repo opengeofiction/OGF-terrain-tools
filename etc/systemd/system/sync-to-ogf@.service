@@ -4,4 +4,4 @@ Description=OpenGeofiction sync %i data to data.opengeofiction.net
 [Service]
 User=ogf
 Group=ogf
-ExecStart=rsync -a --del /opt/opengeofiction/sync-to-ogf/%i/ opengeofiction.net:/var/www/html/data.opengeofiction.net/public_html/%i
+ExecStart=rsync -4 -a --del /opt/opengeofiction/sync-to-ogf/%i/ opengeofiction.net:/var/www/html/data.opengeofiction.net/public_html/%i

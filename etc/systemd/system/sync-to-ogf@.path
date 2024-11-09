@@ -1,0 +1,9 @@
+[Unit]
+Description=OpenGeofiction sync %i data to data.opengeofiction.net
+
+[Path]
+PathChanged=/opt/opengeofiction/sync-to-ogf/%i
+Unit=sync-to-ogf@%i.service
+
+[Install]
+WantedBy=multi-user.target

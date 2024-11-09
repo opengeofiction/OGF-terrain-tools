@@ -1,7 +1,0 @@
-[Unit]
-Description=OpenGeofiction sync activity data to data.opengeofiction.net
-
-[Service]
-User=ogf
-Group=ogf
-ExecStart=rsync -a --del /opt/opengeofiction/sync-to-ogf/activity/ opengeofiction.net:/var/www/html/data.opengeofiction.net/public_html/activity

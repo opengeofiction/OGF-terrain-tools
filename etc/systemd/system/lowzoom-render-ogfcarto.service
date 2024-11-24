@@ -1,0 +1,10 @@
+[Unit]
+Description=Forces render of lowzoom tiles, for ogf-carto
+
+[Service]
+User=_renderd
+Group=_renderd
+ExecStart=render_list --all --force --map=ogf-carto --min-zoom=0 --max-zoom=4
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,18 @@
+--- renderd.conf.orig	2022-04-11 21:13:03.302052225 +0000
++++ renderd.conf	2022-04-11 21:13:35.630046235 +0000
+@@ -8,7 +8,14 @@
+ 
+ [mapnik]
+ plugins_dir=/usr/lib/mapnik/3.1/input
+-font_dir=/usr/share/fonts/truetype
++font_dir=/usr/share/fonts
+ font_dir_recurse=true
+ 
+ ; ADD YOUR LAYERS:
++[ogf-carto]
++URI=/ogf-carto/
++XML=/opt/opengeofiction/map-styles/ogf-carto/style.xml
++DESCRIPTION=This is the standard osm mapnik style for planet Ogieff
++HOST=localhost
++TILESIZE=256
++MAXZOOM=19

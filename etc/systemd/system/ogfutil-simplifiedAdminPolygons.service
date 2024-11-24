@@ -1,0 +1,11 @@
+[Unit]
+Description=Generate simplified admin polygons from mapping data
+RequiresMountsFor=/opt/opengeofiction
+
+[Service]
+User=ogf
+Group=ogf
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/simplifiedAdminPolygons.pl -od /opt/opengeofiction/simplified-territories -copyto /opt/opengeofiction/sync-to-ogf/utility
+
+[Install]
+WantedBy=default.target

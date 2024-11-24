@@ -3,7 +3,7 @@
 
 use LWP;
 use URI::Escape;
-use JSON::PP;
+use JSON::XS;
 use LWP::Simple;
 use Encode;
 use feature 'unicode_strings' ;
@@ -12,8 +12,9 @@ use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use OGF::Util::File;
 use OGF::Util::Usage qw( usageInit usageError );
 
-$OVERPASS = 'https://osm3s.opengeofiction.net/api/interpreter?data=';
-$URL_TERRITORIES = 'https://wiki.opengeofiction.net/wiki/index.php/OGF:Territory_administration?action=raw';
+sub fileExport_Overpass($$$);
+
+$URL_TERRITORIES = 'https://wiki.opengeofiction.net/index.php/OpenGeofiction:Territory_administration?action=raw';
 $BASE = 'https://opengeofiction.net';
 $CHANGESETS = "$BASE/api/0.6/changesets?display_name=";
 $APIUSER = "$BASE/api/0.6/user/";
@@ -35,13 +36,11 @@ $CONTINENT = $opt{'cont'};
 $JSON_FILE = $opt{'json'};
 
 $QUERY = qq(rel["type"="boundary"]["admin_level"]["ogf:id"~"^$CONTINENT"];out;);
-$URL = $OVERPASS . uri_escape($QUERY);
 
 # load map relations
-$userAgent = LWP::UserAgent->new(keep_alive => 20);
-$resp = $userAgent->get($URL);
-print STDERR "URL: $URL\n";
-foreach ( split "\n", decode('utf-8', $resp->content) )
+$resp = fileExport_Overpass( undef, $QUERY, 1000 );
+print STDERR "Query: $QUERY\n";
+foreach ( split "\n", decode('utf-8', $resp) )
 {
 	if( /<relation id=\"(\d+)\"/ )
 	{
@@ -57,9 +56,10 @@ foreach ( split "\n", decode('utf-8', $resp->content) )
 }
 
 # load JSON territories
+$userAgent = LWP::UserAgent->new(keep_alive => 20);
 $resp = $userAgent->get($URL_TERRITORIES);
 $resp = decode('utf-8', $resp->content());
-$json = JSON::PP->new();
+$json = JSON::XS->new();
 $aTerr = $json->decode($resp);
 
 # print JSON territories, matched against map ones
@@ -152,8 +152,11 @@ foreach $hTerr ( @$aTerr )
 			profile      => "$BASE/user/" . uri_escape_utf8($hTerr->{owner}),
 			status       => $hTerr->{status},
 			constraints  => $hTerr->{constraints},
+			is_in        => '',
 			validity     => 'in JSON only',
 			valid_flag   => 'invalid',
+			edits        => '',
+			last_edit    => '',
 			deadline     => $hTerr->{deadline},
 			comment      => $hTerr->{comment}
 		};
@@ -178,9 +181,15 @@ foreach $rel ( sort values %map_territory )
 		ogf_id_issue => 'F',
 		owner        => 'admin',
 		profile      => "$BASE/user/admin",
+		status       => '',
+		constraints  => '',
 		is_in        => $map{$rel}{is_in},
 		validity     => $validity,
-		valid_flag   => $valid_flag
+		valid_flag   => $valid_flag,
+		edits        => '',
+		last_edit    => '',
+		deadline     => '',
+		comment      => ''
 	};
 	push @territory_details, $details;
 	
@@ -190,7 +199,7 @@ foreach $rel ( sort values %map_territory )
 # output JSON file
 if( $JSON_FILE )
 {
-	my $json = JSON::PP->new->indent(2)->space_after;
+	my $json = JSON::XS->new->canonical->indent(2)->space_after;
 	my $text = $json->encode( \@territory_details );
 	OGF::Util::File::writeToFile( $JSON_FILE, $text, '>:encoding(UTF-8)' );
 }
@@ -199,4 +208,14 @@ if( $JSON_FILE )
 if( 0 )
 {
 	print "\n$relations\n";
+}
+
+
+sub fileExport_Overpass($$$)
+{
+	require OGF::Util::Overpass;
+	my($outFile, $query, $minSize) = @_;
+	my $data = OGF::Util::Overpass::runQuery_remoteRetry(undef, $query, $minSize);
+	OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' ) if( defined $outFile and defined $data );
+	$data;
 }

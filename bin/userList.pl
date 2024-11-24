@@ -4,7 +4,7 @@ use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
 use URI::Escape;
-use JSON::PP;
+use JSON::XS;
 use LWP::Simple;
 use OGF::Util::File;
 use OGF::Util::Usage qw( usageInit usageError );
@@ -126,7 +126,7 @@ for( my $userid = $START_ID; $userid <= $END_ID; $userid++ )
 print STDERR "$last_id\n" if( defined $last_id );
 
 # output JSON
-my $json = JSON::PP->new->indent(2)->space_after;
+my $json = JSON::XS->new->indent(2)->space_after;
 my @reverse = reverse @matching_users;
 my $text = $json->encode( \@reverse );
 OGF::Util::File::writeToFile( $OUTPUT, $text, '>:encoding(UTF-8)' );

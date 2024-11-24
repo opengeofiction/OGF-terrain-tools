@@ -10,13 +10,14 @@ use OGF::Util::Overpass;
 use OGF::Util::Usage qw( usageInit usageError );
 use POSIX;
 
-sub fileExport_Overpass($$);
+sub fileExport_Overpass($$$);
 sub build_filename($$$$$$);
 sub latlon_to_key($$$$);
 sub key_to_latlon($);
 sub key_to_name($);
 sub classify($);
 sub midpoint($$$$);
+sub housekeeping($$);
 
 my ($MAX_LAT, $MIN_LON, $MIN_LAT, $MAX_LON) = (90, -180, -90, 180);
 my $FN_ACTIVITY = 'activity';
@@ -26,24 +27,26 @@ my $FN_TEMPLATE = 'activity-template';
 # parse arguments
 my %opt;
 usageInit( \%opt, qq/ h degincr=s od=s copyto=s overpass=s /, << "*" );
-[-degincr <degrees>] [-od <output_directory>] [-copyto <publish_directory>] [-overpass <local|remote>]
+[-degincr <degrees>] [-od <output_directory>] [-copyto <publish_directory>] [-overpass <nop|local|remote>]
 
 -degincr  Summarise per x degree squares, default 15
 -od       Location to output CSV files
 -copyto   Location to publish JSON files for wiki use
--overpass local or remote overpass instance, default local
+-overpass nop, local or remote overpass instance, default local
 *
 usageError() if $opt{'h'};
 my $DEGINCR     = $opt{'degincr'}  || 15;
 my $OUTPUT_DIR  = $opt{'od'}       || '/tmp';
 my $PUBLISH_DIR = $opt{'copyto'}   || undef;
-my $OVERPASS    = $opt{'overpass'} || 'local';
+my $OVERPASS    = $opt{'overpass'} || 'remote';
 
 # validate arguments
 usageError() if( ($DEGINCR < 1) or ($DEGINCR > 180) or (180 % $DEGINCR != 0) or ($DEGINCR % 1 != 0) );
 usageError() if( !-d $OUTPUT_DIR );
 usageError() if( (defined $PUBLISH_DIR) and (!-d $PUBLISH_DIR) );
 usageError() if( ($OVERPASS ne 'local') and ($OVERPASS ne 'remote') and ($OVERPASS ne 'nop') );
+
+housekeeping $OUTPUT_DIR, time;
 
 # calculate time base
 my $startedat = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime;
@@ -55,7 +58,8 @@ print "Changes in $DEGINCR degree squares since $yesterday_fmt\n";
 print "Started: $startedat\n";
 
 # build up overpass query strings, working around 1MB max - break into chunks
-my $QUERY_START = "[out:csv(name, total; true; \",\")][timeout:1800][maxsize:4294967296];\n";
+# query takes 50 - 120s to complete (100s on average), about 230s for 5 degree; set 600s and 100MB as return limits
+my $QUERY_START = "[out:csv(name, total; true; \",\")][timeout:600][maxsize:100000000];\n";
 my $MAXITEMS = 8200;
 my @query;
 for( my $items = 0, my $q = 0, my $lat = $MAX_LAT; $lat > $MIN_LAT; $lat -= $DEGINCR )
@@ -95,7 +99,7 @@ foreach my $querystr( @query )
 	else
 	{
 		print "export to: $fn\n";
-		fileExport_Overpass $fn, $querystr;
+		fileExport_Overpass $fn, $querystr, 10;
 	}
 }
 
@@ -219,9 +223,10 @@ print "Finished: $finishedat\n";
 exit;
 
 ##################################################
-sub fileExport_Overpass($$)
+sub fileExport_Overpass($$$)
 {
-	my($outFile, $query) = @_;
+	require OGF::Util::Overpass;
+	my($outFile, $query, $minSize) = @_;
 	
 	if( $OVERPASS eq 'local' )
 	{
@@ -229,8 +234,8 @@ sub fileExport_Overpass($$)
 	}
 	elsif( $OVERPASS eq 'remote' )
 	{
-		my $data = OGF::Util::Overpass::runQuery_remote( undef, $query );
-		OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' );
+		my $data = OGF::Util::Overpass::runQuery_remoteRetryCsv(undef, $query, $minSize);
+		OGF::Util::File::writeToFile( $outFile, $data, '>:encoding(UTF-8)' ) if( defined $data );
 	}
 	elsif( $OVERPASS eq 'nop' )
 	{
@@ -321,4 +326,24 @@ sub midpoint($$$$)
 	my $midLat = ($latN + $latS) / 2;
 	my $midLon = ($lonW + $lonE) / 2;
 	"$midLat/$midLon";
+}
+
+##################################################
+sub housekeeping($$)
+{
+	my($dir, $now) = @_;
+	my $KEEP_FOR = 60 * 60 * 24 * 4 ; # 4 days
+	my $dh;
+	
+	opendir $dh, $dir;
+	while( my $file = readdir $dh )
+	{
+		next unless( $file =~ /^(activity|activity-polygons)-\d{8}/ ); # activity-20220503-1°-i3.csv activity-polygons-20220227.json
+		if( $now - (stat "$dir/$file")[9] > $KEEP_FOR )
+		{
+			print "deleting: $dir/$file\n";
+			unlink "$dir/$file";
+		}
+	}
+	closedir $dh;
 }

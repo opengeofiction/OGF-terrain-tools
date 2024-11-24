@@ -1,0 +1,10 @@
+[Unit]
+Description=Find new users
+
+[Timer]
+# run twice hourly, at 10 and 40 mins past
+OnCalendar=*:10,40
+Unit=ogfutil-userList.service
+
+[Install]
+WantedBy=timers.target

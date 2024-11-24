@@ -1,0 +1,11 @@
+[Unit]
+Description=Find new users
+RequiresMountsFor=/opt/opengeofiction
+
+[Service]
+User=ogf
+Group=ogf
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/userList.pl -output /opt/opengeofiction/sync-to-ogf/utility/new_users.json -cache /opt/opengeofiction/userlist/users.cache
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Overpass main dispatcher
+After=network.target
+Wants=overpass-area-dispatcher.service
+RequiresMountsFor=/opt/opengeofiction
+
+[Service]
+User=ogf
+Group=ogf
+WorkingDirectory=/opt/opengeofiction/overpass
+ExecStart=/opt/overpass/bin/dispatcher --osm-base --attic --db-dir=/opt/opengeofiction/overpass/db --rate-limit=2 --space=10737418240
+ExecStop=/opt/overpass/bin/dispatcher --osm-base --terminate
+
+[Install]
+WantedBy=multi-user.target

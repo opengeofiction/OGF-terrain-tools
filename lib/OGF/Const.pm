@@ -55,6 +55,7 @@ my %conf = Config::General::ParseConfig( -ConfigFile => 'ogftools.conf', -Config
 $OGF::LAYER_PATH_PREFIX  = $conf{'layer_path_prefix'};
 $OGF::TERRAIN_COLOR_MAP  = $conf{'terrain_color_map'};
 $OGF::TERRAIN_OUTPUT_DIR = $conf{'terrain_output_dir'};
+$OGF::OVERPASS_URL       = $conf{'overpass_url'} || 'https://overpass.opengeofiction.net/api/interpreter';
 #print STDERR "\$OGF::LAYER_PATH_PREFIX <", $OGF::LAYER_PATH_PREFIX, ">\n";  # _DEBUG_
 #print STDERR "\$OGF::TERRAIN_COLOR_MAP <", $OGF::TERRAIN_COLOR_MAP, ">\n";  # _DEBUG_
 

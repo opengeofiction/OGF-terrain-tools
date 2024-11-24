@@ -3,16 +3,15 @@ use strict;
 use warnings;
 use Exporter;
 use LWP;
+use OGF::Const;
 use OGF::Util;
 our @ISA = qw( Exporter );
 our @EXPORT_OK = qw(
 );
 
 
-my $CMD_OSM3S_QUERY = '/opt/osm/osm3s/bin/osm3s_query';
+my $CMD_OSM3S_QUERY = '/opt/geofictician/overpass/bin/osm3s_query';
 my $CMD_OSMCONVERT  = 'osmconvert64';
-my $URL_OVERPASS    = 'https://osm3s.opengeofiction.net/api/interpreter';
-
 
 
 sub runQuery_local {
@@ -66,7 +65,7 @@ sub runQuery_remote {
             $osmFile = $outFile;
         }
 
-        my $resp = $userAgent->post( $URL_OVERPASS, 'Content' => $queryText, ':content_file' => $osmFile );
+        my $resp = $userAgent->post( $OGF::OVERPASS_URL, 'Content' => $queryText, ':content_file' => $osmFile );
         print STDERR 'Overpass export [1]: ', time() - $startTimeE, " seconds\n";
         
         if( $ogfFile ){
@@ -75,16 +74,54 @@ sub runQuery_remote {
             $ctx->writeToXml( $ogfFile );
         }
 	}else{
-        my $resp = $userAgent->post( $URL_OVERPASS, 'Content' => $queryText );
+        my $resp = $userAgent->post( $OGF::OVERPASS_URL, 'Content' => $queryText );
         my $data = $resp->content();
         print STDERR 'Overpass export [1]: ', time() - $startTimeE, " seconds\n";
         return $data;
 	}
 }
 
+sub runQuery_remoteRetryOptions
+{
+	my($outFile, $query, $minSize, $format, $MAX_RETRIES, $TIMEOUT_INCR) = @_;
+	
+	my $retries = 0;
+	while( ++$retries <= $MAX_RETRIES )
+	{
+		sleep $TIMEOUT_INCR * $retries if( $retries > 1 );
+		my $data = runQuery_remote(undef, $query);
+		if( (!defined $data) or ($data !~ /^<\?xml/ and $format eq 'xml') or
+		                        ($data =~ /^<\?xml/ and $format eq 'csv') or
+		                        ($data !~ /^{/ and $format eq 'json') )
+		{
+			print "Failure running Overpass query [$retries]: $query\n";
+			next;
+		}
+		elsif( length $data < $minSize )
+		{
+			my $first800 = substr $data, 0, 800;
+			my $len = length $data;
+			print "Failure running Overpass query, return too small $len [$retries]: $first800\n";
+			next;
+		}
+		return $data;
+	}
+	return undef;
+}
 
+sub runQuery_remoteRetry
+{
+	my($outFile, $query, $minSize) = @_;
 
+	return runQuery_remoteRetryOptions($outFile, $query, $minSize, 'xml', 10, 3);
+}
 
+sub runQuery_remoteRetryCsv
+{
+	my($outFile, $query, $minSize) = @_;
+
+	return runQuery_remoteRetryOptions($outFile, $query, $minSize, 'csv', 10, 3);
+}
 
 1;
 

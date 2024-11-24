@@ -1,0 +1,10 @@
+[Unit]
+Description=Generate simplified admin polygons from mapping data
+
+[Timer]
+# run every 4 hours, at 00:30, 04:30, 08:30, 12:30, 16:30, 20:30
+OnCalendar=00/4:30
+Unit=ogfutil-simplifiedAdminPolygons.service
+
+[Install]
+WantedBy=timers.target

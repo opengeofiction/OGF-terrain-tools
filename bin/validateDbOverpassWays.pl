@@ -8,10 +8,10 @@ use OGF::Util::Usage qw( usageInit usageError );
 
 my $BASE     = 'https://opengeofiction.net';
 my $API      = "$BASE/api/0.6";
-my $OVERPASS = "https://osm3s.opengeofiction.net/api/interpreter?";
+my $OVERPASS = "https://overpass.ogf.rent-a-planet.com/api/interpreter?";
 
 #https://opengeofiction.net/api/0.6/way/84239
-#https://osm3s.opengeofiction.net/api/interpreter?data=way(84239);out;
+#https://overpass.ogf.rent-a-planet.com/api/interpreter?data=way(84239);out;
 
 
 my %opt;

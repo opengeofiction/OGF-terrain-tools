@@ -1,0 +1,10 @@
+[Unit]
+Description=Backup Wiki instance
+
+[Timer]
+# run daily, at 03:03
+OnCalendar=03:03
+Unit=ogfutil-backupWiki.service
+
+[Install]
+WantedBy=timers.target

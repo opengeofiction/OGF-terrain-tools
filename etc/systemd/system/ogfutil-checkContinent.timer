@@ -1,0 +1,10 @@
+[Unit]
+Description=Check territory JSON vs relations
+
+[Timer]
+# run at 04:45 and 16:45
+OnCalendar=04,16:45
+Unit=ogfutil-checkContinent.service
+
+[Install]
+WantedBy=timers.target

@@ -6,7 +6,7 @@ use warnings;
 use feature 'unicode_strings' ;
 use Date::Format;
 use Encode;
-use JSON::PP;
+use JSON::XS;
 use OGF::Data::Context;
 use OGF::Geo::Topology;
 use OGF::Util::File;
@@ -19,6 +19,7 @@ sub parseDrivingSide($);
 sub parseEconomy($);
 sub parseEconomyHdi($);
 sub parseEconomyHdiRange($);
+sub parseEconomyGdp($);
 sub parseEconomyNote($);
 sub parseRailGauge($);
 sub parseGovernance($);
@@ -71,7 +72,7 @@ elsif( $opt{'ds'} eq 'test' )
 	$OUTFILE_NAME = 'test_admin_properties';
 	$ADMIN_RELATION_QUERY = << '---EOF---';
 [timeout:60][maxsize:5000000];
-(relation["boundary"="administrative"]["ogf:id"="UL05a"];);
+(relation["boundary"="administrative"]["ogf:id"~"UL"];);
 out;
 ---EOF---
 }
@@ -118,8 +119,9 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'driving_side'}         = parseDrivingSide $rel->{'tags'}{'driving_side'};
 	
 	$ter{'economy'}              = parseEconomy $rel->{'tags'}{'economy'};
-	$ter{'economy:hdi'}          = parseEconomyHdi $rel->{'tags'}{'economy:hdi'};
+	$ter{'economy:hdi'}          = parseEconomyHdi $rel->{'tags'}{'economy:hdi'} || $rel->{'tags'}{'hdi'};
 	$ter{'economy:hdi:range'}    = parseEconomyHdiRange $ter{'economy:hdi'};
+	$ter{'economy:gdp'}          = parseEconomyGdp $rel->{'tags'}{'economy:gdp'};
 	$ter{'economy:note'}         = parseEconomyNote $rel->{'tags'}{'economy:note'};
 	
 	$ter{'gauge'}                = parseRailGauge $rel->{'tags'}{'gauge'};
@@ -154,11 +156,33 @@ foreach my $rel ( values %{$ctx->{_Relation}} )
 	$ter{'power_supply:frequency'} = parsePowerSupplyFrequency $rel->{'tags'}{'power_supply:frequency'};
 	$ter{'power_supply:range'}     = parsePowerSupplyRange $ter{'power_supply:voltage'}, $ter{'power_supply:frequency'};
 	
+	my %langnames;
+	$langnames{'castellanese'} = $rel->{'tags'}{'name:es'} if exists( $rel->{'tags'}{'name:es'} );
+	$langnames{'florescentan'} = $rel->{'tags'}{'name:pt'} if exists( $rel->{'tags'}{'name:pt'} );
+	$langnames{'franquese'}    = $rel->{'tags'}{'name:fr'} if exists( $rel->{'tags'}{'name:fr'} );
+	$langnames{'ingerlish'}    = $rel->{'tags'}{'name:en'} if exists( $rel->{'tags'}{'name:en'} );
+	$langnames{'kalmish'}      = $rel->{'tags'}{'name:de'} if exists( $rel->{'tags'}{'name:de'} );
+	$langnames{'lechian'}      = $rel->{'tags'}{'name:pl'} if exists( $rel->{'tags'}{'name:pl'} );
+	$langnames{'lentian'}      = $rel->{'tags'}{'name:nl'} if exists( $rel->{'tags'}{'name:nl'} );
+	$langnames{'renminyu'}     = $rel->{'tags'}{'name:zh'} if exists( $rel->{'tags'}{'name:zh'} );
+	$langnames{'surian'}       = $rel->{'tags'}{'name:ru'} if exists( $rel->{'tags'}{'name:ru'} );
+	foreach my $tag ( keys %{$rel->{'tags'}} )
+	{
+		next unless( $tag =~ /^name:([a-z]{4,20})/ );
+		my $lang = $1;
+		my $name = $rel->{'tags'}{$tag};
+		next if( $lang eq 'official' );
+		next if( $lang eq 'officialen' );
+		next if( $lang eq 'pronunciation' );
+		$langnames{$lang} = $name;
+	}
+	$ter{'names'} = \%langnames;
+	
 	push @ters, \%ter;
 }
 
 my $publishFile = $PUBLISH_DIR . '/' . $OUTFILE_NAME . '.json';
-my $json = JSON::PP->new->canonical->indent(2)->space_after;
+my $json = JSON::XS->new->canonical->indent(2)->space_after;
 my $text = $json->encode( \@ters );
 OGF::Util::File::writeToFile($publishFile, $text, '>:encoding(UTF-8)' );
 
@@ -191,6 +215,14 @@ sub parseEconomyHdi($)
 	return '';
 }
 
+sub parseEconomyGdp($)
+{
+	my($var) = @_;
+	
+	return $var + 0.0 if( defined $var and $var =~ /^[\d\.]+$/ and $var >= 0 and $var <= 150000 );
+	return '';
+}
+
 sub parseEconomyHdiRange($)
 {
 	my($var) = @_;
@@ -200,7 +232,8 @@ sub parseEconomyHdiRange($)
 	return 'low'      if( $var >= 0.00 and $var <  0.55 );
 	return 'medium'   if( $var >= 0.55 and $var <  0.70 );
 	return 'high'     if( $var >= 0.70 and $var <  0.80 );
-	return 'veryhigh' if( $var >= 0.80 and $var <= 1.00 );
+	return 'veryhigh' if( $var >= 0.80 and $var <  0.90 );
+	return 'exhigh'   if( $var >= 0.90 and $var <= 1.00 );
 	
 	return 'unknown';
 }

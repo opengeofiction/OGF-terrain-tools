@@ -5,7 +5,7 @@ use File::Spec;
 use File::Copy qw( move );
 use OGF::Const;
 use OGF::Util::File qw( readFromFile writeToFile );
-
+use Geo::LibProj::FFI qw(:all);
 
 our( $NO_ELEV_VALUE, $T_WIDTH, $T_HEIGHT, $BPP ) = ( -30001, 512, 512, 2 );
 
@@ -546,8 +546,7 @@ sub getProjectionParameters {
 	print STDERR "\$minY <", $minY, ">  \$maxY <", $maxY, ">  \$minX <", $minX, ">  \$maxX <", $maxX, ">\n";  # _DEBUG_
 
 	if( $info->layerInfo('proj4','opt') ){
-		require Geo::Proj4;
-		my $proj = Geo::Proj4->new( $info->layerInfo('proj4') );
+		my $proj = proj_create_crs_to_crs(undef, "EPSG:4326", $info->layerInfo('proj4'), undef);
 		# $proj->forward( 85.0511287798066, 180 ) -> ( 20037508.3427892, 20037508.3427892 );
 		my( $worldWd, $worldHg ) = map {$_ * 2**$level} $info->tileSize();
 		my $worldConst = 2 * 20037508.3427892;

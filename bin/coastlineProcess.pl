@@ -13,9 +13,10 @@ use OGF::Util::Usage qw( usageInit usageError );
 use POSIX;
 use File::Path;
 
+sub exitScript($$);
 sub housekeeping($$);
 sub exportOverpassConvert($$$);
-sub buildOverpassQuery($$);
+sub buildOverpassQuery($$$);
 sub fileExport_Overpass($$$);
 sub validateCoastline($$$$$);
 sub validateCoastlineDb($$);
@@ -54,8 +55,7 @@ housekeeping $OUTPUT_DIR, $now;
 my $LOCKFILE="$BASE/backup/backup.lock";
 if( -d $LOCKFILE )
 {
-	print "skipping, backup is running...\n";
-	exit 0;
+	exitScript 0, "skipping, backup is running...\n";
 }
 
 # build up Overpass query to get the top level admin_level=0 continent relations
@@ -154,10 +154,9 @@ if( -f $osmFile )
 	system "osmium merge --no-progress --verbose --output=$pbfFile $filesToMerge";
 	if( ! -f $pbfFile )
 	{
-		print "issues merging world coastline\n";
-		exit 1;
+		exitScript 1, "issues merging world coastline\n";
 	}
-	publishFile $pbfFile, 'coastline.osm.pbf';
+	publishFile $pbfFile, 'coastline-world.osm.pbf';
 	
 	# save summary to JSON
 	my %sum = ();
@@ -178,6 +177,8 @@ if( -f $osmFile )
 	$sum{'mtime'} = strftime '%Y-%m-%d %H:%M:%S UTC', gmtime time;
 	push @summary, \%sum;
 	
+	publishFile $dbFile, 'coastline-world.db';
+	
 	# save summary to JSON (again, now with the overall world coastline)
 	saveToJSON 'coastline_summary.json', \@summary;
 	
@@ -195,31 +196,40 @@ if( -f $osmFile )
 	{
 		# at this point we now have an obsolutely clean coastline db file
 		# which we can use to create land and coast shapefiles
-		
 		createShapefilePublish $dbFile, 'land-polygons-split-3857', 'land_polygons.shp', 'land_polygons', 0;
 		createShapefilePublish $dbFile, 'water-polygons-split-3857', 'water_polygons.shp', 'water_polygons', 0;
 		my $simplify = createShapefilePublish $dbFile, 'simplified-water-polygons-split-3857', 'simplified_water_polygons.shp', 'water_polygons', 25;
 		createShapefilePublish $dbFile, 'simplified-land-polygons-complete-3857', 'simplified_land_polygons.shp', 'land_polygons', $simplify;
+		
+		# these ones are not for the renderers, but for other user use
+		createShapefilePublish $dbFile, 'complete-coastline-3857', 'complete-coastline.shp', 'rings', 0;
+		createShapefilePublish $dbFile, 'complete-coastline-simplified-3857', 'complete-coastline-simplified.shp', 'rings', 1000;
 
-		print "complete\n";
-		exit 0;
+		exitScript 0, "complete\n";
 	}
 	else
 	{
-		print "issues with world coastline\n";
-		exit 1;
+		exitScript 1, "issues with world coastline\n";
 	}
 }
 else
 {
-	print "Error querying overpass\n";
-	exit 1;
+	exitScript 1, "Error querying overpass\n";
+}
+
+sub exitScript($$)
+{
+	my($rc, $msg) = @_;
+	
+	print $msg;
+	system "sudo journalctl -u coastline-process --since '$startedat' > '$PUBLISH_DIR/coastline-process-debug.txt'";
+	exit $rc;
 }
 
 sub housekeeping($$)
 {
 	my($dir, $now) = @_;
-	my $KEEP_FOR = 60 * 30; # 30 mins
+	my $KEEP_FOR = 60 * 10; # 10 mins
 	my $dh;
 	
 	opendir $dh, $dir;
@@ -238,11 +248,12 @@ sub housekeeping($$)
 sub exportOverpassConvert($$$)
 {
 	my($ctxref, $relref, $started) = @_;
-	my $continent = $$relref->{'tags'}{'ogf:id'};
-	my $osmFile   = "$OUTPUT_DIR/coastline-$continent-$started.osm";
-	my $pbfFile   = "$OUTPUT_DIR/coastline-$continent-$started.osm.pbf";
+	my $continent  = $$relref->{'tags'}{'ogf:id'};
+	my $complexity = $$relref->{'tags'}{'ogf:coastline:complexity'};
+	my $osmFile    = "$OUTPUT_DIR/coastline-$continent-$started.osm";
+	my $pbfFile    = "$OUTPUT_DIR/coastline-$continent-$started.osm.pbf";
 	
-	my $overpass = buildOverpassQuery $ctxref, $relref;
+	my $overpass = buildOverpassQuery $ctxref, $relref, $complexity;
 	print "query: $overpass\n";
 	print "query Overpass and save to: $osmFile\n";
 	fileExport_Overpass $osmFile, $overpass, 90000;
@@ -264,10 +275,16 @@ sub exportOverpassConvert($$$)
 	return 'fail';
 }
 
-sub buildOverpassQuery($$)
+sub buildOverpassQuery($$$)
 {
-	my($ctxref, $relref) = @_;
-	my $overpass = qq|[out:xml][timeout:180][maxsize:80000000];(|;
+	my($ctxref, $relref, $complexity) = @_;
+	my $maxsize = 70;
+	$maxsize =  10 if( $complexity eq 'tiny' );
+	$maxsize =  40 if( $complexity eq 'small' );
+	$maxsize =  70 if( $complexity eq 'medium' );
+	$maxsize = 150 if( $complexity eq 'large' );
+	$maxsize *= 1024 * 1024; # bytes to MB
+	my $overpass = qq|[out:xml][timeout:180][maxsize:$maxsize];(|;
 	
 	# query all coastlines within the continent using the extracted latlons
 	# to limit - normally you'd use the built in overpass support for area
@@ -305,8 +322,9 @@ sub validateCoastline($$$$$)
 	my($continent, $errs, $pbfFile, $dbFile, $mode) = @_;
 	my $exotics = 0; my $warnings = 0; my $errors = 0;
 	
-	my $cmd = "$OSMCOASTLINE --verbose --srs=3857 --output-lines --output-polygons=both --output-rings --max-points=2000 --output-database=$dbFile $pbfFile 2>&1";
-	$cmd = "$OSMCOASTLINE --verbose --srs=3857 --max-points=0 --output-database=$dbFile $pbfFile 2>&1" if( $mode eq 'quick' );
+	# note the --verbose argument causes useful extra info, this is then used in our tracking of "exotic" errors
+	my $cmd = "$OSMCOASTLINE --debug --verbose --srs=3857 --output-lines --output-polygons=both --output-rings --max-points=2000 --output-database=$dbFile $pbfFile 2>&1";
+	$cmd = "$OSMCOASTLINE --debug --verbose --srs=3857 --max-points=0 --output-database=$dbFile $pbfFile 2>&1" if( $mode eq 'quick' );
 	open(my $pipe, '-|', $cmd) or return -1;
 	while( my $line = <$pipe> )
 	{

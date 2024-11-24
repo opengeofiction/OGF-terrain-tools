@@ -1,0 +1,14 @@
+[Unit]
+Description=Generate JSON summary of properties in map admin territory relations
+RequiresMountsFor=/opt/opengeofiction
+
+[Service]
+Type=oneshot
+User=ogf
+Group=ogf
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/adminPolygonsToMultimap.pl -od /opt/opengeofiction/multimaps -copyto /opt/opengeofiction/sync-to-ogf/utility
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/adminPolygonsToMultimapTimezone.pl -od /opt/opengeofiction/multimaps -copyto /opt/opengeofiction/sync-to-ogf/utility
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/overpassCacheEconomy.pl -od /opt/opengeofiction/economy -copyto /opt/opengeofiction/sync-to-ogf/utility
+
+[Install]
+WantedBy=default.target

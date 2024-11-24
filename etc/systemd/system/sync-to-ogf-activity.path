@@ -1,9 +1,0 @@
-[Unit]
-Description=OpenGeofiction sync activity data to data.opengeofiction.net
-
-[Path]
-PathChanged=/opt/opengeofiction/sync-to-ogf/activity
-Unit=sync-to-ogf-activity.service
-
-[Install]
-WantedBy=multi-user.target

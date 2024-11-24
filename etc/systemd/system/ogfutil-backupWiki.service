@@ -1,0 +1,11 @@
+[Unit]
+Description=Backup Wiki instance
+RequiresMountsFor=/opt/opengeofiction
+
+[Service]
+User=ogf
+Group=ogf
+ExecStart=/opt/opengeofiction/OGF-terrain-tools/bin/backupWiki.sh
+
+[Install]
+WantedBy=default.target

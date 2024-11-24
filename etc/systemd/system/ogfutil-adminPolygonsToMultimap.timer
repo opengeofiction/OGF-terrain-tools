@@ -1,0 +1,10 @@
+[Unit]
+Description=Generate JSON summary of properties in map admin territory relations
+
+[Timer]
+# run every hour, at 55 mins past
+OnCalendar=*:55
+Unit=ogfutil-adminPolygonsToMultimap.service
+
+[Install]
+WantedBy=timers.target

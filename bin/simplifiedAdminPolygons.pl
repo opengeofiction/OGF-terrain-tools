@@ -3,7 +3,7 @@
 use lib '/opt/opengeofiction/OGF-terrain-tools/lib';
 use strict;
 use warnings;
-use JSON::PP;
+use JSON::XS;
 use URI::Escape;
 use Date::Format;
 use OGF::Geo::Topology;
@@ -43,9 +43,8 @@ if( ! $opt{'ds'} ){
 [timeout:60][maxsize:80000000];
 (
   (relation["boundary"="administrative"]["admin_level"="2"];
-   relation["boundary"="protected_area"]["ogf:id"];
-   relation["boundary"="administrative"]["admin_level"="3"]["ogf:id"~"^UL16[a-z]$"];
-   relation["boundary"="administrative"]["admin_level"="4"]["ogf:id"~"^AR(001b|045|060|120)-[0-9]{2}$"];
+   relation["boundary"="administrative"]["admin_level"="3"]["ogf:id"~"^(UL08c|UL16)-[0-9]{2}$"];
+   relation["boundary"="administrative"]["admin_level"="4"]["ogf:id"~"^(AR(045|047|060|120)|UL10|UL08c)-[0-9]{2}$"];
    relation["boundary"="timezone"]["timezone"];);
   >;
 );
@@ -206,7 +205,7 @@ foreach my $avwThreshold ( 100 ){
         if( @$aErrors ){
             use Data::Dumper; local $Data::Dumper::Indent = 1; local $Data::Dumper::Maxdepth = 3; print STDERR Data::Dumper->Dump( [$aErrors], ['aErrors'] ), "\n";  # _DEBUG_
 			
-			my $json = JSON::PP->new->indent(2)->space_after;
+			my $json = JSON::XS->new->indent(2)->space_after;
 			my $text = $json->encode( \@$aErrors );
 			OGF::Util::File::writeToFile( $outFile, $text, '>:encoding(UTF-8)' );
             $exit = 1;
@@ -225,7 +224,7 @@ foreach my $avwThreshold ( 100 ){
 		exit if( $exit == 1 );
     }
 
-    my $json = JSON::PP->new->indent(2)->space_after;
+    my $json = JSON::XS->new->indent(2)->space_after;
 	my $outFile = "$OUTPUT_DIR/${OUTFILE_NAME}_${avwThreshold}.json";
     writePolygonJson( $outFile, $hPolygons );
 	if( $opt{'copyto'} and -d $opt{'copyto'} ) {
@@ -237,32 +236,37 @@ foreach my $avwThreshold ( 100 ){
 #-------------------------------------------------------------------------------
 
 sub verifyTerritories {
-    my( $hPolygons, $aTerritories ) = @_;
-    my @errors;
-    foreach my $hTerr ( @$aTerritories ){
-        my( $ogfId, $relId ) = ( $hTerr->{'ogfId'}, $hTerr->{'rel'} );
-        my $errText;
-        if( $hPolygons->{$relId} ){
-            $errText = verifyPolygon( $hPolygons->{$relId} );
-        }else{
-	        $errText = 'Missing polygon';
+	my( $hPolygons, $aTerritories ) = @_;
+	my @errors;
+	foreach my $hTerr ( @$aTerritories )
+	{
+		my($ogfId, $relId) = ($hTerr->{'ogfId'}, $hTerr->{'rel'});
+		my $errText = 'Missing polygon';
+
+		unless( exists $hTerr->{'ogfId'}   and exists $hTerr->{'name'}  and exists $hTerr->{'rel'}
+		    and exists $hTerr->{'status'}  and exists $hTerr->{'owner'} and exists $hTerr->{'deadline'}
+		    and exists $hTerr->{'comment'} and exists $hTerr->{'constraints'} )
+		{
+			$errText = 'Territory JSON missing ogfId, name, rel, status, owner, deadline, comment, or constraints';
 		}
-        print STDERR $ogfId;
-        if( $errText ){
-            print STDERR " ", $errText;
-			
-            unless( $VERIFY_IGNORE{$relId} ) {
-				my $err = {
-					_ogfId => $ogfId,
-					_rel   => $relId,
-					_text  => $errText,
-				};
+		elsif( $hPolygons->{$relId} )
+		{
+			$errText = verifyPolygon( $hPolygons->{$relId} );
+		}
+
+		print STDERR $ogfId;
+		if( $errText )
+		{
+			print STDERR " ", $errText;
+			unless( $VERIFY_IGNORE{$relId} )
+			{
+				my $err = {_ogfId => $ogfId, _rel => $relId, _text => $errText};
 				push @errors, $err;
 			}
-        }
-        print STDERR "\n";
-    }
-    return \@errors;
+		}
+		print STDERR "\n";
+	}
+	return \@errors;
 }
 
 
@@ -303,7 +307,7 @@ sub fileExport_Overpass($$$)
 sub getTerritories {
     require LWP;
 
-    my $json = JSON::PP->new();
+    my $json = JSON::XS->new();
 	my $userAgent = LWP::UserAgent->new(
 		keep_alive => 20,
 	);
@@ -321,7 +325,7 @@ sub writePolygonJson {
 	my( $filePoly, $hPolygons ) = @_;
     local *OUTFILE;
     open( OUTFILE, '>:encoding(UTF-8)', $filePoly ) or die qq/Cannot open "$filePoly" for writing: $!\n/;
-    my $jsonP = JSON::PP->new;
+    my $jsonP = JSON::XS->new;
     print OUTFILE "{\n";
     my @keyList = sort keys %$hPolygons;
     my $ccP = lastLoop( \@keyList, ',', '' );

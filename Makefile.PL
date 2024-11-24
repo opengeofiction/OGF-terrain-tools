@@ -7,7 +7,7 @@ WriteMakefile(
     VERSION_FROM      => 'lib/OGF.pm', # finds $VERSION
     PREREQ_PM         => {
         'POSIX'                  => 0,
-        'Geo::Proj4'             => 0,
+        'Geo::LibProj::FFI'      => 0,
         'Math::Trig'             => 0,
         'XML::SAX'               => 0,
         'Archive::Zip'           => 0,
